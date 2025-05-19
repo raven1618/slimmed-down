@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Deal } from '@/data/sampleData';
-import { DollarSign, MoreHorizontal, ChevronDown } from 'lucide-react';
+import { DollarSign, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,9 +10,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
+import DealForm from './DealForm';
+import { createDeal, deleteDeal, updateDeal } from '@/services/dealService';
+import { toast } from '@/components/ui/sonner';
 
 interface DealsBoardProps {
   deals: Deal[];
+  onDealsChange: () => void;
 }
 
 type Stage = Deal['stage'];
@@ -22,8 +26,12 @@ type StageColumn = {
   deals: Deal[];
 };
 
-export default function DealsBoard({ deals }: DealsBoardProps) {
+export default function DealsBoard({ deals, onDealsChange }: DealsBoardProps) {
   const [view, setView] = useState<'board' | 'table'>('board');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addToStage, setAddToStage] = useState<Stage | null>(null);
   
   const stageColumns: StageColumn[] = [
     { id: 'Lead', title: 'Lead', deals: [] },
@@ -65,6 +73,61 @@ export default function DealsBoard({ deals }: DealsBoardProps) {
     }
   };
 
+  const handleOpenForm = (deal?: Deal, stage?: Stage) => {
+    setSelectedDeal(deal);
+    if (stage) {
+      setAddToStage(stage);
+    } else {
+      setAddToStage(null);
+    }
+    setIsFormOpen(true);
+  };
+
+  const handleSubmit = async (formData: any) => {
+    setIsSubmitting(true);
+    
+    try {
+      if (selectedDeal?.id) {
+        // Update existing deal
+        await updateDeal(selectedDeal.id, formData);
+      } else {
+        // Create new deal with specific stage if coming from column
+        const stageValue = addToStage || formData.stage;
+        await createDeal({
+          ...formData,
+          stage: stageValue,
+        });
+      }
+      
+      // Refresh deals
+      onDealsChange();
+      setIsFormOpen(false);
+    } catch (error) {
+      console.error('Error saving deal:', error);
+      toast.error('Failed to save deal');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteDeal(id);
+      onDealsChange();
+    } catch (error) {
+      console.error('Error deleting deal:', error);
+    }
+  };
+
+  const handleMoveDeal = async (deal: Deal, newStage: Stage) => {
+    try {
+      await updateDeal(deal.id, { stage: newStage });
+      onDealsChange();
+    } catch (error) {
+      console.error('Error moving deal:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -92,7 +155,12 @@ export default function DealsBoard({ deals }: DealsBoardProps) {
           </div>
           
           <div className="flex items-center gap-2">
-            <Button className="bg-crm-blue hover:bg-blue-700">Add Deal</Button>
+            <Button 
+              className="bg-crm-blue hover:bg-blue-700"
+              onClick={() => handleOpenForm()}
+            >
+              Add Deal
+            </Button>
           </div>
         </div>
       </div>
@@ -124,9 +192,32 @@ export default function DealsBoard({ deals }: DealsBoardProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Move</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenForm(deal)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="w-full text-left">
+                              Move
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {stageColumns
+                                .filter((stageCol) => stageCol.id !== deal.stage)
+                                .map((stageCol) => (
+                                  <DropdownMenuItem 
+                                    key={stageCol.id}
+                                    onClick={() => handleMoveDeal(deal, stageCol.id)}
+                                  >
+                                    {stageCol.title}
+                                  </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-red-600"
+                          onClick={() => handleDelete(deal.id)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -149,13 +240,24 @@ export default function DealsBoard({ deals }: DealsBoardProps) {
                 </div>
               )}
 
-              <button className="w-full text-sm py-2 border border-dashed border-gray-300 rounded-lg text-gray-500 flex items-center justify-center hover:bg-white hover:border-gray-400 transition-colors">
+              <button 
+                className="w-full text-sm py-2 border border-dashed border-gray-300 rounded-lg text-gray-500 flex items-center justify-center hover:bg-white hover:border-gray-400 transition-colors"
+                onClick={() => handleOpenForm(undefined, column.id)}
+              >
                 <span className="mr-1">+</span> Add Deal
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      <DealForm
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        initialData={selectedDeal}
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 }

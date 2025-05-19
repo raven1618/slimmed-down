@@ -1,11 +1,31 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import DealsBoard from '@/components/deals/DealsBoard';
-import { sampleDeals } from '@/data/sampleData';
+import { fetchDeals } from '@/services/dealService';
+import { Deal } from '@/data/sampleData';
 
 const Deals = () => {
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadDeals = async () => {
+    setIsLoading(true);
+    try {
+      const dealsData = await fetchDeals();
+      setDeals(dealsData);
+    } catch (error) {
+      console.error('Failed to load deals:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDeals();
+  }, []);
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -19,9 +39,15 @@ const Deals = () => {
               <h1 className="text-2xl font-bold text-gray-800">Deals Pipeline</h1>
             </div>
             
-            <div className="animate-fade-in">
-              <DealsBoard deals={sampleDeals} />
-            </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-crm-blue"></div>
+              </div>
+            ) : (
+              <div className="animate-fade-in">
+                <DealsBoard deals={deals} onDealsChange={loadDeals} />
+              </div>
+            )}
           </div>
         </main>
       </div>

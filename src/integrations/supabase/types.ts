@@ -9,7 +9,138 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          related_to: string | null
+          timestamp: string
+          type: string
+          user_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          related_to?: string | null
+          timestamp?: string
+          type: string
+          user_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          related_to?: string | null
+          timestamp?: string
+          type?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string | null
+          id: string
+          last_contact: string | null
+          name: string
+          phone: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_contact?: string | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_contact?: string | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deals: {
+        Row: {
+          company: string
+          created_at: string
+          id: string
+          name: string
+          owner: string | null
+          stage: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          id?: string
+          name: string
+          owner?: string | null
+          stage?: string
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          id?: string
+          name?: string
+          owner?: string | null
+          stage?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          completed: boolean | null
+          created_at: string
+          due_date: string
+          id: string
+          priority: string | null
+          related: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string
+          due_date: string
+          id?: string
+          priority?: string | null
+          related?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          priority?: string | null
+          related?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
