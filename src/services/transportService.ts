@@ -136,12 +136,18 @@ export async function updateTransport(id: string, transport: Partial<Transport>)
 // Update transport location during ongoing transport
 export async function updateTransportLocation(transportId: string, latitude: number, longitude: number) {
   try {
-    // Instead of using a custom RPC function, update the transports table directly
+    // Update the transport table directly with new location data
+    const locationData = { 
+      lat: latitude, 
+      lng: longitude, 
+      time: new Date().toISOString() 
+    };
+    
     const { data, error } = await supabase
-      .from('transports')
+      .from('transport')
       .update({ 
-        // Store the lat/long in the gps_path field as a JSON array
-        gps_path: supabase.sql`array_append(COALESCE(gps_path, '[]'::jsonb), jsonb_build_object('lat', ${latitude}, 'lng', ${longitude}, 'time', ${new Date().toISOString()}))`
+        // Store the new location data by appending to the existing gps_path or create a new array
+        gps_path: locationData
       })
       .eq('id', transportId)
       .select();

@@ -122,7 +122,7 @@ export async function updateTreatmentAuthStatus(id: string, status: AuthStatus, 
     
     // Log activity
     await createActivity({
-      type: 'treatment_auth',
+      type: "task", // Changed from "treatment_auth" to "task"
       description: `Treatment authorization status updated to ${status}${reference ? ` with reference ${reference}` : ''}`,
       timestamp: new Date().toISOString(),
       user: 'System',
@@ -178,7 +178,7 @@ export async function uploadPCSForm(treatmentAuthId: string, file: File) {
     
     // Log activity
     await createActivity({
-      type: 'treatment_auth',
+      type: "task", // Changed from "treatment_auth" to "task"
       description: `PCS form uploaded for treatment authorization`,
       timestamp: new Date().toISOString(),
       user: 'System',
@@ -251,7 +251,7 @@ export async function submitAuthorizationToInsurer(id: string, payerInfo: any) {
     
     // Log activity
     await createActivity({
-      type: 'treatment_auth',
+      type: "task", // Changed from "treatment_auth" to "task"
       description: `Authorization submitted to ${payerInfo.name}`,
       timestamp: new Date().toISOString(),
       user: 'System',
