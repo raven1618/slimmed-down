@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { Transport } from "@/types/medicalTransport";
@@ -134,32 +133,30 @@ export async function updateTransport(id: string, transport: Partial<Transport>)
   }
 }
 
-export async function updateTransportLocation(id: string, lat: number, lng: number) {
+// Update transport location during ongoing transport
+export async function updateTransportLocation(transportId: string, latitude: number, longitude: number) {
   try {
-    // Create a GeoJSON Point
-    const point = {
-      type: 'Point',
-      coordinates: [lng, lat]
-    };
-    
-    // Update the transport with the new location
-    // Use plain SQL query instead of RPC due to type issues
-    const { error } = await supabase
-      .from('transport')
+    // Instead of using a custom RPC function, update the transports table directly
+    const { data, error } = await supabase
+      .from('transports')
       .update({ 
-        location: point 
+        // Store the lat/long in the gps_path field as a JSON array
+        gps_path: supabase.sql`array_append(COALESCE(gps_path, '[]'::jsonb), jsonb_build_object('lat', ${latitude}, 'lng', ${longitude}, 'time', ${new Date().toISOString()}))`
       })
-      .eq('id', id);
-    
+      .eq('id', transportId)
+      .select();
+
     if (error) {
       console.error('Error updating transport location:', error);
-      return false;
+      toast.error('Failed to update transport location');
+      return { success: false, error: error.message };
     }
-    
-    return true;
+
+    return { success: true, data };
   } catch (error) {
-    console.error('Exception when updating transport location:', error);
-    return false;
+    console.error('Exception during transport location update:', error);
+    toast.error('An unexpected error occurred');
+    return { success: false, error: 'An unexpected error occurred' };
   }
 }
 
