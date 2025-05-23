@@ -28,11 +28,7 @@ export default function Login() {
       const { user, error: signInError } = await signIn(email, password);
       
       if (signInError) {
-        if (signInError.includes("Email not confirmed")) {
-          setError("Please check your email and confirm your account before logging in.");
-        } else {
-          setError(signInError);
-        }
+        setError(signInError);
       } else if (user) {
         navigate('/dashboard');
       }
@@ -71,16 +67,6 @@ export default function Login() {
     }
   };
 
-  const handleResendVerification = async () => {
-    // This would typically call a function to resend the verification email
-    // For now we'll just use the magic link functionality as it accomplishes a similar goal
-    await handleMagicLink();
-    toast({
-      title: "Verification email sent",
-      description: "Please check your email to confirm your account",
-    });
-  };
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md">
@@ -95,17 +81,6 @@ export default function Login() {
               <Alert variant="destructive" className="mb-4">
                 <ExclamationTriangleIcon className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
-                
-                {error.includes("confirm your account") && (
-                  <Button 
-                    variant="link" 
-                    className="px-0 mt-2 text-sm font-medium h-auto"
-                    type="button"
-                    onClick={handleResendVerification}
-                  >
-                    Resend verification email
-                  </Button>
-                )}
               </Alert>
             )}
             
