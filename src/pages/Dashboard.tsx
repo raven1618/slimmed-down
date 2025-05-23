@@ -11,12 +11,16 @@ import { Ambulance, Clock, MapPin } from 'lucide-react';
 export default function Dashboard() {
   const navigate = useNavigate();
   
-  // Fetch active transports for the dashboard
-  const { data: activeTransports, isLoading } = useQuery({
+  // Fetch active transports for the dashboard with better error handling
+  const { data: activeTransports, isLoading, error } = useQuery({
     queryKey: ['activeTransports'],
     queryFn: fetchActiveTransports,
-    refetchInterval: 30000 // Refresh every 30 seconds for demo purposes
+    refetchInterval: 30000, // Refresh every 30 seconds for demo purposes
+    retry: 1, // Only retry once to avoid hanging
+    staleTime: 10000 // Consider data stale after 10 seconds
   });
+  
+  console.log('Dashboard query state:', { isLoading, error, activeTransports });
   
   return (
     <div className="space-y-6">
@@ -44,6 +48,18 @@ export default function Dashboard() {
           <CardContent>
             {isLoading ? (
               <p className="text-gray-500">Loading active transports...</p>
+            ) : error ? (
+              <div className="text-center py-6">
+                <p className="text-red-500 mb-4">Error loading transports</p>
+                <p className="text-sm text-gray-500 mb-4">{error.message}</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/dispatch')}
+                  className="mx-auto"
+                >
+                  Go to Dispatch
+                </Button>
+              </div>
             ) : activeTransports && activeTransports.length > 0 ? (
               <div className="space-y-4">
                 {activeTransports.slice(0, 3).map((transport) => (
@@ -55,13 +71,13 @@ export default function Dashboard() {
                     <div className="flex items-center mt-2 text-sm text-gray-500">
                       <MapPin className="h-3.5 w-3.5 mr-1" />
                       <span>
-                        {transport.patientcase?.origin_facility?.name} → {transport.patientcase?.destination_facility?.name}
+                        {transport.patientcase?.origin_facility?.name || 'Unknown'} → {transport.patientcase?.destination_facility?.name || 'Unknown'}
                       </span>
                     </div>
                     <div className="flex items-center mt-2 text-sm text-gray-500">
                       <Clock className="h-3.5 w-3.5 mr-1" />
                       <span>
-                        Started {new Date(transport.start_time).toLocaleTimeString()}
+                        Started {transport.start_time ? new Date(transport.start_time).toLocaleTimeString() : 'Unknown'}
                       </span>
                     </div>
                   </div>
