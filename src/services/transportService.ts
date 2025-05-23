@@ -81,7 +81,7 @@ export async function createTransport(transport: Omit<Transport, 'id'>) {
     
     // Log activity
     await createActivity({
-      type: 'transport',
+      type: "task", // Changed from "transport" to valid type
       description: `New transport created for patient case ${transport.patientcase_id}`,
       timestamp: new Date().toISOString(),
       user: 'System',
@@ -118,7 +118,7 @@ export async function updateTransport(id: string, transport: Partial<Transport>)
     
     // Log activity
     await createActivity({
-      type: 'transport',
+      type: "task", // Changed from "transport" to valid type
       description,
       timestamp: new Date().toISOString(),
       user: 'System',
@@ -143,10 +143,13 @@ export async function updateTransportLocation(id: string, lat: number, lng: numb
     };
     
     // Update the transport with the new location
-    const { error } = await supabase.rpc('update_transport_location', { 
-      transport_id: id, 
-      location: point 
-    });
+    // Use plain SQL query instead of RPC due to type issues
+    const { error } = await supabase
+      .from('transport')
+      .update({ 
+        location: point 
+      })
+      .eq('id', id);
     
     if (error) {
       console.error('Error updating transport location:', error);

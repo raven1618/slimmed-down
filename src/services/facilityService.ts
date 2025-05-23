@@ -39,8 +39,9 @@ export const getFacilityById = async (id: string): Promise<Facility> => {
 
 /**
  * Create a new facility
+ * Ensures name is provided as it's required by the database
  */
-export const createFacility = async (facility: Partial<Facility>): Promise<Facility> => {
+export const createFacility = async (facility: Partial<Facility> & { name: string }): Promise<Facility> => {
   const { data, error } = await supabase
     .from('facility')
     .insert(facility)

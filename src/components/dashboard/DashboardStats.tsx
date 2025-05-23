@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from '@tanstack/react-query';
 import { getTodayStats } from '@/services/patientCaseService';
-import { StatCard } from './StatCard';
+import StatCard from './StatCard'; // Fixed import statement
 import { Ambulance, Clock, Clipboard, Users } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -48,16 +48,13 @@ export const DashboardStats = () => {
         value={stats?.openEmergencies || 0}
         icon={<Ambulance className="h-6 w-6" />}
         color="orange"
-        description="Requiring immediate attention"
       />
       
       <StatCard
         title="Avg. Response Time"
-        // Value is in minutes
         value={stats?.avgResponseTime ? `${Math.round(stats.avgResponseTime)}m` : 'N/A'}
         icon={<Clock className="h-6 w-6" />}
         color="blue"
-        description="For emergency calls"
       />
       
       <StatCard
@@ -65,7 +62,6 @@ export const DashboardStats = () => {
         value={stats?.pendingAuthorizations || 0}
         icon={<Clipboard className="h-6 w-6" />}
         color="purple"
-        description="Awaiting approval"
       />
       
       <StatCard
@@ -73,7 +69,6 @@ export const DashboardStats = () => {
         value="4"
         icon={<Users className="h-6 w-6" />}
         color="green"
-        description="Currently on duty"
       />
     </div>
   );
