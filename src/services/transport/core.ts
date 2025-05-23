@@ -1,127 +1,146 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/sonner";
-import { Transport } from "@/types/medicalTransport";
-import { createActivity } from "../activityService";
 
 export async function fetchTransports() {
-  try {
-    const { data, error } = await supabase
-      .from('transport')
-      .select(`
-        *,
-        patientcase:patientcase_id(
+  const { data, error } = await supabase
+    .from('transport')
+    .select(`
+      *,
+      patientcase!inner (
+        id,
+        patient_hash,
+        priority,
+        status,
+        created_at,
+        origin_facility:facility!patientcase_origin_facility_fkey (
           id,
-          priority,
-          status,
-          origin_facility(name),
-          destination_facility(name)
+          name,
+          type,
+          address
+        ),
+        destination_facility:facility!patientcase_destination_facility_fkey (
+          id,
+          name,
+          type,
+          address
         )
-      `)
-      .order('start_time', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching transports:', error);
-      toast.error('Failed to load transports');
-      return [];
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Exception when fetching transports:', error);
-    toast.error('Failed to load transports');
-    return [];
+      )
+    `)
+    .order('start_time', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching transports:', error);
+    throw error;
   }
+
+  return data;
 }
 
-export async function fetchTransportById(id: string) {
-  try {
-    const { data, error } = await supabase
-      .from('transport')
-      .select(`
-        *,
-        patientcase:patientcase_id(
+export async function fetchTransportById(transportId: string) {
+  const { data, error } = await supabase
+    .from('transport')
+    .select(`
+      *,
+      patientcase!inner (
+        id,
+        patient_hash,
+        priority,
+        status,
+        created_at,
+        origin_facility:facility!patientcase_origin_facility_fkey (
           id,
-          priority,
-          status,
-          origin_facility(name, address),
-          destination_facility(name, address)
+          name,
+          type,
+          address
+        ),
+        destination_facility:facility!patientcase_destination_facility_fkey (
+          id,
+          name,
+          type,
+          address
         )
-      `)
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching transport:', error);
-      toast.error('Failed to load transport details');
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Exception when fetching transport:', error);
-    toast.error('Failed to load transport details');
-    return null;
+      )
+    `)
+    .eq('id', transportId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching transport:', error);
+    throw error;
   }
+
+  return data;
 }
 
 export async function fetchTransportsByPatientCase(patientCaseId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('transport')
-      .select(`
-        *,
-        patientcase:patientcase_id(
+  const { data, error } = await supabase
+    .from('transport')
+    .select(`
+      *,
+      patientcase!inner (
+        id,
+        patient_hash,
+        priority,
+        status,
+        created_at,
+        origin_facility:facility!patientcase_origin_facility_fkey (
           id,
-          priority,
-          status
+          name,
+          type,
+          address
+        ),
+        destination_facility:facility!patientcase_destination_facility_fkey (
+          id,
+          name,
+          type,
+          address
         )
-      `)
-      .eq('patientcase_id', patientCaseId)
-      .order('start_time', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching transports by patient case:', error);
-      toast.error('Failed to load transports');
-      return [];
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Exception when fetching transports by patient case:', error);
-    toast.error('Failed to load transports');
-    return [];
+      )
+    `)
+    .eq('patientcase_id', patientCaseId)
+    .order('start_time', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching transports for patient case:', error);
+    throw error;
   }
+
+  return data;
 }
 
 export async function fetchActiveTransports() {
-  try {
-    const { data, error } = await supabase
-      .from('transport')
-      .select(`
-        *,
-        patientcase:patientcase_id(
+  const { data, error } = await supabase
+    .from('transport')
+    .select(`
+      *,
+      patientcase!inner (
+        id,
+        patient_hash,
+        priority,
+        status,
+        created_at,
+        origin_facility:facility!patientcase_origin_facility_fkey (
           id,
-          priority,
-          status,
-          origin_facility(name),
-          destination_facility(name)
+          name,
+          type,
+          address
+        ),
+        destination_facility:facility!patientcase_destination_facility_fkey (
+          id,
+          name,
+          type,
+          address
         )
-      `)
-      .is('end_time', null)
-      .not('start_time', 'is', null)
-      .order('start_time', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching active transports:', error);
-      toast.error('Failed to load active transports');
-      return [];
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Exception when fetching active transports:', error);
-    toast.error('Failed to load active transports');
-    return [];
+      )
+    `)
+    .not('start_time', 'is', null)
+    .is('end_time', null)
+    .order('start_time', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching active transports:', error);
+    throw error;
   }
+
+  return data;
 }
