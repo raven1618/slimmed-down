@@ -67,8 +67,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchUserProfile = async (userId: string) => {
     try {
       setLoading(true);
-      const profile = await getUserProfile(userId);
-      setProfile(profile);
+      const fetchedProfile = await getUserProfile(userId);
+      setProfile(fetchedProfile as UserProfile);
     } catch (error) {
       console.error('Error fetching user profile:', error);
     } finally {

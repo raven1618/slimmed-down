@@ -1,39 +1,22 @@
 
-import React from "react";
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
-const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
-  }, [location.pathname]);
-
+export default function NotFound() {
+  const navigate = useNavigate();
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center max-w-md px-6">
-        <h1 className="text-6xl font-bold text-crm-blue mb-4">404</h1>
-        <p className="text-xl text-gray-700 mb-6">Page not found</p>
-        <p className="text-gray-500 mb-8">
-          The page you are looking for might have been removed, had its name changed, 
-          or is temporarily unavailable.
-        </p>
-        <Link
-          to="/"
-          className="inline-flex items-center text-crm-blue hover:text-blue-700 font-medium"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Return to Dashboard
-        </Link>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <h1 className="text-6xl font-bold text-gray-900">404</h1>
+      <p className="mt-4 text-xl text-gray-600">Page not found</p>
+      <p className="mt-2 text-gray-500">The page you're looking for doesn't exist or has been moved.</p>
+      <Button 
+        className="mt-6"
+        onClick={() => navigate('/dashboard')}
+      >
+        Go to Dashboard
+      </Button>
     </div>
   );
-};
-
-export default NotFound;
+}

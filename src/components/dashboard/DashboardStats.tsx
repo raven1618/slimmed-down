@@ -1,75 +1,82 @@
 
-import React, { useEffect, useState } from 'react';
-import { Clock, AlertTriangle, FileCheck } from 'lucide-react';
-import { fetchDashboardStats } from '@/services/patientCaseService';
-import StatCard from './StatCard';
+import React from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { useQuery } from '@tanstack/react-query';
+import { getTodayStats } from '@/services/patientCaseService';
+import { StatCard } from './StatCard';
+import { Ambulance, Clock, Clipboard, Users } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default function DashboardStats() {
-  const [stats, setStats] = useState({
-    openEmergencies: 0,
-    avgResponseTime: 0,
-    pendingAuthorizations: 0,
+export const DashboardStats = () => {
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: getTodayStats
   });
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadStats = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchDashboardStats();
-        setStats({
-          openEmergencies: data.openEmergencies || 0,
-          avgResponseTime: data.avgResponseTime || 0,
-          pendingAuthorizations: data.pendingAuthorizations || 0,
-        });
-      } catch (error) {
-        console.error('Failed to load dashboard stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-6">
+              <Skeleton className="h-16 w-16 rounded-full" />
+              <Skeleton className="h-4 w-1/2 mt-4" />
+              <Skeleton className="h-8 w-1/3 mt-2" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
-    loadStats();
-    
-    // Set up a refresh interval every 5 minutes
-    const intervalId = setInterval(loadStats, 5 * 60 * 1000);
-    
-    return () => clearInterval(intervalId);
-  }, []);
-
-  // Format the average response time nicely
-  const formatResponseTime = (minutes: number) => {
-    if (minutes === 0 || !minutes) return 'N/A';
-    
-    if (minutes < 60) {
-      return `${Math.round(minutes)} mins`;
-    } else {
-      const hours = Math.floor(minutes / 60);
-      const remainingMins = Math.round(minutes % 60);
-      return `${hours}h ${remainingMins}m`;
-    }
-  };
+  // Show error state
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-red-500">
+          Error loading dashboard stats
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      <StatCard 
-        title="Open Emergencies" 
-        value={loading ? '...' : stats.openEmergencies.toString()}
-        icon={<AlertTriangle className="h-6 w-6" />}
-        color="red"
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <StatCard
+        title="Open Emergencies"
+        value={stats?.openEmergencies || 0}
+        icon={<Ambulance className="h-6 w-6" />}
+        color="orange"
+        description="Requiring immediate attention"
       />
-      <StatCard 
-        title="Avg Response Time (24h)"
-        value={loading ? '...' : formatResponseTime(stats.avgResponseTime)}
+      
+      <StatCard
+        title="Avg. Response Time"
+        // Value is in minutes
+        value={stats?.avgResponseTime ? `${Math.round(stats.avgResponseTime)}m` : 'N/A'}
         icon={<Clock className="h-6 w-6" />}
         color="blue"
+        description="For emergency calls"
       />
-      <StatCard 
+      
+      <StatCard
         title="Pending Authorizations"
-        value={loading ? '...' : stats.pendingAuthorizations.toString()}
-        icon={<FileCheck className="h-6 w-6" />}
+        value={stats?.pendingAuthorizations || 0}
+        icon={<Clipboard className="h-6 w-6" />}
+        color="purple"
+        description="Awaiting approval"
+      />
+      
+      <StatCard
+        title="Active Crews"
+        value="4"
+        icon={<Users className="h-6 w-6" />}
         color="green"
+        description="Currently on duty"
       />
     </div>
   );
-}
+};
+
+export default DashboardStats;

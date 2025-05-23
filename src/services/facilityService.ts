@@ -1,175 +1,133 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/sonner";
-import { Facility } from "@/types/medicalTransport";
-import { createActivity } from "./activityService";
+import { supabase } from '@/integrations/supabase/client';
+import { Facility } from '@/types/medicalTransport';
 
-export async function fetchFacilities() {
-  try {
-    const { data, error } = await supabase
-      .from('facility')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching facilities:', error);
-      toast.error('Failed to load facilities');
-      return [];
-    }
-    
-    return data as Facility[];
-  } catch (error) {
-    console.error('Exception when fetching facilities:', error);
-    toast.error('Failed to load facilities');
-    return [];
+/**
+ * Get all facilities
+ */
+export const getFacilities = async (): Promise<Facility[]> => {
+  const { data, error } = await supabase
+    .from('facility')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching facilities:', error);
+    throw error;
   }
-}
 
-export async function fetchFacilityById(id: string) {
-  try {
-    const { data, error } = await supabase
-      .from('facility')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching facility:', error);
-      toast.error('Failed to load facility details');
-      return null;
-    }
-    
-    return data as Facility;
-  } catch (error) {
-    console.error('Exception when fetching facility:', error);
-    toast.error('Failed to load facility details');
-    return null;
+  return data as Facility[];
+};
+
+/**
+ * Get a facility by ID
+ */
+export const getFacilityById = async (id: string): Promise<Facility> => {
+  const { data, error } = await supabase
+    .from('facility')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error(`Error fetching facility ${id}:`, error);
+    throw error;
   }
-}
 
-export async function createFacility(facility: Omit<Facility, 'id' | 'created_at'>) {
-  try {
-    const { data, error } = await supabase
-      .from('facility')
-      .insert(facility)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating facility:', error);
-      toast.error('Failed to create facility');
-      return null;
-    }
-    
-    // Log activity
-    await createActivity({
-      type: 'facility',
-      description: `New facility created: ${facility.name}`,
-      timestamp: new Date().toISOString(),
-      user: 'System',
-      relatedTo: facility.name,
+  return data as Facility;
+};
+
+/**
+ * Create a new facility
+ */
+export const createFacility = async (facility: Partial<Facility>): Promise<Facility> => {
+  const { data, error } = await supabase
+    .from('facility')
+    .insert(facility)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating facility:', error);
+    throw error;
+  }
+
+  // Log the action
+  await supabase
+    .from('interactionlog')
+    .insert({
+      entity: 'facility',
+      entity_id: data.id,
+      verb: 'created',
+      channel: 'system',
+      note: `Facility ${data.name} created`
     });
-    
-    toast.success('Facility created successfully');
-    return data as Facility;
-  } catch (error) {
-    console.error('Exception when creating facility:', error);
-    toast.error('Failed to create facility');
-    return null;
-  }
-}
 
-export async function updateFacility(id: string, facility: Partial<Facility>) {
-  try {
-    const { data, error } = await supabase
-      .from('facility')
-      .update(facility)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error updating facility:', error);
-      toast.error('Failed to update facility');
-      return null;
-    }
-    
-    // Log activity
-    await createActivity({
-      type: 'facility',
-      description: `Facility updated: ${facility.name || data.name}`,
-      timestamp: new Date().toISOString(),
-      user: 'System',
-      relatedTo: facility.name || data.name,
+  return data as Facility;
+};
+
+/**
+ * Update an existing facility
+ */
+export const updateFacility = async (id: string, facility: Partial<Facility>): Promise<Facility> => {
+  const { data, error } = await supabase
+    .from('facility')
+    .update(facility)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating facility ${id}:`, error);
+    throw error;
+  }
+
+  // Log the action
+  await supabase
+    .from('interactionlog')
+    .insert({
+      entity: 'facility',
+      entity_id: data.id,
+      verb: 'updated',
+      channel: 'system',
+      note: `Facility ${data.name} updated`
     });
-    
-    toast.success('Facility updated successfully');
-    return data as Facility;
-  } catch (error) {
-    console.error('Exception when updating facility:', error);
-    toast.error('Failed to update facility');
-    return null;
-  }
-}
 
-export async function deleteFacility(id: string) {
-  try {
-    // First, get the facility to be deleted for logging
-    const { data: facilityToDelete } = await supabase
-      .from('facility')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    const { error } = await supabase
-      .from('facility')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error deleting facility:', error);
-      toast.error('Failed to delete facility');
-      return false;
-    }
-    
-    // Log activity if we got the facility data
-    if (facilityToDelete) {
-      await createActivity({
-        type: 'facility',
-        description: `Facility deleted: ${facilityToDelete.name}`,
-        timestamp: new Date().toISOString(),
-        user: 'System',
-        relatedTo: facilityToDelete.name,
+  return data as Facility;
+};
+
+/**
+ * Delete a facility
+ */
+export const deleteFacility = async (id: string): Promise<void> => {
+  // First get the facility to log the deletion
+  const { data: facility } = await supabase
+    .from('facility')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  // Delete the facility
+  const { error } = await supabase
+    .from('facility')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error(`Error deleting facility ${id}:`, error);
+    throw error;
+  }
+
+  // Log the action
+  if (facility) {
+    await supabase
+      .from('interactionlog')
+      .insert({
+        entity: 'facility',
+        entity_id: id,
+        verb: 'deleted',
+        channel: 'system',
+        note: `Facility ${facility.name} deleted`
       });
-    }
-    
-    toast.success('Facility deleted successfully');
-    return true;
-  } catch (error) {
-    console.error('Exception when deleting facility:', error);
-    toast.error('Failed to delete facility');
-    return false;
   }
-}
-
-export async function fetchFacilitiesByType(type: string) {
-  try {
-    const { data, error } = await supabase
-      .from('facility')
-      .select('*')
-      .eq('type', type)
-      .order('name');
-    
-    if (error) {
-      console.error('Error fetching facilities by type:', error);
-      toast.error('Failed to load facilities');
-      return [];
-    }
-    
-    return data as Facility[];
-  } catch (error) {
-    console.error('Exception when fetching facilities by type:', error);
-    toast.error('Failed to load facilities');
-    return [];
-  }
-}
+};
