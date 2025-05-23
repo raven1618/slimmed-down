@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,14 +64,12 @@ export default function Dashboard() {
                 {activeTransports.slice(0, 3).map((transport) => (
                   <div key={transport.id} className="border rounded-lg p-3">
                     <div className="flex justify-between">
-                      <div className="font-medium">Case #{transport.patientcase?.id?.slice(-6)}</div>
+                      <div className="font-medium">Transport #{transport.id?.slice(-6)}</div>
                       <div className="text-sm text-blue-600 font-medium">In Progress</div>
                     </div>
                     <div className="flex items-center mt-2 text-sm text-gray-500">
                       <MapPin className="h-3.5 w-3.5 mr-1" />
-                      <span>
-                        {transport.patientcase?.origin_facility?.name || 'Unknown'} → {transport.patientcase?.destination_facility?.name || 'Unknown'}
-                      </span>
+                      <span>Active Transport Route</span>
                     </div>
                     <div className="flex items-center mt-2 text-sm text-gray-500">
                       <Clock className="h-3.5 w-3.5 mr-1" />

@@ -6,7 +6,7 @@ export async function fetchTransports() {
     .from('transport')
     .select(`
       *,
-      patientcase!inner (
+      patientcase (
         id,
         patient_hash,
         priority,
@@ -41,7 +41,7 @@ export async function fetchTransportById(transportId: string) {
     .from('transport')
     .select(`
       *,
-      patientcase!inner (
+      patientcase (
         id,
         patient_hash,
         priority,
@@ -77,7 +77,7 @@ export async function fetchTransportsByPatientCase(patientCaseId: string) {
     .from('transport')
     .select(`
       *,
-      patientcase!inner (
+      patientcase (
         id,
         patient_hash,
         priority,
@@ -109,38 +109,22 @@ export async function fetchTransportsByPatientCase(patientCaseId: string) {
 }
 
 export async function fetchActiveTransports() {
+  console.log('Fetching active transports...');
+  
+  // First, let's try a simpler query to see if basic transport data loads
   const { data, error } = await supabase
     .from('transport')
-    .select(`
-      *,
-      patientcase!inner (
-        id,
-        patient_hash,
-        priority,
-        status,
-        created_at,
-        origin_facility:facility!patientcase_origin_facility_fkey (
-          id,
-          name,
-          type,
-          address
-        ),
-        destination_facility:facility!patientcase_destination_facility_fkey (
-          id,
-          name,
-          type,
-          address
-        )
-      )
-    `)
+    .select('*')
     .not('start_time', 'is', null)
     .is('end_time', null)
     .order('start_time', { ascending: false });
+
+  console.log('Simple transport query result:', { data, error });
 
   if (error) {
     console.error('Error fetching active transports:', error);
     throw error;
   }
 
-  return data;
+  return data || [];
 }
