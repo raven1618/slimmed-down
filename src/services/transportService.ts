@@ -7,5 +7,6 @@ export {
   fetchActiveTransports,
   createTransport,
   updateTransport,
-  updateTransportLocation
+  updateTransportLocation,
+  getTransportLocationHistory
 } from './transport';

@@ -15,5 +15,6 @@ export {
 
 // Location tracking
 export {
-  updateTransportLocation
+  updateTransportLocation,
+  getTransportLocationHistory
 } from './location';
