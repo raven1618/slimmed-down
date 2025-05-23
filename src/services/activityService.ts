@@ -50,3 +50,65 @@ export async function createActivity(activity: Omit<Activity, 'id'>) {
     return null;
   }
 }
+
+export async function fetchActivitiesByType(type: string) {
+  try {
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('type', type)
+      .order('timestamp', { ascending: false })
+      .limit(20);
+    
+    if (error) {
+      console.error(`Error fetching ${type} activities:`, error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error(`Exception when fetching ${type} activities:`, error);
+    return [];
+  }
+}
+
+export async function fetchActivitiesByEntity(entityType: string, entityId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('type', entityType)
+      .eq('related_to', entityId)
+      .order('timestamp', { ascending: false });
+    
+    if (error) {
+      console.error(`Error fetching activities for ${entityType} ${entityId}:`, error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error(`Exception when fetching activities for ${entityType} ${entityId}:`, error);
+    return [];
+  }
+}
+
+export async function fetchRecentActivities(limit = 10) {
+  try {
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error('Error fetching recent activities:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Exception when fetching recent activities:', error);
+    return [];
+  }
+}
