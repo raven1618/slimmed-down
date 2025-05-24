@@ -1,24 +1,14 @@
 
-import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { supabase } from '@/integrations/supabase/client';
 import { CasePriority } from '@/types/medicalTransport';
+import { toast } from 'sonner';
 
 interface CreatePatientCaseDialogProps {
   open: boolean;
@@ -26,108 +16,85 @@ interface CreatePatientCaseDialogProps {
   onSuccess: () => void;
 }
 
-interface FormData {
+interface CreateCaseForm {
   patient_hash: string;
   origin_facility: string;
   destination_facility: string;
   priority: CasePriority;
-  notes: string;
 }
 
-export default function CreatePatientCaseDialog({ 
-  open, 
-  onOpenChange, 
-  onSuccess 
-}: CreatePatientCaseDialogProps) {
-  const [formData, setFormData] = useState<FormData>({
-    patient_hash: '',
-    origin_facility: '',
-    destination_facility: '',
-    priority: 'Routine',
-    notes: ''
-  });
+export default function CreatePatientCaseDialog({ open, onOpenChange, onSuccess }: CreatePatientCaseDialogProps) {
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm<CreateCaseForm>();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.patient_hash || !formData.origin_facility) {
-      toast.error('Patient hash and origin facility are required');
-      return;
+  const onSubmit = async (data: CreateCaseForm) => {
+    try {
+      const { error } = await supabase
+        .from('patientcase')
+        .insert({
+          patient_hash: data.patient_hash,
+          origin_facility: data.origin_facility,
+          destination_facility: data.destination_facility,
+          priority: data.priority,
+          status: 'Pending',
+          created_by: (await supabase.auth.getUser()).data.user?.id || ''
+        });
+
+      if (error) throw error;
+
+      toast.success('Patient case created successfully');
+      reset();
+      onSuccess();
+    } catch (error) {
+      console.error('Error creating patient case:', error);
+      toast.error('Failed to create patient case');
     }
-
-    // For now, just show success - we'll implement actual creation later
-    toast.success('Patient case created successfully');
-    onSuccess();
-    
-    // Reset form
-    setFormData({
-      patient_hash: '',
-      origin_facility: '',
-      destination_facility: '',
-      priority: 'Routine',
-      notes: ''
-    });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Patient Case</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="patient_hash">Patient Hash</Label>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <Label htmlFor="patient_hash">Patient ID</Label>
             <Input
               id="patient_hash"
-              value={formData.patient_hash}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                patient_hash: e.target.value 
-              }))}
+              {...register('patient_hash', { required: 'Patient ID is required' })}
               placeholder="PAT-001-XYZ"
-              required
             />
+            {errors.patient_hash && (
+              <p className="text-sm text-red-600">{errors.patient_hash.message}</p>
+            )}
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="origin_facility">Origin Facility</Label>
             <Input
               id="origin_facility"
-              value={formData.origin_facility}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                origin_facility: e.target.value 
-              }))}
+              {...register('origin_facility', { required: 'Origin facility is required' })}
               placeholder="General Hospital"
-              required
             />
+            {errors.origin_facility && (
+              <p className="text-sm text-red-600">{errors.origin_facility.message}</p>
+            )}
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="destination_facility">Destination Facility</Label>
             <Input
               id="destination_facility"
-              value={formData.destination_facility}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                destination_facility: e.target.value 
-              }))}
+              {...register('destination_facility')}
               placeholder="Specialist Center"
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="priority">Priority</Label>
-            <Select 
-              value={formData.priority}
-              onValueChange={(value: CasePriority) => 
-                setFormData(prev => ({ ...prev, priority: value }))
-              }
-            >
+            <Select onValueChange={(value) => setValue('priority', value as CasePriority)}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select priority" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Emergency">Emergency</SelectItem>
@@ -136,30 +103,12 @@ export default function CreatePatientCaseDialog({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                notes: e.target.value 
-              }))}
-              placeholder="Additional notes or special instructions..."
-              rows={3}
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-            >
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">
-              Create Case
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Case'}
             </Button>
           </div>
         </form>

@@ -1,46 +1,55 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, FileText, Clock, MapPin, User } from 'lucide-react';
+import { Plus, Search, FileText, Clock, MapPin } from 'lucide-react';
+import { PatientCase } from '@/types/medicalTransport';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import CreatePatientCaseDialog from '@/components/patient-cases/CreatePatientCaseDialog';
-
-// Mock data for demonstration
-const mockPatientCases = [
-  {
-    id: '1',
-    patient_hash: 'PAT-001-XYZ',
-    priority: 'Emergency' as const,
-    status: 'En Route' as const,
-    created_at: '2024-01-20T10:30:00Z',
-    origin_facility: 'General Hospital',
-    destination_facility: 'Specialist Center'
-  },
-  {
-    id: '2',
-    patient_hash: 'PAT-002-ABC',
-    priority: 'Routine' as const,
-    status: 'Pending' as const,
-    created_at: '2024-01-20T11:15:00Z',
-    origin_facility: 'Care Home',
-    destination_facility: 'Regional Hospital'
-  },
-  {
-    id: '3',
-    patient_hash: 'PAT-003-DEF',
-    priority: 'Emergency' as const,
-    status: 'At Destination' as const,
-    created_at: '2024-01-20T09:45:00Z',
-    origin_facility: 'Emergency Clinic',
-    destination_facility: 'Trauma Center'
-  }
-];
+import PatientCaseDetailDialog from '@/components/patient-cases/PatientCaseDetailDialog';
 
 export default function PatientCases() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedCase, setSelectedCase] = useState<PatientCase | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [patientCases, setPatientCases] = useState<PatientCase[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPatientCases = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('patientcase')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPatientCases(data || []);
+    } catch (error) {
+      console.error('Error fetching patient cases:', error);
+      toast.error('Failed to load patient cases');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPatientCases();
+  }, []);
+
+  const handleViewCase = (patientCase: PatientCase) => {
+    setSelectedCase(patientCase);
+    setIsDetailDialogOpen(true);
+  };
+
+  const handleCaseUpdate = () => {
+    fetchPatientCases();
+    setIsDetailDialogOpen(false);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -65,11 +74,23 @@ export default function PatientCases() {
       : 'bg-blue-100 text-blue-800 border-blue-200';
   };
 
-  const filteredCases = mockPatientCases.filter(case_ =>
-    case_.patient_hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredCases = patientCases.filter(case_ =>
+    case_.patient_hash?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     case_.origin_facility.toLowerCase().includes(searchTerm.toLowerCase()) ||
     case_.destination_facility?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const emergencyCases = patientCases.filter(c => c.priority === 'Emergency');
+  const activeCases = patientCases.filter(c => c.status === 'En Route' || c.status === 'At Destination');
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Patient Cases</h1>
+        <div className="text-center py-8">Loading patient cases...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -97,20 +118,20 @@ export default function PatientCases() {
         
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
-            All Cases ({mockPatientCases.length})
+            All Cases ({patientCases.length})
           </Button>
           <Button variant="outline" size="sm">
-            Emergency (2)
+            Emergency ({emergencyCases.length})
           </Button>
           <Button variant="outline" size="sm">
-            Active (1)
+            Active ({activeCases.length})
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCases.map((case_) => (
-          <Card key={case_.id} className="hover:shadow-md transition-shadow">
+          <Card key={case_.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleViewCase(case_)}>
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div>
@@ -119,7 +140,7 @@ export default function PatientCases() {
                     {case_.patient_hash}
                   </CardTitle>
                   <p className="text-sm text-gray-600 mt-1">
-                    Case #{case_.id}
+                    Case #{case_.id.slice(0, 8)}
                   </p>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -157,12 +178,6 @@ export default function PatientCases() {
                   })}
                 </span>
               </div>
-              
-              <div className="pt-2 border-t">
-                <Button variant="outline" size="sm" className="w-full">
-                  View Details
-                </Button>
-              </div>
             </CardContent>
           </Card>
         ))}
@@ -188,7 +203,17 @@ export default function PatientCases() {
       <CreatePatientCaseDialog 
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        onSuccess={() => setIsCreateDialogOpen(false)}
+        onSuccess={() => {
+          setIsCreateDialogOpen(false);
+          fetchPatientCases();
+        }}
+      />
+
+      <PatientCaseDetailDialog
+        open={isDetailDialogOpen}
+        onOpenChange={setIsDetailDialogOpen}
+        case={selectedCase}
+        onUpdate={handleCaseUpdate}
       />
     </div>
   );
