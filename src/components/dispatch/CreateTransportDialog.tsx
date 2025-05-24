@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { CasePriority, BillingLevel } from '@/types/medicalTransport';
+import { CasePriority, BillingLevel, PatientCase } from '@/types/medicalTransport';
+import { supabase } from '@/integrations/supabase/client';
+import { createTransport } from '@/services/transport/operations';
 
 interface CreateTransportDialogProps {
   open: boolean;
@@ -28,7 +30,6 @@ interface CreateTransportDialogProps {
 interface FormData {
   patientcase_id: string;
   ambulance_id: string;
-  priority: CasePriority;
   billing_level: BillingLevel;
 }
 
@@ -40,29 +41,97 @@ export default function CreateTransportDialog({
   const [formData, setFormData] = useState<FormData>({
     patientcase_id: '',
     ambulance_id: '',
-    priority: 'Routine',
     billing_level: 'BLS'
   });
+  const [patientCases, setPatientCases] = useState<PatientCase[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingCases, setLoadingCases] = useState(true);
+
+  useEffect(() => {
+    const fetchPatientCases = async () => {
+      if (!open) return;
+      
+      try {
+        setLoadingCases(true);
+        const { data, error } = await supabase
+          .from('patientcase')
+          .select('*')
+          .in('status', ['Pending', 'En Route'])
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
+        const typedData = (data || []).map(item => ({
+          ...item,
+          priority: item.priority as CasePriority,
+          status: item.status as any
+        }));
+        
+        setPatientCases(typedData);
+      } catch (error) {
+        console.error('Error fetching patient cases:', error);
+        toast.error('Failed to load patient cases');
+      } finally {
+        setLoadingCases(false);
+      }
+    };
+
+    fetchPatientCases();
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.patientcase_id) {
-      toast.error('Patient Case ID is required');
+      toast.error('Please select a patient case');
       return;
     }
 
-    // For now, just show success - we'll implement actual creation later
-    toast.success('Transport created successfully');
-    onSuccess();
-    
-    // Reset form
-    setFormData({
-      patientcase_id: '',
-      ambulance_id: '',
-      priority: 'Routine',
-      billing_level: 'BLS'
-    });
+    if (!formData.ambulance_id) {
+      toast.error('Please enter an ambulance ID');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const transportData = {
+        patientcase_id: formData.patientcase_id,
+        ambulance_id: formData.ambulance_id,
+        billing_level: formData.billing_level,
+        start_time: new Date().toISOString(),
+        crew: {
+          driver: 'John Smith',
+          medic: 'Jane Doe'
+        }
+      };
+
+      const result = await createTransport(transportData);
+      
+      if (result) {
+        // Update patient case status to En Route
+        await supabase
+          .from('patientcase')
+          .update({ status: 'En Route' })
+          .eq('id', formData.patientcase_id);
+
+        toast.success('Transport created successfully');
+        
+        // Reset form
+        setFormData({
+          patientcase_id: '',
+          ambulance_id: '',
+          billing_level: 'BLS'
+        });
+        
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Error creating transport:', error);
+      toast.error('Failed to create transport');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -74,17 +143,24 @@ export default function CreateTransportDialog({
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="patientcase_id">Patient Case ID</Label>
-            <Input
-              id="patientcase_id"
+            <Label htmlFor="patientcase_id">Patient Case</Label>
+            <Select 
               value={formData.patientcase_id}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                patientcase_id: e.target.value 
-              }))}
-              placeholder="Enter patient case ID"
-              required
-            />
+              onValueChange={(value) => 
+                setFormData(prev => ({ ...prev, patientcase_id: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingCases ? "Loading cases..." : "Select patient case"} />
+              </SelectTrigger>
+              <SelectContent>
+                {patientCases.map((case_) => (
+                  <SelectItem key={case_.id} value={case_.id}>
+                    {case_.patient_hash} - {case_.priority} ({case_.status})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -96,26 +172,9 @@ export default function CreateTransportDialog({
                 ...prev, 
                 ambulance_id: e.target.value 
               }))}
-              placeholder="Enter ambulance ID"
+              placeholder="Enter ambulance ID (e.g., AMB-001)"
+              required
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="priority">Priority</Label>
-            <Select 
-              value={formData.priority}
-              onValueChange={(value: CasePriority) => 
-                setFormData(prev => ({ ...prev, priority: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Emergency">Emergency</SelectItem>
-                <SelectItem value="Routine">Routine</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="space-y-2">
@@ -142,11 +201,12 @@ export default function CreateTransportDialog({
               type="button" 
               variant="outline" 
               onClick={() => onOpenChange(false)}
+              disabled={loading}
             >
               Cancel
             </Button>
-            <Button type="submit">
-              Create Transport
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Transport'}
             </Button>
           </div>
         </form>

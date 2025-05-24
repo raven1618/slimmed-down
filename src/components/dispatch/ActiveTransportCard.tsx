@@ -1,90 +1,99 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Clock, User, Phone } from 'lucide-react';
+import { Ambulance, Clock, MapPin, User } from 'lucide-react';
 import { Transport } from '@/types/medicalTransport';
+import { updateTransport } from '@/services/transport/operations';
+import { toast } from 'sonner';
 
 interface ActiveTransportCardProps {
   transport: Transport;
+  onUpdate?: () => void;
 }
 
-export default function ActiveTransportCard({ transport }: ActiveTransportCardProps) {
-  const formatTime = (timeString?: string) => {
-    if (!timeString) return 'Unknown';
-    return new Date(timeString).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+export default function ActiveTransportCard({ transport, onUpdate }: ActiveTransportCardProps) {
+  const handleCompleteTransport = async () => {
+    try {
+      const result = await updateTransport(transport.id, {
+        end_time: new Date().toISOString()
+      });
+      
+      if (result && onUpdate) {
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Error completing transport:', error);
+      toast.error('Failed to complete transport');
+    }
   };
 
-  const getElapsedTime = (startTime?: string) => {
-    if (!startTime) return 'Unknown';
-    const start = new Date(startTime);
+  const getElapsedTime = () => {
+    if (!transport.start_time) return 'Unknown';
+    
+    const start = new Date(transport.start_time);
     const now = new Date();
-    const diffMs = now.getTime() - start.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    return `${diffMins}m ago`;
+    const diff = now.getTime() - start.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m`;
+    }
+    return `${minutes}m`;
   };
 
   return (
-    <Card className="border-l-4 border-l-blue-500">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="font-semibold text-lg">
-              Transport #{transport.id?.slice(-6)}
-            </h3>
-            <p className="text-sm text-gray-600">
-              Patient Case #{transport.patientcase_id?.slice(-6)}
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-              IN PROGRESS
-            </div>
-          </div>
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Ambulance className="h-5 w-5" />
+            {transport.ambulance_id || 'Unknown Unit'}
+          </CardTitle>
+          <Badge className="bg-blue-100 text-blue-800">
+            Active
+          </Badge>
         </div>
-
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-sm">
+      </CardHeader>
+      
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4 text-gray-500" />
+          <span className="text-sm">
+            Case: {transport.patientcase_id?.slice(0, 8)}...
+          </span>
+        </div>
+        
+        {transport.billing_level && (
+          <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-gray-500" />
-            <span className="text-gray-600">Transport Route Active</span>
+            <span className="text-sm">Level: {transport.billing_level}</span>
           </div>
-          
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-gray-500" />
-            <span className="text-gray-600">
-              Started: {formatTime(transport.start_time)} ({getElapsedTime(transport.start_time)})
-            </span>
-          </div>
-
-          {transport.crew && (
-            <div className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4 text-gray-500" />
-              <span className="text-gray-600">
-                Crew: {typeof transport.crew === 'object' ? 'Assigned' : 'Unassigned'}
-              </span>
-            </div>
-          )}
-
-          {transport.ambulance_id && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-600">
-                Vehicle: {transport.ambulance_id}
-              </span>
-            </div>
-          )}
+        )}
+        
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-gray-500" />
+          <span className="text-sm">
+            Duration: {getElapsedTime()}
+          </span>
         </div>
 
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1">
-            <MapPin className="h-3 w-3 mr-1" />
-            Track
-          </Button>
-          <Button size="sm" variant="outline" className="flex-1">
-            <Phone className="h-3 w-3 mr-1" />
-            Contact
+        {transport.crew && (
+          <div className="text-sm text-gray-600">
+            <div>Driver: {transport.crew.driver || 'Unknown'}</div>
+            <div>Medic: {transport.crew.medic || 'Unknown'}</div>
+          </div>
+        )}
+        
+        <div className="pt-2">
+          <Button 
+            onClick={handleCompleteTransport}
+            size="sm"
+            className="w-full"
+          >
+            Complete Transport
           </Button>
         </div>
       </CardContent>

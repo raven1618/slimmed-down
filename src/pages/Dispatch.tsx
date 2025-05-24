@@ -27,6 +27,10 @@ export default function Dispatch() {
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 
+  const handleTransportUpdate = () => {
+    refetch();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -121,7 +125,11 @@ export default function Dispatch() {
           ) : activeTransports && activeTransports.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {activeTransports.map((transport) => (
-                <ActiveTransportCard key={transport.id} transport={transport} />
+                <ActiveTransportCard 
+                  key={transport.id} 
+                  transport={transport}
+                  onUpdate={handleTransportUpdate}
+                />
               ))}
             </div>
           ) : (
@@ -143,7 +151,7 @@ export default function Dispatch() {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onSuccess={() => {
-          refetch();
+          handleTransportUpdate();
           setIsCreateDialogOpen(false);
         }}
       />
