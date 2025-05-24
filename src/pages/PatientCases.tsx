@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, FileText, Clock, MapPin } from 'lucide-react';
-import { PatientCase } from '@/types/medicalTransport';
+import { PatientCase, CasePriority, CaseStatus } from '@/types/medicalTransport';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import CreatePatientCaseDialog from '@/components/patient-cases/CreatePatientCaseDialog';
