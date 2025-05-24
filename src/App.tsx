@@ -1,3 +1,4 @@
+
 import React from "react";
 import "./App.css";
 import "@fontsource/roboto/300.css";
@@ -22,15 +23,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/sample-data-demo" element={<SampleDataDemo />} />
-          <Route path="/*" element={
-            <AuthLayout>
-              <Routes>
-                {navItems.map(({ to, page }) => (
-                  <Route key={to} path={to} element={page} />
-                ))}
-              </Routes>
-            </AuthLayout>
-          } />
+          <Route path="/*" element={<AuthLayout />}>
+            {navItems.map(({ to, page }) => (
+              <Route key={to} path={to} element={page} />
+            ))}
+          </Route>
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
