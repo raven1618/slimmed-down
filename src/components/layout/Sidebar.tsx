@@ -13,7 +13,8 @@ import {
   ChartBar,
   Settings,
   Menu,
-  X
+  X,
+  Car
 } from 'lucide-react';
 
 type NavItem = {
@@ -26,6 +27,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Patient Cases', icon: FileText, path: '/patient-cases' },
   { label: 'Dispatch', icon: Truck, path: '/dispatch' },
+  { label: 'Fleet', icon: Car, path: '/fleet' },
   { label: 'Facilities', icon: Building2, path: '/facilities' },
   { label: 'Crew Members', icon: UserCheck, path: '/crew' },
   { label: 'Authorizations', icon: Users, path: '/authorizations' },

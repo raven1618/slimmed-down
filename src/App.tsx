@@ -1,225 +1,73 @@
 
-import React, { lazy, Suspense } from 'react';
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from './context/AuthContext';
-import LoadingScreen from './components/layout/LoadingScreen';
-import AuthLayout from './components/layout/AuthLayout';
+import { AuthProvider } from "@/context/AuthContext";
+import AuthLayout from "@/components/layout/AuthLayout";
+import LoadingScreen from "@/components/layout/LoadingScreen";
+import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import PatientCases from "./pages/PatientCases";
+import PatientCaseDetail from "./pages/PatientCaseDetail";
+import Dispatch from "./pages/Dispatch";
+import Fleet from "./pages/Fleet";
+import Facilities from "./pages/Facilities";
+import FacilityDetail from "./pages/FacilityDetail";
+import Crew from "./pages/Crew";
+import Authorizations from "./pages/Authorizations";
+import AuthorizationDetail from "./pages/AuthorizationDetail";
+import Tasks from "./pages/Tasks";
+import Billing from "./pages/Billing";
+import Performance from "./pages/Performance";
+import Settings from "./pages/Settings";
+import Contacts from "./pages/Contacts";
+import Deals from "./pages/Deals";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
 
-// Lazy loaded pages for better performance
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword'));
-const PatientCases = lazy(() => import('./pages/PatientCases'));
-const PatientCaseDetail = lazy(() => import('./pages/PatientCaseDetail'));
-const Dispatch = lazy(() => import('./pages/Dispatch'));
-const Facilities = lazy(() => import('./pages/Facilities'));
-const FacilityDetail = lazy(() => import('./pages/FacilityDetail'));
-const Crew = lazy(() => import('./pages/Crew'));
-const Authorizations = lazy(() => import('./pages/Authorizations'));
-const AuthorizationDetail = lazy(() => import('./pages/AuthorizationDetail'));
-const Performance = lazy(() => import('./pages/Performance'));
-const Tasks = lazy(() => import('./pages/Tasks'));
-const Billing = lazy(() => import('./pages/Billing'));
-const Settings = lazy(() => import('./pages/Settings'));
-const NotFound = lazy(() => import('./pages/NotFound'));
+const queryClient = new QueryClient();
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 30000, // 30 seconds
-    },
-  },
-});
-
-// Error Boundary Component
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error?: Error }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: any) {
-    console.error('App Error Boundary caught an error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex items-center justify-center h-screen bg-gray-50">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Something went wrong</h2>
-            <p className="text-gray-500 mb-6">Please refresh the page to try again</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Refresh Page
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-const App = () => (
-  <ErrorBoundary>
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Suspense fallback={<LoadingScreen />}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                
-                {/* Protected Routes */}
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <AuthLayout>
-                      <Dashboard />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/patient-cases" 
-                  element={
-                    <AuthLayout>
-                      <PatientCases />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/patient-cases/:id" 
-                  element={
-                    <AuthLayout>
-                      <PatientCaseDetail />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/dispatch" 
-                  element={
-                    <AuthLayout requiredRoles={['admin', 'dispatcher']}>
-                      <Dispatch />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/facilities" 
-                  element={
-                    <AuthLayout requiredRoles={['admin', 'dispatcher', 'client']}>
-                      <Facilities />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/facilities/:id" 
-                  element={
-                    <AuthLayout requiredRoles={['admin', 'dispatcher', 'client']}>
-                      <FacilityDetail />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/crew" 
-                  element={
-                    <AuthLayout requiredRoles={['admin', 'dispatcher']}>
-                      <Crew />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/authorizations" 
-                  element={
-                    <AuthLayout requiredRoles={['admin', 'billing']}>
-                      <Authorizations />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/authorizations/:id" 
-                  element={
-                    <AuthLayout requiredRoles={['admin', 'billing']}>
-                      <AuthorizationDetail />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/tasks" 
-                  element={
-                    <AuthLayout>
-                      <Tasks />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/billing" 
-                  element={
-                    <AuthLayout requiredRoles={['admin', 'billing']}>
-                      <Billing />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/performance" 
-                  element={
-                    <AuthLayout requiredRoles={['admin']}>
-                      <Performance />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
-                  path="/settings" 
-                  element={
-                    <AuthLayout>
-                      <Settings />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route element={<AuthLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/patient-cases" element={<PatientCases />} />
+                <Route path="/patient-cases/:id" element={<PatientCaseDetail />} />
+                <Route path="/dispatch" element={<Dispatch />} />
+                <Route path="/fleet" element={<Fleet />} />
+                <Route path="/facilities" element={<Facilities />} />
+                <Route path="/facilities/:id" element={<FacilityDetail />} />
+                <Route path="/crew" element={<Crew />} />
+                <Route path="/authorizations" element={<Authorizations />} />
+                <Route path="/authorizations/:id" element={<AuthorizationDetail />} />
+                <Route path="/tasks" element={<Tasks />} />
+                <Route path="/billing" element={<Billing />} />
+                <Route path="/performance" element={<Performance />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/contacts" element={<Contacts />} />
+                <Route path="/deals" element={<Deals />} />
+              </Route>
+              <Route path="/404" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/404" replace />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
-  </ErrorBoundary>
-);
+  );
+}
 
 export default App;
