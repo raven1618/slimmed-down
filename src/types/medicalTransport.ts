@@ -1,3 +1,4 @@
+
 export type FacilityType = 'Hospital' | 'FSER' | 'Behavioral' | 'NursingHome' | 'Event';
 
 export type CrewRole = 'EMT' | 'Paramedic' | 'Dispatcher' | 'Supervisor';
@@ -39,6 +40,27 @@ export interface CrewMember {
   email?: string;
 }
 
+export interface Vehicle {
+  id: string;
+  vehicle_number: string;
+  vehicle_type: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  vin?: string;
+  license_plate?: string;
+  status: string;
+  mileage?: number;
+  location?: string;
+  fuel_level?: number;
+  last_inspection?: string;
+  next_inspection?: string;
+  insurance_expiry?: string;
+  registration_expiry?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PatientCase {
   id: string;
   patient_hash?: string;
@@ -60,6 +82,8 @@ export interface Transport {
   mileage?: number;
   billing_level?: BillingLevel;
   gps_path?: any;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface TreatmentAuth {

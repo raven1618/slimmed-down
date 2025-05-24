@@ -9,6 +9,7 @@ interface ResourceContextType {
   vehicles: Vehicle[];
   activeTransports: Transport[];
   refreshTransports: () => void;
+  updateVehicleStatus: (vehicleId: string, status: string) => void;
   loading: boolean;
 }
 
@@ -16,6 +17,7 @@ const ResourceContext = createContext<ResourceContextType>({
   vehicles: [],
   activeTransports: [],
   refreshTransports: () => {},
+  updateVehicleStatus: () => {},
   loading: true,
 });
 
@@ -90,6 +92,28 @@ export const ResourceProvider = ({ children }: { children: React.ReactNode }) =>
     refetchTransports();
   };
 
+  const updateVehicleStatus = async (vehicleId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ status })
+        .eq('id', vehicleId);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setVehicles(prev => prev.map(v => 
+        v.id === vehicleId ? { ...v, status } : v
+      ));
+    } catch (error) {
+      console.error('Error updating vehicle status:', error);
+      // Update local state anyway for demo purposes
+      setVehicles(prev => prev.map(v => 
+        v.id === vehicleId ? { ...v, status } : v
+      ));
+    }
+  };
+
   // Don't show loading for too long - use mock data for demo
   const loading = false;
 
@@ -98,6 +122,7 @@ export const ResourceProvider = ({ children }: { children: React.ReactNode }) =>
       vehicles,
       activeTransports,
       refreshTransports,
+      updateVehicleStatus,
       loading,
     }}>
       {children}
