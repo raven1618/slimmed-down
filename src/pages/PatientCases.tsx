@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, FileText, Clock, MapPin } from 'lucide-react';
-import { PatientCase, CasePriority, CaseStatus, Facility } from '@/types/medicalTransport';
+import { PatientCase, CasePriority, CaseStatus, Facility, FacilityType } from '@/types/medicalTransport';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import CreatePatientCaseDialog from '@/components/patient-cases/CreatePatientCaseDialog';
@@ -32,7 +32,14 @@ export default function PatientCases() {
         .select('*');
       
       if (error) throw error;
-      setFacilities(data || []);
+      
+      // Cast the data to properly typed Facility objects
+      const typedFacilities: Facility[] = (data || []).map(facility => ({
+        ...facility,
+        type: facility.type as FacilityType
+      }));
+      
+      setFacilities(typedFacilities);
     } catch (error) {
       console.error('Error fetching facilities:', error);
     }
