@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useResource } from '@/context/ResourceContext';
 import { useNavigate } from 'react-router-dom';
-import { Truck, MapPin, Clock, User, Settings, AlertTriangle } from 'lucide-react';
+import { Truck, MapPin, Clock, AlertTriangle, Plus } from 'lucide-react';
 
 export default function UnifiedResourceDashboard() {
   const { vehicles, activeTransports, updateVehicleStatus } = useResource();
@@ -34,230 +34,163 @@ export default function UnifiedResourceDashboard() {
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-600">Available Vehicles</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-600">{availableVehicles.length}</div>
+            <p className="text-sm text-gray-600">Available</p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-600">Active Transports</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <div className="text-2xl font-bold text-blue-600">{activeTransports.length}</div>
+            <p className="text-sm text-gray-600">Active</p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-600">In Service</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <div className="text-2xl font-bold text-yellow-600">{inServiceVehicles.length}</div>
+            <p className="text-sm text-gray-600">In Service</p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-600">Maintenance</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <div className="text-2xl font-bold text-orange-600">{maintenanceVehicles.length}</div>
+            <p className="text-sm text-gray-600">Maintenance</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Active Transports with Vehicle Info */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5" />
-              Active Transports & Fleet Status
-            </CardTitle>
-            <div className="flex gap-2">
+      {/* Active Operations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Active Transports */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="h-5 w-5" />
+                Active Transports
+              </CardTitle>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => navigate('/dispatch')}
               >
-                View Dispatch
+                <Plus className="h-4 w-4 mr-1" />
+                New
               </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {activeTransports.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-gray-500 text-sm">No active transports</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activeTransports.slice(0, 3).map((transport) => {
+                  const vehicle = getVehicleByTransport(transport.id);
+                  return (
+                    <div key={transport.id} className="border rounded p-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium text-sm">
+                            {vehicle?.vehicle_number || 'Unassigned'}
+                          </h4>
+                          <p className="text-xs text-gray-600">
+                            {transport.billing_level} • Case: {transport.patientcase_id?.slice(0, 8)}...
+                          </p>
+                        </div>
+                        <Badge className="bg-blue-100 text-blue-800 text-xs">Active</Badge>
+                      </div>
+                      {transport.start_time && (
+                        <p className="text-xs text-gray-500">
+                          Started: {new Date(transport.start_time).toLocaleTimeString()}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+                {activeTransports.length > 3 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => navigate('/dispatch')}
+                  >
+                    View All ({activeTransports.length})
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Fleet Status */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Fleet Status
+              </CardTitle>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => navigate('/fleet')}
               >
-                Manage Fleet
+                Manage
               </Button>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {activeTransports.length === 0 ? (
-            <div className="text-center py-8">
-              <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-500">No active transports</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {activeTransports.map((transport) => {
-                const vehicle = getVehicleByTransport(transport.id);
-                return (
-                  <div key={transport.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Truck className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium">
-                            {transport.ambulance_id || 'Unknown Unit'}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            Case: {transport.patientcase_id?.slice(0, 8)}...
-                          </p>
-                        </div>
-                      </div>
-                      <Badge className="bg-blue-100 text-blue-800">Active</Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600">Vehicle:</span>
-                        <div className="font-medium">
-                          {vehicle ? (
-                            <div className="flex items-center gap-2">
-                              <span>{vehicle.vehicle_number}</span>
-                              <Badge className={getStatusColor(vehicle.status)}>
-                                {vehicle.status}
-                              </Badge>
-                            </div>
-                          ) : (
-                            <span className="text-orange-600">Not assigned</span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <span className="text-gray-600">Level:</span>
-                        <div className="font-medium">{transport.billing_level || 'BLS'}</div>
-                      </div>
-                      
-                      <div>
-                        <span className="text-gray-600">Started:</span>
-                        <div className="font-medium">
-                          {transport.start_time 
-                            ? new Date(transport.start_time).toLocaleTimeString()
-                            : 'Unknown'
-                          }
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 mt-3">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate(`/dispatch`)}
-                      >
-                        View in Dispatch
-                      </Button>
-                      {vehicle && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => navigate(`/fleet`)}
-                        >
-                          Vehicle Details
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Available Vehicles */}
-      {availableVehicles.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Available Vehicles
-            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {availableVehicles.map((vehicle) => (
-                <div key={vehicle.id} className="border rounded-lg p-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-medium">{vehicle.vehicle_number}</h4>
-                    <Badge className={getStatusColor(vehicle.status)}>
-                      {vehicle.status}
-                    </Badge>
-                  </div>
-                  {vehicle.location && (
-                    <p className="text-sm text-gray-600 mb-2">
-                      Location: {vehicle.location}
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => navigate('/dispatch')}
-                    >
-                      Assign Transport
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => updateVehicleStatus(vehicle.id, 'maintenance')}
-                    >
-                      <Settings className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Maintenance Alerts */}
-      {maintenanceVehicles.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-800">
-              <AlertTriangle className="h-5 w-5" />
-              Vehicles in Maintenance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {maintenanceVehicles.map((vehicle) => (
+            <div className="space-y-3">
+              {availableVehicles.slice(0, 3).map((vehicle) => (
                 <div key={vehicle.id} className="flex justify-between items-center">
-                  <span className="font-medium">{vehicle.vehicle_number}</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => updateVehicleStatus(vehicle.id, 'available')}
-                  >
-                    Mark Available
-                  </Button>
+                  <div>
+                    <span className="font-medium text-sm">{vehicle.vehicle_number}</span>
+                    {vehicle.location && (
+                      <p className="text-xs text-gray-500">{vehicle.location}</p>
+                    )}
+                  </div>
+                  <Badge className={getStatusColor(vehicle.status)} className="text-xs">
+                    {vehicle.status}
+                  </Badge>
                 </div>
               ))}
+              
+              {maintenanceVehicles.length > 0 && (
+                <div className="border-t pt-3 mt-3">
+                  <div className="flex items-center gap-2 text-orange-600 mb-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Needs Attention</span>
+                  </div>
+                  {maintenanceVehicles.slice(0, 2).map((vehicle) => (
+                    <div key={vehicle.id} className="flex justify-between items-center text-sm">
+                      <span>{vehicle.vehicle_number}</span>
+                      <Badge className={getStatusColor(vehicle.status)} className="text-xs">
+                        Maintenance
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {availableVehicles.length > 3 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => navigate('/fleet')}
+                >
+                  View All Vehicles ({vehicles.length})
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
-      )}
+      </div>
     </div>
   );
 }

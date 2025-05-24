@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Ambulance, Phone } from 'lucide-react';
+import { Plus, Phone, Ambulance } from 'lucide-react';
 import CreateTransportDialog from '@/components/dispatch/CreateTransportDialog';
 import ActiveTransportCard from '@/components/dispatch/ActiveTransportCard';
-import UnifiedResourceDashboard from '@/components/shared/UnifiedResourceDashboard';
 import { useResource } from '@/context/ResourceContext';
 
 export default function Dispatch() {
@@ -27,27 +26,55 @@ export default function Dispatch() {
         </Button>
       </div>
 
-      {/* Unified Resource Dashboard */}
-      <UnifiedResourceDashboard />
+      {/* Active Transports Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Active Transports</h2>
+        {activeTransports.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Ambulance className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500">No active transports</p>
+              <Button 
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="mt-4"
+                variant="outline"
+              >
+                Create First Transport
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeTransports.map((transport) => (
+              <ActiveTransportCard 
+                key={transport.id} 
+                transport={transport}
+                onUpdate={refreshTransports}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
+      {/* Quick Actions Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Quick Stats</CardTitle>
+            <CardTitle className="text-lg">Available Resources</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Active Transports</span>
-                <span className="font-semibold">{activeTransports.length}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Available Vehicles</span>
-                <span className="font-semibold">{availableVehicles.length}</span>
+                <span className="font-semibold text-green-600">{availableVehicles.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Emergency Calls</span>
-                <span className="font-semibold text-red-600">2</span>
+                <span className="text-sm text-gray-600">Active Transports</span>
+                <span className="font-semibold text-blue-600">{activeTransports.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Emergency Queue</span>
+                <span className="font-semibold text-red-600">0</span>
               </div>
             </div>
           </CardContent>

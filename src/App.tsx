@@ -8,6 +8,7 @@ import AuthLayout from "@/components/layout/AuthLayout";
 import LoadingScreen from "@/components/layout/LoadingScreen";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
+import Operations from "./pages/Operations";
 import PatientCases from "./pages/PatientCases";
 import PatientCaseDetail from "./pages/PatientCaseDetail";
 import Dispatch from "./pages/Dispatch";
@@ -46,6 +47,7 @@ function App() {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route element={<AuthLayout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/operations" element={<Operations />} />
                   <Route path="/patient-cases" element={<PatientCases />} />
                   <Route path="/patient-cases/:id" element={<PatientCaseDetail />} />
                   <Route path="/dispatch" element={<Dispatch />} />
