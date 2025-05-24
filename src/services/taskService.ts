@@ -12,6 +12,7 @@ const mapTaskFromDB = (task: any): Task => ({
   dueDate: task.due_date,
   priority: task.priority as Task['priority'],
   completed: task.completed || false,
+  category: task.category || 'transport' as Task['category'],
 });
 
 export async function fetchTasks() {
@@ -44,6 +45,7 @@ export async function createTask(task: Omit<Task, 'id'>) {
       due_date: task.dueDate, // Convert camelCase to snake_case
       priority: task.priority,
       completed: task.completed,
+      category: task.category,
     };
 
     const { data, error } = await supabase
@@ -61,7 +63,7 @@ export async function createTask(task: Omit<Task, 'id'>) {
     // Log activity
     await createActivity({
       type: 'task',
-      description: `New task created: ${task.title}`,
+      description: `New ${task.category} task created: ${task.title}`,
       timestamp: new Date().toISOString(),
       user: 'System',
       relatedTo: task.related,
@@ -85,6 +87,7 @@ export async function updateTask(id: string, task: Partial<Task>) {
     if (task.dueDate) updateData.due_date = task.dueDate; // Convert camelCase to snake_case
     if (task.priority) updateData.priority = task.priority;
     if (task.completed !== undefined) updateData.completed = task.completed;
+    if (task.category) updateData.category = task.category;
 
     const { data, error } = await supabase
       .from('tasks')
@@ -102,7 +105,7 @@ export async function updateTask(id: string, task: Partial<Task>) {
     // Log activity
     await createActivity({
       type: 'task',
-      description: `Task updated: ${task.title || data.title}`,
+      description: `${task.category || 'Task'} updated: ${task.title || data.title}`,
       timestamp: new Date().toISOString(),
       user: 'System',
       relatedTo: task.related || data.related,

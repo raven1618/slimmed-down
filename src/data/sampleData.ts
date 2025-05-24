@@ -1,4 +1,3 @@
-
 export interface Contact {
   id: string;
   name: string;
@@ -26,6 +25,7 @@ export interface Task {
   dueDate: string;
   priority: 'Low' | 'Medium' | 'High';
   completed: boolean;
+  category: 'transport' | 'vehicle' | 'compliance' | 'crew' | 'facility';
 }
 
 export interface Activity {
@@ -136,43 +136,75 @@ export const sampleDeals: Deal[] = [
 export const sampleTasks: Task[] = [
   {
     id: '1',
-    title: 'Follow up with John Smith',
-    related: 'John Smith, Acme Corp',
-    dueDate: '2023-05-18',
+    title: 'Complete transport AMB-001 documentation',
+    related: 'Transport #AMB-001',
+    dueDate: '2024-01-18',
     priority: 'High',
     completed: false,
+    category: 'transport',
   },
   {
     id: '2',
-    title: 'Send proposal to XYZ Industries',
-    related: 'Sarah Johnson, XYZ Industries',
-    dueDate: '2023-05-20',
+    title: 'Vehicle maintenance inspection - Unit 3',
+    related: 'Ambulance Unit 3',
+    dueDate: '2024-01-20',
     priority: 'Medium',
     completed: false,
+    category: 'vehicle',
   },
   {
     id: '3',
-    title: 'Schedule demo with Tech Solutions',
-    related: 'Michael Brown, Tech Solutions',
-    dueDate: '2023-05-25',
-    priority: 'Medium',
+    title: 'Submit monthly compliance report',
+    related: 'Regulatory Compliance',
+    dueDate: '2024-01-25',
+    priority: 'High',
     completed: false,
+    category: 'compliance',
   },
   {
     id: '4',
-    title: 'Review contract with legal',
-    related: 'First National Bank deal',
-    dueDate: '2023-05-22',
-    priority: 'High',
+    title: 'Update crew certification records',
+    related: 'EMT Team Alpha',
+    dueDate: '2024-01-22',
+    priority: 'Medium',
     completed: false,
+    category: 'crew',
   },
   {
     id: '5',
-    title: 'Update CRM records',
-    related: 'Internal',
-    dueDate: '2023-05-19',
+    title: 'Equipment inventory check',
+    related: 'Medical Equipment',
+    dueDate: '2024-01-19',
     priority: 'Low',
     completed: false,
+    category: 'vehicle',
+  },
+  {
+    id: '6',
+    title: 'Review facility SLA performance',
+    related: 'Memorial Hospital',
+    dueDate: '2024-01-24',
+    priority: 'Medium',
+    completed: false,
+    category: 'facility',
+  },
+  {
+    id: '7',
+    title: 'Process insurance authorization',
+    related: 'Patient Case #PC-2024-001',
+    dueDate: '2024-01-17',
+    priority: 'High',
+    completed: true,
+    category: 'transport',
+  },
+  {
+    id: '8',
+    title: 'Schedule crew training session',
+    related: 'Emergency Response Training',
+    dueDate: '2024-01-30',
+    priority: 'Low',
+    completed: false,
+    category: 'crew',
   },
 ];
 
