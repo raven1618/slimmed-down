@@ -1,14 +1,18 @@
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useForm } from 'react-hook-form';
-import { createFacility } from '@/services/facilityService';
-import { FacilityType } from '@/types/medicalTransport';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { FacilityType } from '@/types/medicalTransport';
 
 interface CreateFacilityDialogProps {
   open: boolean;
@@ -16,55 +20,102 @@ interface CreateFacilityDialogProps {
   onSuccess: () => void;
 }
 
-interface CreateFacilityForm {
+interface FormData {
   name: string;
   type: FacilityType;
-  address?: string;
-  phone?: string;
+  address: string;
+  phone: string;
   sla_target_mins: number;
 }
 
-export default function CreateFacilityDialog({ open, onOpenChange, onSuccess }: CreateFacilityDialogProps) {
-  const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = useForm<CreateFacilityForm>({
-    defaultValues: {
-      sla_target_mins: 60
-    }
+export default function CreateFacilityDialog({ 
+  open, 
+  onOpenChange, 
+  onSuccess 
+}: CreateFacilityDialogProps) {
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    type: 'Hospital',
+    address: '',
+    phone: '',
+    sla_target_mins: 30
   });
+  const [loading, setLoading] = useState(false);
 
-  const onSubmit = async (data: CreateFacilityForm) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast.error('Please enter a facility name');
+      return;
+    }
+
     try {
-      await createFacility(data);
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('facility')
+        .insert({
+          name: formData.name.trim(),
+          type: formData.type,
+          address: formData.address.trim() || null,
+          phone: formData.phone.trim() || null,
+          sla_target_mins: formData.sla_target_mins
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating facility:', error);
+        toast.error(`Failed to create facility: ${error.message}`);
+        return;
+      }
+
       toast.success('Facility created successfully');
-      reset();
+      
+      // Reset form
+      setFormData({
+        name: '',
+        type: 'Hospital',
+        address: '',
+        phone: '',
+        sla_target_mins: 30
+      });
+      
       onSuccess();
     } catch (error) {
       console.error('Error creating facility:', error);
       toast.error('Failed to create facility');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create New Facility</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
             <Label htmlFor="name">Facility Name</Label>
             <Input
               id="name"
-              {...register('name', { required: 'Facility name is required' })}
-              placeholder="General Hospital"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Enter facility name"
+              required
             />
-            {errors.name && (
-              <p className="text-sm text-red-600">{errors.name.message}</p>
-            )}
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="type">Facility Type</Label>
-            <Select onValueChange={(value) => setValue('type', value as FacilityType)}>
+            <Select 
+              value={formData.type} 
+              onValueChange={(value: FacilityType) => setFormData(prev => ({ ...prev, type: value }))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select facility type" />
               </SelectTrigger>
@@ -78,46 +129,49 @@ export default function CreateFacilityDialog({ open, onOpenChange, onSuccess }: 
             </Select>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="address">Address</Label>
             <Input
               id="address"
-              {...register('address')}
-              placeholder="123 Main St, City, State 12345"
+              value={formData.address}
+              onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+              placeholder="Enter facility address"
             />
           </div>
 
-          <div>
-            <Label htmlFor="phone">Phone</Label>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
             <Input
               id="phone"
-              {...register('phone')}
-              placeholder="(555) 123-4567"
+              value={formData.phone}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              placeholder="Enter phone number"
             />
           </div>
 
-          <div>
-            <Label htmlFor="sla_target_mins">SLA Target (minutes)</Label>
+          <div className="space-y-2">
+            <Label htmlFor="sla_target_mins">SLA Target (Minutes)</Label>
             <Input
               id="sla_target_mins"
               type="number"
-              {...register('sla_target_mins', { 
-                required: 'SLA target is required',
-                min: { value: 1, message: 'Must be at least 1 minute' }
-              })}
-              placeholder="60"
+              value={formData.sla_target_mins}
+              onChange={(e) => setFormData(prev => ({ ...prev, sla_target_mins: parseInt(e.target.value) || 30 }))}
+              placeholder="30"
+              min="1"
             />
-            {errors.sla_target_mins && (
-              <p className="text-sm text-red-600">{errors.sla_target_mins.message}</p>
-            )}
           </div>
 
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Facility'}
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Facility'}
             </Button>
           </div>
         </form>

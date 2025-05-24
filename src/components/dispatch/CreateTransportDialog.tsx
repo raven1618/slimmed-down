@@ -45,13 +45,20 @@ export default function CreateTransportDialog({
       
       try {
         setLoadingCases(true);
+        console.log('Fetching patient cases...');
+        
         const { data, error } = await supabase
           .from('patientcase')
           .select('*')
           .in('status', ['Pending', 'En Route'])
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching patient cases:', error);
+          throw error;
+        }
+        
+        console.log('Fetched patient cases:', data);
         
         const typedData = (data || []).map(item => ({
           ...item,
@@ -63,6 +70,7 @@ export default function CreateTransportDialog({
       } catch (error) {
         console.error('Error fetching patient cases:', error);
         toast.error('Failed to load patient cases');
+        setPatientCases([]);
       } finally {
         setLoadingCases(false);
       }
@@ -79,18 +87,19 @@ export default function CreateTransportDialog({
       return;
     }
 
-    if (!formData.ambulance_id) {
+    if (!formData.ambulance_id.trim()) {
       toast.error('Please enter an ambulance ID');
       return;
     }
 
     try {
       setLoading(true);
+      console.log('Submitting transport creation with:', formData);
       
       const now = new Date().toISOString();
       const transportData = {
         patientcase_id: formData.patientcase_id,
-        ambulance_id: formData.ambulance_id,
+        ambulance_id: formData.ambulance_id.trim(),
         billing_level: formData.billing_level,
         start_time: now,
         crew: {
@@ -101,14 +110,21 @@ export default function CreateTransportDialog({
         updated_at: now
       };
 
+      console.log('Creating transport with data:', transportData);
       const result = await createTransport(transportData);
       
       if (result) {
+        console.log('Transport created successfully, updating patient case status...');
+        
         // Update patient case status to En Route
-        await supabase
+        const { error: updateError } = await supabase
           .from('patientcase')
           .update({ status: 'En Route' })
           .eq('id', formData.patientcase_id);
+
+        if (updateError) {
+          console.warn('Failed to update patient case status:', updateError);
+        }
 
         toast.success('Transport created successfully');
         
@@ -120,6 +136,9 @@ export default function CreateTransportDialog({
         });
         
         onSuccess();
+      } else {
+        console.error('Transport creation returned null');
+        toast.error('Failed to create transport - please check the console for details');
       }
     } catch (error) {
       console.error('Error creating transport:', error);
@@ -153,7 +172,7 @@ export default function CreateTransportDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !formData.patientcase_id || !formData.ambulance_id.trim()}>
               {loading ? 'Creating...' : 'Create Transport'}
             </Button>
           </div>

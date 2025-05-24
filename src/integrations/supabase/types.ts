@@ -588,6 +588,7 @@ export type Database = {
         Row: {
           ambulance_id: string | null
           billing_level: string | null
+          created_at: string
           crew: Json | null
           end_time: string | null
           gps_path: unknown | null
@@ -595,10 +596,12 @@ export type Database = {
           mileage: number | null
           patientcase_id: string | null
           start_time: string | null
+          updated_at: string
         }
         Insert: {
           ambulance_id?: string | null
           billing_level?: string | null
+          created_at?: string
           crew?: Json | null
           end_time?: string | null
           gps_path?: unknown | null
@@ -606,10 +609,12 @@ export type Database = {
           mileage?: number | null
           patientcase_id?: string | null
           start_time?: string | null
+          updated_at?: string
         }
         Update: {
           ambulance_id?: string | null
           billing_level?: string | null
+          created_at?: string
           crew?: Json | null
           end_time?: string | null
           gps_path?: unknown | null
@@ -617,6 +622,7 @@ export type Database = {
           mileage?: number | null
           patientcase_id?: string | null
           start_time?: string | null
+          updated_at?: string
         }
         Relationships: [
           {

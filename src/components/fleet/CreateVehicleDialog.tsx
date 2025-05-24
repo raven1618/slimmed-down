@@ -1,68 +1,93 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CreateVehicleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-export default function CreateVehicleDialog({ open, onOpenChange }: CreateVehicleDialogProps) {
-  const [formData, setFormData] = useState({
+interface FormData {
+  vehicle_number: string;
+  vehicle_type: string;
+  make: string;
+  model: string;
+  year: number;
+  status: string;
+}
+
+export default function CreateVehicleDialog({ 
+  open, 
+  onOpenChange, 
+  onSuccess 
+}: CreateVehicleDialogProps) {
+  const [formData, setFormData] = useState<FormData>({
     vehicle_number: '',
     vehicle_type: 'ambulance',
     make: '',
     model: '',
-    year: '',
-    vin: '',
-    license_plate: '',
-    status: 'available',
-    mileage: '',
-    location: '',
-    fuel_level: '100'
+    year: new Date().getFullYear(),
+    status: 'available'
   });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    
+    if (!formData.vehicle_number.trim()) {
+      toast.error('Please enter a vehicle number');
+      return;
+    }
 
     try {
-      const vehicleData = {
-        ...formData,
-        year: formData.year ? parseInt(formData.year) : null,
-        mileage: formData.mileage ? parseInt(formData.mileage) : null,
-        fuel_level: formData.fuel_level ? parseFloat(formData.fuel_level) : null
-      };
-
-      const { error } = await supabase
+      setLoading(true);
+      
+      const { data, error } = await supabase
         .from('vehicles')
-        .insert([vehicleData]);
+        .insert({
+          vehicle_number: formData.vehicle_number.trim(),
+          vehicle_type: formData.vehicle_type,
+          make: formData.make.trim() || null,
+          model: formData.model.trim() || null,
+          year: formData.year,
+          status: formData.status,
+          mileage: 0,
+          fuel_level: 100
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating vehicle:', error);
+        toast.error(`Failed to create vehicle: ${error.message}`);
+        return;
+      }
 
       toast.success('Vehicle created successfully');
-      onOpenChange(false);
+      
+      // Reset form
       setFormData({
         vehicle_number: '',
         vehicle_type: 'ambulance',
         make: '',
         model: '',
-        year: '',
-        vin: '',
-        license_plate: '',
-        status: 'available',
-        mileage: '',
-        location: '',
-        fuel_level: '100'
+        year: new Date().getFullYear(),
+        status: 'available'
       });
-      window.location.reload(); // Refresh to show new vehicle
+      
+      onSuccess?.();
     } catch (error) {
       console.error('Error creating vehicle:', error);
       toast.error('Failed to create vehicle');
@@ -71,34 +96,33 @@ export default function CreateVehicleDialog({ open, onOpenChange }: CreateVehicl
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Vehicle</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="vehicle_number">Vehicle Number *</Label>
+          <div className="space-y-2">
+            <Label htmlFor="vehicle_number">Vehicle Number</Label>
             <Input
               id="vehicle_number"
               value={formData.vehicle_number}
-              onChange={(e) => handleInputChange('vehicle_number', e.target.value)}
-              placeholder="e.g., AMB-001"
+              onChange={(e) => setFormData(prev => ({ ...prev, vehicle_number: e.target.value }))}
+              placeholder="Enter vehicle number (e.g., AMB-001)"
               required
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="vehicle_type">Vehicle Type</Label>
-            <Select value={formData.vehicle_type} onValueChange={(value) => handleInputChange('vehicle_type', value)}>
+            <Select 
+              value={formData.vehicle_type} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, vehicle_type: value }))}
+            >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select vehicle type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ambulance">Ambulance</SelectItem>
@@ -109,85 +133,68 @@ export default function CreateVehicleDialog({ open, onOpenChange }: CreateVehicl
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="make">Make</Label>
               <Input
                 id="make"
                 value={formData.make}
-                onChange={(e) => handleInputChange('make', e.target.value)}
-                placeholder="Ford"
+                onChange={(e) => setFormData(prev => ({ ...prev, make: e.target.value }))}
+                placeholder="e.g., Ford"
               />
             </div>
-            <div>
+
+            <div className="space-y-2">
               <Label htmlFor="model">Model</Label>
               <Input
                 id="model"
                 value={formData.model}
-                onChange={(e) => handleInputChange('model', e.target.value)}
-                placeholder="Transit"
+                onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
+                placeholder="e.g., Transit"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="year">Year</Label>
-              <Input
-                id="year"
-                type="number"
-                value={formData.year}
-                onChange={(e) => handleInputChange('year', e.target.value)}
-                placeholder="2023"
-              />
-            </div>
-            <div>
-              <Label htmlFor="mileage">Mileage</Label>
-              <Input
-                id="mileage"
-                type="number"
-                value={formData.mileage}
-                onChange={(e) => handleInputChange('mileage', e.target.value)}
-                placeholder="50000"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="license_plate">License Plate</Label>
+          <div className="space-y-2">
+            <Label htmlFor="year">Year</Label>
             <Input
-              id="license_plate"
-              value={formData.license_plate}
-              onChange={(e) => handleInputChange('license_plate', e.target.value)}
-              placeholder="ABC-123"
+              id="year"
+              type="number"
+              value={formData.year}
+              onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
+              min="1990"
+              max={new Date().getFullYear() + 1}
             />
           </div>
 
-          <div>
-            <Label htmlFor="vin">VIN</Label>
-            <Input
-              id="vin"
-              value={formData.vin}
-              onChange={(e) => handleInputChange('vin', e.target.value)}
-              placeholder="1HGBH41JXMN109186"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select 
+              value={formData.status} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="available">Available</SelectItem>
+                <SelectItem value="in_use">In Use</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="out_of_service">Out of Service</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <Label htmlFor="location">Current Location</Label>
-            <Input
-              id="location"
-              value={formData.location}
-              onChange={(e) => handleInputChange('location', e.target.value)}
-              placeholder="Main Station"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Vehicle'}
+              {loading ? 'Creating...' : 'Add Vehicle'}
             </Button>
           </div>
         </form>

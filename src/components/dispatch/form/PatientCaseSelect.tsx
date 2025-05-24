@@ -1,13 +1,7 @@
 
 import React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { PatientCase } from '@/types/medicalTransport';
 
 interface PatientCaseSelectProps {
@@ -25,17 +19,23 @@ export default function PatientCaseSelect({
 }: PatientCaseSelectProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="patientcase_id">Patient Case</Label>
+      <Label htmlFor="patientcase">Patient Case</Label>
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger>
-          <SelectValue placeholder={loading ? "Loading cases..." : "Select patient case"} />
+          <SelectValue placeholder={loading ? "Loading cases..." : "Select a patient case"} />
         </SelectTrigger>
         <SelectContent>
-          {patientCases.map((case_) => (
-            <SelectItem key={case_.id} value={case_.id}>
-              {case_.patient_hash} - {case_.priority} ({case_.status})
-            </SelectItem>
-          ))}
+          {loading ? (
+            <SelectItem value="loading" disabled>Loading...</SelectItem>
+          ) : patientCases.length === 0 ? (
+            <SelectItem value="empty" disabled>No patient cases available</SelectItem>
+          ) : (
+            patientCases.map((patientCase) => (
+              <SelectItem key={patientCase.id} value={patientCase.id}>
+                {patientCase.patient_hash || 'Unknown Patient'} - {patientCase.priority} ({patientCase.status})
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
     </div>

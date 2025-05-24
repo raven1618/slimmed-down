@@ -1,13 +1,18 @@
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useForm } from 'react-hook-form';
-import { createCrewMember } from '@/services/crewMemberService';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { CrewRole } from '@/types/medicalTransport';
 
 interface CreateCrewMemberDialogProps {
   open: boolean;
@@ -15,34 +20,66 @@ interface CreateCrewMemberDialogProps {
   onSuccess: () => void;
 }
 
-interface CreateCrewMemberForm {
+interface FormData {
   full_name: string;
-  cert_level: string;
-  cert_expiry?: string;
+  role: CrewRole;
   safety_score: number;
-  status: string;
-  employee_id?: string;
-  phone?: string;
-  email?: string;
 }
 
-export default function CreateCrewMemberDialog({ open, onOpenChange, onSuccess }: CreateCrewMemberDialogProps) {
-  const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = useForm<CreateCrewMemberForm>({
-    defaultValues: {
-      safety_score: 100,
-      status: 'Active'
-    }
+export default function CreateCrewMemberDialog({ 
+  open, 
+  onOpenChange, 
+  onSuccess 
+}: CreateCrewMemberDialogProps) {
+  const [formData, setFormData] = useState<FormData>({
+    full_name: '',
+    role: 'EMT',
+    safety_score: 100
   });
+  const [loading, setLoading] = useState(false);
 
-  const onSubmit = async (data: CreateCrewMemberForm) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.full_name.trim()) {
+      toast.error('Please enter crew member name');
+      return;
+    }
+
     try {
-      await createCrewMember(data);
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('crewmember')
+        .insert({
+          full_name: formData.full_name.trim(),
+          role: formData.role,
+          safety_score: formData.safety_score
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating crew member:', error);
+        toast.error(`Failed to create crew member: ${error.message}`);
+        return;
+      }
+
       toast.success('Crew member created successfully');
-      reset();
+      
+      // Reset form
+      setFormData({
+        full_name: '',
+        role: 'EMT',
+        safety_score: 100
+      });
+      
       onSuccess();
     } catch (error) {
       console.error('Error creating crew member:', error);
       toast.error('Failed to create crew member');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,116 +87,63 @@ export default function CreateCrewMemberDialog({ open, onOpenChange, onSuccess }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Crew Member</DialogTitle>
+          <DialogTitle>Create New Crew Member</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
             <Label htmlFor="full_name">Full Name</Label>
             <Input
               id="full_name"
-              {...register('full_name', { required: 'Full name is required' })}
-              placeholder="John Doe"
+              value={formData.full_name}
+              onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+              placeholder="Enter crew member name"
+              required
             />
-            {errors.full_name && (
-              <p className="text-sm text-red-600">{errors.full_name.message}</p>
-            )}
           </div>
 
-          <div>
-            <Label htmlFor="cert_level">Certification Level</Label>
-            <Select onValueChange={(value) => setValue('cert_level', value)}>
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select 
+              value={formData.role} 
+              onValueChange={(value: CrewRole) => setFormData(prev => ({ ...prev, role: value }))}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Select certification level" />
+                <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="EMT-Basic">EMT-Basic</SelectItem>
-                <SelectItem value="EMT-Intermediate">EMT-Intermediate</SelectItem>
-                <SelectItem value="EMT-Paramedic">EMT-Paramedic</SelectItem>
-                <SelectItem value="RN">Registered Nurse</SelectItem>
-                <SelectItem value="Driver">Driver</SelectItem>
+                <SelectItem value="EMT">EMT</SelectItem>
+                <SelectItem value="Paramedic">Paramedic</SelectItem>
+                <SelectItem value="Dispatcher">Dispatcher</SelectItem>
+                <SelectItem value="Supervisor">Supervisor</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="employee_id">Employee ID</Label>
+          <div className="space-y-2">
+            <Label htmlFor="safety_score">Safety Score</Label>
             <Input
-              id="employee_id"
-              {...register('employee_id')}
-              placeholder="EMP-001"
+              id="safety_score"
+              type="number"
+              value={formData.safety_score}
+              onChange={(e) => setFormData(prev => ({ ...prev, safety_score: parseInt(e.target.value) || 100 }))}
+              placeholder="100"
+              min="0"
+              max="100"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                {...register('phone')}
-                placeholder="(555) 123-4567"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                {...register('email')}
-                placeholder="john@example.com"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="cert_expiry">Certification Expiry</Label>
-              <Input
-                id="cert_expiry"
-                type="date"
-                {...register('cert_expiry')}
-              />
-            </div>
-            <div>
-              <Label htmlFor="safety_score">Safety Score</Label>
-              <Input
-                id="safety_score"
-                type="number"
-                min="0"
-                max="100"
-                {...register('safety_score', { 
-                  required: 'Safety score is required',
-                  min: { value: 0, message: 'Must be at least 0' },
-                  max: { value: 100, message: 'Must be at most 100' }
-                })}
-                placeholder="100"
-              />
-              {errors.safety_score && (
-                <p className="text-sm text-red-600">{errors.safety_score.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <Select onValueChange={(value) => setValue('status', value)} defaultValue="Active">
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
-                <SelectItem value="On Leave">On Leave</SelectItem>
-                <SelectItem value="Training">Training</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Add Crew Member'}
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Crew Member'}
             </Button>
           </div>
         </form>
