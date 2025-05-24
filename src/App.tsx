@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import "./App.css";
 
@@ -19,9 +20,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/sample-data-demo" element={<SampleDataDemo />} />
-          <Route path="/*" element={<AuthLayout />}>
+          <Route path="/" element={<AuthLayout />}>
             {navItems.map(({ to, page }) => (
-              <Route key={to} path={to} element={page} />
+              <Route key={to} path={to === "/" ? "index" : to.replace("/", "")} element={page} />
             ))}
           </Route>
         </Routes>
@@ -31,3 +32,4 @@ const App = () => (
 );
 
 export default App;
+
