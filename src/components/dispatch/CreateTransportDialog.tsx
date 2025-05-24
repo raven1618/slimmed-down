@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { CasePriority, BillingLevel } from '@/types/medicalTransport';
 
 interface CreateTransportDialogProps {
   open: boolean;
@@ -24,16 +25,23 @@ interface CreateTransportDialogProps {
   onSuccess: () => void;
 }
 
+interface FormData {
+  patientcase_id: string;
+  ambulance_id: string;
+  priority: CasePriority;
+  billing_level: BillingLevel;
+}
+
 export default function CreateTransportDialog({ 
   open, 
   onOpenChange, 
   onSuccess 
 }: CreateTransportDialogProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     patientcase_id: '',
     ambulance_id: '',
-    priority: 'Routine' as const,
-    billing_level: 'BLS' as const
+    priority: 'Routine',
+    billing_level: 'BLS'
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,7 +104,7 @@ export default function CreateTransportDialog({
             <Label htmlFor="priority">Priority</Label>
             <Select 
               value={formData.priority}
-              onValueChange={(value: 'Emergency' | 'Routine') => 
+              onValueChange={(value: CasePriority) => 
                 setFormData(prev => ({ ...prev, priority: value }))
               }
             >
@@ -114,7 +122,7 @@ export default function CreateTransportDialog({
             <Label htmlFor="billing_level">Billing Level</Label>
             <Select 
               value={formData.billing_level}
-              onValueChange={(value: 'BLS' | 'ALS' | 'MICU') => 
+              onValueChange={(value: BillingLevel) => 
                 setFormData(prev => ({ ...prev, billing_level: value }))
               }
             >

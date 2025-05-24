@@ -7,13 +7,23 @@ import { fetchActiveTransports } from '@/services/transportService';
 import { Plus, Ambulance, MapPin, Clock, Phone } from 'lucide-react';
 import CreateTransportDialog from '@/components/dispatch/CreateTransportDialog';
 import ActiveTransportCard from '@/components/dispatch/ActiveTransportCard';
+import { Transport } from '@/types/medicalTransport';
 
 export default function Dispatch() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { data: activeTransports, isLoading, refetch } = useQuery({
     queryKey: ['activeTransports'],
-    queryFn: fetchActiveTransports,
+    queryFn: async () => {
+      const data = await fetchActiveTransports();
+      // Convert crew from Json to Record<string, any> for type compatibility
+      return data.map((transport: any): Transport => ({
+        ...transport,
+        crew: typeof transport.crew === 'object' && transport.crew !== null 
+          ? transport.crew as Record<string, any>
+          : undefined
+      }));
+    },
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { CasePriority } from '@/types/medicalTransport';
 
 interface CreatePatientCaseDialogProps {
   open: boolean;
@@ -25,16 +26,24 @@ interface CreatePatientCaseDialogProps {
   onSuccess: () => void;
 }
 
+interface FormData {
+  patient_hash: string;
+  origin_facility: string;
+  destination_facility: string;
+  priority: CasePriority;
+  notes: string;
+}
+
 export default function CreatePatientCaseDialog({ 
   open, 
   onOpenChange, 
   onSuccess 
 }: CreatePatientCaseDialogProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     patient_hash: '',
     origin_facility: '',
     destination_facility: '',
-    priority: 'Routine' as const,
+    priority: 'Routine',
     notes: ''
   });
 
@@ -113,7 +122,7 @@ export default function CreatePatientCaseDialog({
             <Label htmlFor="priority">Priority</Label>
             <Select 
               value={formData.priority}
-              onValueChange={(value: 'Emergency' | 'Routine') => 
+              onValueChange={(value: CasePriority) => 
                 setFormData(prev => ({ ...prev, priority: value }))
               }
             >
