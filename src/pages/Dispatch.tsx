@@ -2,34 +2,17 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
-import { fetchActiveTransports } from '@/services/transportService';
-import { Plus, Ambulance, MapPin, Clock, Phone } from 'lucide-react';
+import { Plus, Ambulance, Phone } from 'lucide-react';
 import CreateTransportDialog from '@/components/dispatch/CreateTransportDialog';
 import ActiveTransportCard from '@/components/dispatch/ActiveTransportCard';
-import { Transport } from '@/types/medicalTransport';
+import UnifiedResourceDashboard from '@/components/shared/UnifiedResourceDashboard';
+import { useResource } from '@/context/ResourceContext';
 
 export default function Dispatch() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const { activeTransports, vehicles, refreshTransports } = useResource();
 
-  const { data: activeTransports, isLoading, refetch } = useQuery({
-    queryKey: ['activeTransports'],
-    queryFn: async () => {
-      const data = await fetchActiveTransports();
-      // Convert crew from Json to Record<string, any> for type compatibility
-      return data.map((transport: any): Transport => ({
-        ...transport,
-        crew: typeof transport.crew === 'object' && transport.crew !== null 
-          ? transport.crew as Record<string, any>
-          : undefined
-      }));
-    },
-    refetchInterval: 10000, // Refresh every 10 seconds
-  });
-
-  const handleTransportUpdate = () => {
-    refetch();
-  };
+  const availableVehicles = vehicles.filter(v => v.status === 'available');
 
   return (
     <div className="space-y-6">
@@ -44,6 +27,9 @@ export default function Dispatch() {
         </Button>
       </div>
 
+      {/* Unified Resource Dashboard */}
+      <UnifiedResourceDashboard />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
@@ -53,11 +39,11 @@ export default function Dispatch() {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Active Transports</span>
-                <span className="font-semibold">{activeTransports?.length || 0}</span>
+                <span className="font-semibold">{activeTransports.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Available Crews</span>
-                <span className="font-semibold">3</span>
+                <span className="text-sm text-gray-600">Available Vehicles</span>
+                <span className="font-semibold">{availableVehicles.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Emergency Calls</span>
@@ -112,46 +98,11 @@ export default function Dispatch() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Ambulance className="mr-2 h-5 w-5" />
-            Active Transports
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-gray-500">Loading transports...</p>
-          ) : activeTransports && activeTransports.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeTransports.map((transport) => (
-                <ActiveTransportCard 
-                  key={transport.id} 
-                  transport={transport}
-                  onUpdate={handleTransportUpdate}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Ambulance className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-500 mb-4">No active transports</p>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsCreateDialogOpen(true)}
-              >
-                Create First Transport
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       <CreateTransportDialog 
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onSuccess={() => {
-          handleTransportUpdate();
+          refreshTransports();
           setIsCreateDialogOpen(false);
         }}
       />
