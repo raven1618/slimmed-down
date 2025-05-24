@@ -8,12 +8,8 @@ import { Truck, Plus } from 'lucide-react';
 import TransportListItem from './TransportListItem';
 
 export default function ActiveTransportsCard() {
-  const { activeTransports, vehicles } = useResource();
+  const { activeTransports } = useResource();
   const navigate = useNavigate();
-
-  const getVehicleByTransport = (transportId: string) => {
-    return vehicles.find(v => v.current_transport_id === transportId);
-  };
 
   return (
     <Card>
@@ -40,16 +36,13 @@ export default function ActiveTransportsCard() {
           </div>
         ) : (
           <div className="space-y-3">
-            {activeTransports.slice(0, 3).map((transport) => {
-              const vehicle = getVehicleByTransport(transport.id);
-              return (
-                <TransportListItem
-                  key={transport.id}
-                  transport={transport}
-                  vehicleNumber={vehicle?.vehicle_number}
-                />
-              );
-            })}
+            {activeTransports.slice(0, 3).map((transport) => (
+              <TransportListItem
+                key={transport.id}
+                transport={transport}
+                vehicleNumber={transport.ambulance_id}
+              />
+            ))}
             {activeTransports.length > 3 && (
               <Button 
                 variant="ghost" 

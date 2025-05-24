@@ -87,15 +87,18 @@ export default function CreateTransportDialog({
     try {
       setLoading(true);
       
+      const now = new Date().toISOString();
       const transportData = {
         patientcase_id: formData.patientcase_id,
         ambulance_id: formData.ambulance_id,
         billing_level: formData.billing_level,
-        start_time: new Date().toISOString(),
+        start_time: now,
         crew: {
           driver: 'John Smith',
           medic: 'Jane Doe'
-        }
+        },
+        created_at: now,
+        updated_at: now
       };
 
       const result = await createTransport(transportData);
