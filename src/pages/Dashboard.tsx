@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import DashboardStats from '@/components/dashboard/DashboardStats';
-import { Ambulance, MapPin, Clock } from 'lucide-react';
+import { Ambulance, MapPin, Clock, Activity } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -26,13 +26,16 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Medical Transport Management System</p>
+        </div>
         <Button 
           onClick={() => navigate('/dispatch')}
           className="bg-blue-600 hover:bg-blue-700"
         >
           <Ambulance className="mr-2 h-4 w-4" />
-          Dispatch
+          Open Dispatch
         </Button>
       </div>
       
@@ -69,7 +72,7 @@ export default function Dashboard() {
                 ))}
                 
                 <Button variant="outline" className="w-full" onClick={() => navigate('/dispatch')}>
-                  View All Active Transports
+                  View All in Dispatch Center
                 </Button>
               </div>
             ) : (
@@ -81,7 +84,7 @@ export default function Dashboard() {
                   onClick={() => navigate('/dispatch')}
                   className="mx-auto"
                 >
-                  Create New Transport
+                  Open Dispatch Center
                 </Button>
               </div>
             )}
@@ -90,37 +93,32 @@ export default function Dashboard() {
         
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle className="flex items-center">
+              <Activity className="mr-2 h-5 w-5" />
+              System Overview
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                <span className="font-medium">System Status</span>
+                <span className="text-green-600 font-semibold">Operational</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                <span className="font-medium">Dispatch Center</span>
+                <span className="text-blue-600 font-semibold">Active</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                <span className="font-medium">Emergency Mode</span>
+                <span className="text-orange-600 font-semibold">Standby</span>
+              </div>
+              
               <Button 
-                onClick={() => navigate('/patient-cases')} 
                 variant="outline" 
-                className="justify-start"
+                className="w-full" 
+                onClick={() => navigate('/performance')}
               >
-                View Patient Cases
-              </Button>
-              <Button 
-                onClick={() => navigate('/facilities')} 
-                variant="outline" 
-                className="justify-start"
-              >
-                Manage Facilities
-              </Button>
-              <Button 
-                onClick={() => navigate('/authorizations')} 
-                variant="outline"
-                className="justify-start"
-              >
-                Treatment Authorizations
-              </Button>
-              <Button 
-                onClick={() => navigate('/crew')} 
-                variant="outline"
-                className="justify-start"
-              >
-                View Crew Members
+                View Performance Reports
               </Button>
             </div>
           </CardContent>

@@ -4,8 +4,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
-  Briefcase, 
-  Calendar, 
+  Truck, 
+  Building2, 
+  UserCheck,
+  FileText,
   ClipboardCheck,
   ChartBar,
   Settings,
@@ -20,12 +22,14 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { label: 'Contacts', icon: Users, path: '/contacts' },
-  { label: 'Deals', icon: Briefcase, path: '/deals' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { label: 'Patient Cases', icon: FileText, path: '/patient-cases' },
+  { label: 'Dispatch', icon: Truck, path: '/dispatch' },
+  { label: 'Facilities', icon: Building2, path: '/facilities' },
+  { label: 'Crew Members', icon: UserCheck, path: '/crew' },
+  { label: 'Authorizations', icon: Users, path: '/authorizations' },
   { label: 'Tasks', icon: ClipboardCheck, path: '/tasks' },
-  { label: 'Calendar', icon: Calendar, path: '/calendar' },
-  { label: 'Reports', icon: ChartBar, path: '/reports' },
+  { label: 'Performance', icon: ChartBar, path: '/performance' },
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
@@ -42,7 +46,7 @@ export default function Sidebar() {
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           {!collapsed && (
-            <div className="text-xl font-bold text-crm-blue">SimpleCRM</div>
+            <div className="text-xl font-bold text-blue-600">MedTransport</div>
           )}
           <button 
             onClick={toggleSidebar}
@@ -62,7 +66,7 @@ export default function Sidebar() {
                     to={item.path}
                     className={`flex items-center p-3 rounded-lg transition-colors ${
                       isActive 
-                        ? 'bg-crm-blue text-white' 
+                        ? 'bg-blue-600 text-white' 
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
@@ -78,7 +82,7 @@ export default function Sidebar() {
         <div className="p-4 border-t border-gray-200">
           {!collapsed && (
             <div className="text-xs text-gray-500">
-              SimpleCRM v1.0.0
+              MedTransport v1.0.0
             </div>
           )}
         </div>

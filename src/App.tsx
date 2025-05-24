@@ -23,6 +23,7 @@ const Crew = lazy(() => import('./pages/Crew'));
 const Authorizations = lazy(() => import('./pages/Authorizations'));
 const AuthorizationDetail = lazy(() => import('./pages/AuthorizationDetail'));
 const Performance = lazy(() => import('./pages/Performance'));
+const Tasks = lazy(() => import('./pages/Tasks'));
 const Settings = lazy(() => import('./pages/Settings'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -102,15 +103,6 @@ const App = () => (
                 />
                 
                 <Route 
-                  path="/dispatch" 
-                  element={
-                    <AuthLayout requiredRoles={['admin', 'dispatcher']}>
-                      <Dispatch />
-                    </AuthLayout>
-                  } 
-                />
-                
-                <Route 
                   path="/patient-cases" 
                   element={
                     <AuthLayout>
@@ -124,6 +116,15 @@ const App = () => (
                   element={
                     <AuthLayout>
                       <PatientCaseDetail />
+                    </AuthLayout>
+                  } 
+                />
+                
+                <Route 
+                  path="/dispatch" 
+                  element={
+                    <AuthLayout requiredRoles={['admin', 'dispatcher']}>
+                      <Dispatch />
                     </AuthLayout>
                   } 
                 />
@@ -169,6 +170,15 @@ const App = () => (
                   element={
                     <AuthLayout requiredRoles={['admin', 'billing']}>
                       <AuthorizationDetail />
+                    </AuthLayout>
+                  } 
+                />
+                
+                <Route 
+                  path="/tasks" 
+                  element={
+                    <AuthLayout>
+                      <Tasks />
                     </AuthLayout>
                   } 
                 />
