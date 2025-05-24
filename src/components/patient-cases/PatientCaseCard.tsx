@@ -12,7 +12,7 @@ interface PatientCaseWithFacilities extends PatientCase {
 
 interface PatientCaseCardProps {
   case: PatientCaseWithFacilities;
-  onClick: (case: PatientCaseWithFacilities) => void;
+  onClick: (patientCase: PatientCaseWithFacilities) => void;
 }
 
 export default function PatientCaseCard({ case: case_, onClick }: PatientCaseCardProps) {
