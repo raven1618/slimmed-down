@@ -111,20 +111,33 @@ export async function fetchTransportsByPatientCase(patientCaseId: string) {
 export async function fetchActiveTransports() {
   console.log('Fetching active transports...');
   
-  // First, let's try a simpler query to see if basic transport data loads
-  const { data, error } = await supabase
-    .from('transport')
-    .select('*')
-    .not('start_time', 'is', null)
-    .is('end_time', null)
-    .order('start_time', { ascending: false });
+  try {
+    // First check if the transport table exists and has data
+    const { data, error } = await supabase
+      .from('transport')
+      .select('*')
+      .limit(10);
 
-  console.log('Simple transport query result:', { data, error });
+    console.log('Transport table query result:', { data, error });
 
-  if (error) {
-    console.error('Error fetching active transports:', error);
-    throw error;
+    if (error) {
+      console.error('Error fetching transports:', error);
+      // Return empty array if table doesn't exist or has access issues
+      return [];
+    }
+
+    // If we have data, filter for active transports
+    if (data && data.length > 0) {
+      const activeData = data.filter(transport => 
+        transport.start_time && !transport.end_time
+      );
+      console.log('Active transports found:', activeData);
+      return activeData;
+    }
+
+    return [];
+  } catch (err) {
+    console.error('Unexpected error in fetchActiveTransports:', err);
+    return [];
   }
-
-  return data || [];
 }

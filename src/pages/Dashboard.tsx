@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,16 +11,39 @@ import { Ambulance, Clock, MapPin } from 'lucide-react';
 export default function Dashboard() {
   const navigate = useNavigate();
   
-  // Fetch active transports for the dashboard with better error handling
+  // Fetch active transports for the dashboard with simpler error handling
   const { data: activeTransports, isLoading, error } = useQuery({
     queryKey: ['activeTransports'],
-    queryFn: fetchActiveTransports,
-    refetchInterval: 30000, // Refresh every 30 seconds for demo purposes
-    retry: 1, // Only retry once to avoid hanging
-    staleTime: 10000 // Consider data stale after 10 seconds
+    queryFn: async () => {
+      console.log('Dashboard: Starting to fetch active transports...');
+      try {
+        const data = await fetchActiveTransports();
+        console.log('Dashboard: Received data:', data);
+        
+        // Ensure we return a proper array
+        if (!Array.isArray(data)) {
+          console.warn('Dashboard: Data is not an array, returning empty array');
+          return [];
+        }
+        
+        return data.map((transport: any) => ({
+          ...transport,
+          crew: typeof transport.crew === 'object' && transport.crew !== null 
+            ? transport.crew as Record<string, any>
+            : undefined
+        }));
+      } catch (err) {
+        console.error('Dashboard: Error fetching active transports:', err);
+        return [];
+      }
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+    retry: 1, // Only retry once
+    staleTime: 10000, // Consider data stale after 10 seconds
+    refetchOnWindowFocus: false
   });
   
-  console.log('Dashboard query state:', { isLoading, error, activeTransports });
+  console.log('Dashboard render - isLoading:', isLoading, 'error:', error, 'activeTransports:', activeTransports);
   
   return (
     <div className="space-y-6">
@@ -46,11 +70,16 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <p className="text-gray-500">Loading active transports...</p>
+              <div className="text-center py-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p className="text-gray-500">Loading active transports...</p>
+              </div>
             ) : error ? (
               <div className="text-center py-6">
-                <p className="text-red-500 mb-4">Error loading transports</p>
-                <p className="text-sm text-gray-500 mb-4">{error.message}</p>
+                <p className="text-red-500 mb-4">Unable to load transports</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  This might be because the database tables haven't been set up yet.
+                </p>
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/dispatch')}
@@ -88,6 +117,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="text-center py-6">
+                <Ambulance className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <p className="text-gray-500 mb-4">No active transports at the moment</p>
                 <Button 
                   variant="outline" 
