@@ -31,7 +31,10 @@ export default function PatientCases() {
         .from('facility')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching facilities:', error);
+        return [];
+      }
       
       // Cast the data to properly typed Facility objects
       const typedFacilities: Facility[] = (data || []).map(facility => ({
@@ -40,12 +43,14 @@ export default function PatientCases() {
       }));
       
       setFacilities(typedFacilities);
+      return typedFacilities;
     } catch (error) {
       console.error('Error fetching facilities:', error);
+      return [];
     }
   };
 
-  const fetchPatientCases = async () => {
+  const fetchPatientCases = async (facilitiesData: Facility[] = facilities) => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -63,13 +68,13 @@ export default function PatientCases() {
       
       // Map facility IDs to names
       const casesWithFacilities = typedData.map(case_ => {
-        const originFacility = facilities.find(f => f.id === case_.origin_facility);
-        const destinationFacility = facilities.find(f => f.id === case_.destination_facility);
+        const originFacility = facilitiesData.find(f => f.id === case_.origin_facility);
+        const destinationFacility = facilitiesData.find(f => f.id === case_.destination_facility);
         
         return {
           ...case_,
           origin_facility_name: originFacility?.name || 'Unknown Facility',
-          destination_facility_name: destinationFacility?.name
+          destination_facility_name: destinationFacility?.name || 'Unknown Facility'
         };
       });
       
@@ -83,7 +88,14 @@ export default function PatientCases() {
   };
 
   useEffect(() => {
-    fetchFacilities();
+    const loadData = async () => {
+      // Fetch facilities first
+      const facilitiesData = await fetchFacilities();
+      // Then fetch patient cases with the facilities data
+      await fetchPatientCases(facilitiesData);
+    };
+    
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -210,7 +222,7 @@ export default function PatientCases() {
                 <MapPin className="h-4 w-4 text-gray-500 mt-0.5" />
                 <div className="text-sm">
                   <div className="font-medium">{case_.origin_facility_name}</div>
-                  {case_.destination_facility_name && (
+                  {case_.destination_facility_name && case_.destination_facility_name !== 'Unknown Facility' && (
                     <>
                       <div className="text-gray-500">↓</div>
                       <div className="font-medium">{case_.destination_facility_name}</div>
