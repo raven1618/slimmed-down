@@ -9,6 +9,7 @@ import {
   UserCheck,
   FileText,
   ClipboardCheck,
+  CreditCard,
   ChartBar,
   Settings,
   Menu,
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { label: 'Crew Members', icon: UserCheck, path: '/crew' },
   { label: 'Authorizations', icon: Users, path: '/authorizations' },
   { label: 'Tasks', icon: ClipboardCheck, path: '/tasks' },
+  { label: 'Billing', icon: CreditCard, path: '/billing' },
   { label: 'Performance', icon: ChartBar, path: '/performance' },
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];

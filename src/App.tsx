@@ -24,6 +24,7 @@ const Authorizations = lazy(() => import('./pages/Authorizations'));
 const AuthorizationDetail = lazy(() => import('./pages/AuthorizationDetail'));
 const Performance = lazy(() => import('./pages/Performance'));
 const Tasks = lazy(() => import('./pages/Tasks'));
+const Billing = lazy(() => import('./pages/Billing'));
 const Settings = lazy(() => import('./pages/Settings'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -179,6 +180,15 @@ const App = () => (
                   element={
                     <AuthLayout>
                       <Tasks />
+                    </AuthLayout>
+                  } 
+                />
+                
+                <Route 
+                  path="/billing" 
+                  element={
+                    <AuthLayout requiredRoles={['admin', 'billing']}>
+                      <Billing />
                     </AuthLayout>
                   } 
                 />
