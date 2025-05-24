@@ -75,6 +75,53 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_shifts: {
+        Row: {
+          created_at: string
+          crew_member_id: string
+          end_time: string
+          id: string
+          notes: string | null
+          shift_date: string
+          shift_type: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crew_member_id: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          shift_date: string
+          shift_type?: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crew_member_id?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          shift_date?: string
+          shift_type?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_shifts_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crewmember"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crewmember: {
         Row: {
           avatar_url: string | null
@@ -342,6 +389,140 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facility"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_conflicts: {
+        Row: {
+          conflict_date: string
+          conflict_type: string
+          created_at: string
+          id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resource_id: string
+          schedule_item_1_id: string
+          schedule_item_1_type: string
+          schedule_item_2_id: string
+          schedule_item_2_type: string
+          status: string
+        }
+        Insert: {
+          conflict_date: string
+          conflict_type: string
+          created_at?: string
+          id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resource_id: string
+          schedule_item_1_id: string
+          schedule_item_1_type: string
+          schedule_item_2_id: string
+          schedule_item_2_type: string
+          status?: string
+        }
+        Update: {
+          conflict_date?: string
+          conflict_type?: string
+          created_at?: string
+          id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resource_id?: string
+          schedule_item_1_id?: string
+          schedule_item_1_type?: string
+          schedule_item_2_id?: string
+          schedule_item_2_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      scheduled_transports: {
+        Row: {
+          assigned_crew_id: string | null
+          assigned_vehicle_id: string | null
+          created_at: string
+          created_by: string | null
+          destination_location: string
+          estimated_duration: number | null
+          id: string
+          notes: string | null
+          patient_case_id: string | null
+          pickup_location: string
+          priority: string
+          scheduled_date: string
+          scheduled_time: string
+          special_requirements: string | null
+          status: string
+          transport_type: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_crew_id?: string | null
+          assigned_vehicle_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_location: string
+          estimated_duration?: number | null
+          id?: string
+          notes?: string | null
+          patient_case_id?: string | null
+          pickup_location: string
+          priority?: string
+          scheduled_date: string
+          scheduled_time: string
+          special_requirements?: string | null
+          status?: string
+          transport_type?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_crew_id?: string | null
+          assigned_vehicle_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_location?: string
+          estimated_duration?: number | null
+          id?: string
+          notes?: string | null
+          patient_case_id?: string | null
+          pickup_location?: string
+          priority?: string
+          scheduled_date?: string
+          scheduled_time?: string
+          special_requirements?: string | null
+          status?: string
+          transport_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_transports_assigned_crew_id_fkey"
+            columns: ["assigned_crew_id"]
+            isOneToOne: false
+            referencedRelation: "crewmember"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_transports_assigned_vehicle_id_fkey"
+            columns: ["assigned_vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_transports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_transports_patient_case_id_fkey"
+            columns: ["patient_case_id"]
+            isOneToOne: false
+            referencedRelation: "patientcase"
             referencedColumns: ["id"]
           },
         ]

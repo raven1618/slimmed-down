@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -14,7 +13,8 @@ import {
   Settings,
   Menu,
   X,
-  Car
+  Car,
+  Calendar
 } from 'lucide-react';
 
 type NavItem = {
@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { label: 'Patient Cases', icon: FileText, path: '/patient-cases' },
   { label: 'Dispatch', icon: Truck, path: '/dispatch' },
   { label: 'Fleet', icon: Car, path: '/fleet' },
+  { label: 'Schedule', icon: Calendar, path: '/schedule' },
   { label: 'Facilities', icon: Building2, path: '/facilities' },
   { label: 'Crew Members', icon: UserCheck, path: '/crew' },
   { label: 'Authorizations', icon: Users, path: '/authorizations' },

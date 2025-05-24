@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,6 +11,7 @@ import PatientCases from "./pages/PatientCases";
 import PatientCaseDetail from "./pages/PatientCaseDetail";
 import Dispatch from "./pages/Dispatch";
 import Fleet from "./pages/Fleet";
+import Schedule from "./pages/Schedule";
 import Facilities from "./pages/Facilities";
 import FacilityDetail from "./pages/FacilityDetail";
 import Crew from "./pages/Crew";
@@ -48,6 +48,7 @@ function App() {
                 <Route path="/patient-cases/:id" element={<PatientCaseDetail />} />
                 <Route path="/dispatch" element={<Dispatch />} />
                 <Route path="/fleet" element={<Fleet />} />
+                <Route path="/schedule" element={<Schedule />} />
                 <Route path="/facilities" element={<Facilities />} />
                 <Route path="/facilities/:id" element={<FacilityDetail />} />
                 <Route path="/crew" element={<Crew />} />
