@@ -1,4 +1,3 @@
-
 export type FacilityType = 'Hospital' | 'FSER' | 'Behavioral' | 'NursingHome' | 'Event';
 
 export type CrewRole = 'EMT' | 'Paramedic' | 'Dispatcher' | 'Supervisor';
@@ -32,6 +31,12 @@ export interface CrewMember {
   safety_score: number;
   avatar_url?: string;
   created_at: string;
+  cert_level?: string;
+  cert_expiry?: string;
+  status?: string;
+  employee_id?: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface PatientCase {
