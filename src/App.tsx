@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import AuthLayout from './components/layout/AuthLayout';
 import SampleDataDemo from './pages/SampleDataDemo';
+import { ResourceProvider } from './context/ResourceContext';
 
 const queryClient = new QueryClient();
 
@@ -17,16 +18,18 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <BrowserRouter>
-        <Routes>
-          <Route path="/sample-data-demo" element={<SampleDataDemo />} />
-          {navItems.map(({ to, page }) => (
-            <Route 
-              key={to} 
-              path={to} 
-              element={<AuthLayout>{page}</AuthLayout>} 
-            />
-          ))}
-        </Routes>
+        <ResourceProvider>
+          <Routes>
+            <Route path="/sample-data-demo" element={<SampleDataDemo />} />
+            {navItems.map(({ to, page }) => (
+              <Route 
+                key={to} 
+                path={to} 
+                element={<AuthLayout>{page}</AuthLayout>} 
+              />
+            ))}
+          </Routes>
+        </ResourceProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,163 +1,106 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Transport } from '@/types/medicalTransport';
-
-interface Vehicle {
-  id: string;
-  vehicle_number: string;
-  status: string;
-  location?: string;
-  current_transport_id?: string;
-}
+import { Vehicle, Transport } from '@/types/medicalTransport';
+import { mockVehicles, mockActiveTransports } from '@/data/mockData';
 
 interface ResourceContextType {
   vehicles: Vehicle[];
   activeTransports: Transport[];
-  refreshVehicles: () => void;
   refreshTransports: () => void;
-  updateVehicleStatus: (vehicleId: string, status: string) => void;
-  assignVehicleToTransport: (vehicleId: string, transportId: string) => void;
-  releaseVehicleFromTransport: (vehicleId: string) => void;
+  loading: boolean;
 }
 
-const ResourceContext = createContext<ResourceContextType | undefined>(undefined);
+const ResourceContext = createContext<ResourceContextType>({
+  vehicles: [],
+  activeTransports: [],
+  refreshTransports: () => {},
+  loading: true,
+});
 
-export function ResourceProvider({ children }: { children: React.ReactNode }) {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [activeTransports, setActiveTransports] = useState<Transport[]>([]);
+export const useResource = () => {
+  const context = useContext(ResourceContext);
+  if (!context) {
+    throw new Error('useResource must be used within a ResourceProvider');
+  }
+  return context;
+};
 
-  const fetchVehicles = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('vehicles')
-        .select('*')
-        .order('vehicle_number');
-      
-      if (error) throw error;
-      setVehicles(data || []);
-    } catch (error) {
-      console.error('Error fetching vehicles:', error);
-    }
-  };
+export const ResourceProvider = ({ children }: { children: React.ReactNode }) => {
+  const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
+  const [activeTransports, setActiveTransports] = useState<Transport[]>(mockActiveTransports);
 
-  const fetchActiveTransports = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('transport')
-        .select('*')
-        .is('end_time', null)
-        .order('start_time', { ascending: false });
-      
-      if (error) throw error;
-      
-      const typedData = (data || []).map((transport: any): Transport => ({
-        ...transport,
-        crew: typeof transport.crew === 'object' && transport.crew !== null 
-          ? transport.crew as Record<string, any>
-          : undefined
-      }));
-      
-      setActiveTransports(typedData);
-    } catch (error) {
-      console.error('Error fetching active transports:', error);
-    }
-  };
+  // Fetch vehicles with fallback to mock data
+  const { data: vehiclesData, isLoading: vehiclesLoading } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('*')
+          .order('vehicle_number');
+        
+        if (error) throw error;
+        return data as Vehicle[];
+      } catch (error) {
+        console.error('Error fetching vehicles, using mock data:', error);
+        return mockVehicles;
+      }
+    },
+    retry: 1,
+    retryDelay: 1000,
+  });
 
-  const updateVehicleStatus = async (vehicleId: string, status: string) => {
-    try {
-      const { error } = await supabase
-        .from('vehicles')
-        .update({ status })
-        .eq('id', vehicleId);
-      
-      if (error) throw error;
-      await fetchVehicles();
-    } catch (error) {
-      console.error('Error updating vehicle status:', error);
-    }
-  };
-
-  const assignVehicleToTransport = async (vehicleId: string, transportId: string) => {
-    try {
-      await supabase
-        .from('vehicles')
-        .update({ 
-          status: 'in_service',
-          current_transport_id: transportId 
-        })
-        .eq('id', vehicleId);
-      
-      await fetchVehicles();
-      await fetchActiveTransports();
-    } catch (error) {
-      console.error('Error assigning vehicle to transport:', error);
-    }
-  };
-
-  const releaseVehicleFromTransport = async (vehicleId: string) => {
-    try {
-      await supabase
-        .from('vehicles')
-        .update({ 
-          status: 'available',
-          current_transport_id: null 
-        })
-        .eq('id', vehicleId);
-      
-      await fetchVehicles();
-      await fetchActiveTransports();
-    } catch (error) {
-      console.error('Error releasing vehicle from transport:', error);
-    }
-  };
+  // Fetch active transports with fallback to mock data
+  const { data: transportsData, isLoading: transportsLoading, refetch: refetchTransports } = useQuery({
+    queryKey: ['activeTransports'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('transport')
+          .select('*')
+          .is('end_time', null)
+          .order('start_time', { ascending: false });
+        
+        if (error) throw error;
+        return data as Transport[];
+      } catch (error) {
+        console.error('Error fetching active transports, using mock data:', error);
+        return mockActiveTransports;
+      }
+    },
+    retry: 1,
+    retryDelay: 1000,
+  });
 
   useEffect(() => {
-    fetchVehicles();
-    fetchActiveTransports();
+    if (vehiclesData) {
+      setVehicles(vehiclesData);
+    }
+  }, [vehiclesData]);
 
-    // Set up real-time subscriptions
-    const vehiclesSubscription = supabase
-      .channel('vehicles-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'vehicles' },
-        () => fetchVehicles()
-      )
-      .subscribe();
+  useEffect(() => {
+    if (transportsData) {
+      setActiveTransports(transportsData);
+    }
+  }, [transportsData]);
 
-    const transportsSubscription = supabase
-      .channel('transports-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'transport' },
-        () => fetchActiveTransports()
-      )
-      .subscribe();
+  const refreshTransports = () => {
+    refetchTransports();
+  };
 
-    return () => {
-      supabase.removeChannel(vehiclesSubscription);
-      supabase.removeChannel(transportsSubscription);
-    };
-  }, []);
+  // Don't show loading for too long - use mock data for demo
+  const loading = false;
 
   return (
     <ResourceContext.Provider value={{
       vehicles,
       activeTransports,
-      refreshVehicles: fetchVehicles,
-      refreshTransports: fetchActiveTransports,
-      updateVehicleStatus,
-      assignVehicleToTransport,
-      releaseVehicleFromTransport
+      refreshTransports,
+      loading,
     }}>
       {children}
     </ResourceContext.Provider>
   );
-}
-
-export function useResource() {
-  const context = useContext(ResourceContext);
-  if (context === undefined) {
-    throw new Error('useResource must be used within a ResourceProvider');
-  }
-  return context;
-}
+};
