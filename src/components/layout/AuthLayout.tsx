@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -8,9 +8,10 @@ import LoadingScreen from './LoadingScreen';
 
 interface AuthLayoutProps {
   requiredRoles?: string[];
+  children: React.ReactNode;
 }
 
-export default function AuthLayout({ requiredRoles = [] }: AuthLayoutProps) {
+export default function AuthLayout({ requiredRoles = [], children }: AuthLayoutProps) {
   const { user, profile, loading } = useAuth();
 
   // Show loading screen while checking auth
@@ -53,7 +54,7 @@ export default function AuthLayout({ requiredRoles = [] }: AuthLayoutProps) {
         
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">
-            <Outlet />
+            {children}
           </div>
         </main>
       </div>

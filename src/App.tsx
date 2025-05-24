@@ -19,15 +19,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/sample-data-demo" element={<SampleDataDemo />} />
-          <Route path="/*" element={<AuthLayout />}>
-            {navItems.map(({ to, page }) => (
-              <Route 
-                key={to} 
-                path={to === "/" ? "" : to.replace("/", "")} 
-                element={page} 
-              />
-            ))}
-          </Route>
+          {navItems.map(({ to, page }) => (
+            <Route 
+              key={to} 
+              path={to} 
+              element={<AuthLayout>{page}</AuthLayout>} 
+            />
+          ))}
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
