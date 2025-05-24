@@ -33,89 +33,20 @@ export const ResourceProvider = ({ children }: { children: React.ReactNode }) =>
   const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
   const [activeTransports, setActiveTransports] = useState<Transport[]>(mockActiveTransports);
 
-  // Fetch vehicles with fallback to mock data
-  const { data: vehiclesData, isLoading: vehiclesLoading } = useQuery({
-    queryKey: ['vehicles'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('vehicles')
-          .select('*')
-          .order('vehicle_number');
-        
-        if (error) throw error;
-        return data as Vehicle[];
-      } catch (error) {
-        console.error('Error fetching vehicles, using mock data:', error);
-        return mockVehicles;
-      }
-    },
-    retry: 1,
-    retryDelay: 1000,
-  });
-
-  // Fetch active transports with fallback to mock data
-  const { data: transportsData, isLoading: transportsLoading, refetch: refetchTransports } = useQuery({
-    queryKey: ['activeTransports'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('transport')
-          .select('*')
-          .is('end_time', null)
-          .order('start_time', { ascending: false });
-        
-        if (error) throw error;
-        return data as Transport[];
-      } catch (error) {
-        console.error('Error fetching active transports, using mock data:', error);
-        return mockActiveTransports;
-      }
-    },
-    retry: 1,
-    retryDelay: 1000,
-  });
-
-  useEffect(() => {
-    if (vehiclesData) {
-      setVehicles(vehiclesData);
-    }
-  }, [vehiclesData]);
-
-  useEffect(() => {
-    if (transportsData) {
-      setActiveTransports(transportsData);
-    }
-  }, [transportsData]);
+  // Don't show loading for too long - use mock data for demo
+  const loading = false;
 
   const refreshTransports = () => {
-    refetchTransports();
+    console.log('Refreshing transports...');
+    setActiveTransports([...mockActiveTransports]);
   };
 
   const updateVehicleStatus = async (vehicleId: string, status: string) => {
-    try {
-      const { error } = await supabase
-        .from('vehicles')
-        .update({ status })
-        .eq('id', vehicleId);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setVehicles(prev => prev.map(v => 
-        v.id === vehicleId ? { ...v, status } : v
-      ));
-    } catch (error) {
-      console.error('Error updating vehicle status:', error);
-      // Update local state anyway for demo purposes
-      setVehicles(prev => prev.map(v => 
-        v.id === vehicleId ? { ...v, status } : v
-      ));
-    }
+    console.log('Updating vehicle status:', vehicleId, status);
+    setVehicles(prev => prev.map(v => 
+      v.id === vehicleId ? { ...v, status } : v
+    ));
   };
-
-  // Don't show loading for too long - use mock data for demo
-  const loading = false;
 
   return (
     <ResourceContext.Provider value={{
