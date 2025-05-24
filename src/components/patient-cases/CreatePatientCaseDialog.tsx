@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { CasePriority, Facility } from '@/types/medicalTransport';
+import { CasePriority, Facility, FacilityType } from '@/types/medicalTransport';
 
 interface CreatePatientCaseDialogProps {
   open: boolean;
@@ -54,7 +54,14 @@ export default function CreatePatientCaseDialog({
           .order('name');
 
         if (error) throw error;
-        setFacilities(data || []);
+        
+        // Cast the data to proper Facility type with FacilityType
+        const typedFacilities: Facility[] = (data || []).map(facility => ({
+          ...facility,
+          type: facility.type as FacilityType
+        }));
+        
+        setFacilities(typedFacilities);
       } catch (error) {
         console.error('Error fetching facilities:', error);
         toast.error('Failed to load facilities');
