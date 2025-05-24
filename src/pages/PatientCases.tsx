@@ -28,7 +28,15 @@ export default function PatientCases() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPatientCases(data || []);
+      
+      // Type assertion to ensure proper types for enum fields
+      const typedData = (data || []).map(item => ({
+        ...item,
+        priority: item.priority as CasePriority,
+        status: item.status as CaseStatus
+      }));
+      
+      setPatientCases(typedData);
     } catch (error) {
       console.error('Error fetching patient cases:', error);
       toast.error('Failed to load patient cases');
