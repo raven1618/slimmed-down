@@ -1,9 +1,18 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export async function seedSampleData() {
   try {
     console.log('Starting to seed sample data...');
+
+    // Check if user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('User must be authenticated to seed data');
+      throw new Error('Authentication required to seed sample data');
+    }
+
+    console.log('User authenticated, proceeding with data seeding...');
 
     // 1. Create sample facilities
     const facilitiesData = [
@@ -49,7 +58,10 @@ export async function seedSampleData() {
       .insert(facilitiesData)
       .select();
 
-    if (facilitiesError) throw facilitiesError;
+    if (facilitiesError) {
+      console.error('Error creating facilities:', facilitiesError);
+      throw facilitiesError;
+    }
     console.log('✅ Facilities created:', facilities?.length);
 
     // 2. Create sample vehicles
@@ -146,7 +158,10 @@ export async function seedSampleData() {
       .insert(vehiclesData)
       .select();
 
-    if (vehiclesError) throw vehiclesError;
+    if (vehiclesError) {
+      console.error('Error creating vehicles:', vehiclesError);
+      throw vehiclesError;
+    }
     console.log('✅ Vehicles created:', vehicles?.length);
 
     // 3. Create sample crew members
@@ -193,7 +208,10 @@ export async function seedSampleData() {
       .insert(crewData)
       .select();
 
-    if (crewError) throw crewError;
+    if (crewError) {
+      console.error('Error creating crew:', crewError);
+      throw crewError;
+    }
     console.log('✅ Crew members created:', crew?.length);
 
     // 4. Create sample patient cases
@@ -205,7 +223,8 @@ export async function seedSampleData() {
           destination_facility: facilities[1].id,
           priority: 'Emergency',
           status: 'En Route',
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+          created_by: user.id,
+          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
         },
         {
           patient_hash: 'PT-2024-002',
@@ -213,7 +232,8 @@ export async function seedSampleData() {
           destination_facility: facilities[0].id,
           priority: 'Routine',
           status: 'Pending',
-          created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString() // 30 minutes ago
+          created_by: user.id,
+          created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString()
         },
         {
           patient_hash: 'PT-2024-003',
@@ -221,7 +241,8 @@ export async function seedSampleData() {
           destination_facility: facilities[0].id,
           priority: 'Emergency',
           status: 'At Destination',
-          created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() // 4 hours ago
+          created_by: user.id,
+          created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
         },
         {
           patient_hash: 'PT-2024-004',
@@ -229,7 +250,8 @@ export async function seedSampleData() {
           destination_facility: facilities[0].id,
           priority: 'Routine',
           status: 'Closed',
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // 1 day ago
+          created_by: user.id,
+          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
         },
         {
           patient_hash: 'PT-2024-005',
@@ -237,7 +259,8 @@ export async function seedSampleData() {
           destination_facility: facilities[2].id,
           priority: 'Emergency',
           status: 'Pending',
-          created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString() // 15 minutes ago
+          created_by: user.id,
+          created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString()
         },
         {
           patient_hash: 'PT-2024-006',
@@ -245,7 +268,8 @@ export async function seedSampleData() {
           destination_facility: facilities[3].id,
           priority: 'Routine',
           status: 'En Route',
-          created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() // 1 hour ago
+          created_by: user.id,
+          created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
         },
         {
           patient_hash: 'PT-2024-007',
@@ -253,7 +277,8 @@ export async function seedSampleData() {
           destination_facility: facilities[2].id,
           priority: 'Emergency',
           status: 'Pending',
-          created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString() // 10 minutes ago
+          created_by: user.id,
+          created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString()
         },
         {
           patient_hash: 'PT-2024-008',
@@ -261,7 +286,8 @@ export async function seedSampleData() {
           destination_facility: facilities[4].id,
           priority: 'Routine',
           status: 'Closed',
-          created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
+          created_by: user.id,
+          created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
         }
       ];
 
@@ -270,7 +296,10 @@ export async function seedSampleData() {
         .insert(patientCasesData)
         .select();
 
-      if (casesError) throw casesError;
+      if (casesError) {
+        console.error('Error creating patient cases:', casesError);
+        throw casesError;
+      }
       console.log('✅ Patient cases created:', patientCases?.length);
 
       // 5. Create sample transports for some cases
@@ -280,7 +309,7 @@ export async function seedSampleData() {
             patientcase_id: patientCases[0].id,
             ambulance_id: vehicles[1].vehicle_number,
             crew: { primary: crew[0].full_name, secondary: crew[1].full_name },
-            start_time: new Date(Date.now() - 90 * 60 * 1000).toISOString(), // 1.5 hours ago
+            start_time: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
             billing_level: 'ALS',
             mileage: 15.3
           },
@@ -309,7 +338,10 @@ export async function seedSampleData() {
           .insert(transportsData)
           .select();
 
-        if (transportsError) throw transportsError;
+        if (transportsError) {
+          console.error('Error creating transports:', transportsError);
+          throw transportsError;
+        }
         console.log('✅ Transports created:', transports?.length);
       }
     }
@@ -319,35 +351,35 @@ export async function seedSampleData() {
       {
         title: 'Vehicle maintenance inspection - AMB-003',
         related: 'AMB-003',
-        due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 days from now
+        due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         priority: 'High',
         completed: false
       },
       {
         title: 'Monthly compliance report submission',
         related: 'Regulatory Compliance',
-        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 week from now
+        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         priority: 'Medium',
         completed: false
       },
       {
         title: 'Update crew certification records',
         related: 'Sarah Johnson',
-        due_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5 days from now
+        due_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         priority: 'Medium',
         completed: false
       },
       {
         title: 'Equipment inventory check',
         related: 'Medical Equipment',
-        due_date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // tomorrow
+        due_date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         priority: 'Low',
         completed: false
       },
       {
         title: 'Process insurance authorization - PT-2024-001',
         related: 'PT-2024-001',
-        due_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // yesterday
+        due_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         priority: 'High',
         completed: true
       }
@@ -358,7 +390,10 @@ export async function seedSampleData() {
       .insert(tasksData)
       .select();
 
-    if (tasksError) throw tasksError;
+    if (tasksError) {
+      console.error('Error creating tasks:', tasksError);
+      throw tasksError;
+    }
     console.log('✅ Tasks created:', tasks?.length);
 
     // 7. Create sample activities
@@ -405,14 +440,17 @@ export async function seedSampleData() {
       .insert(activitiesData)
       .select();
 
-    if (activitiesError) throw activitiesError;
+    if (activitiesError) {
+      console.error('Error creating activities:', activitiesError);
+      throw activitiesError;
+    }
     console.log('✅ Activities created:', activities?.length);
 
     // 8. Create sample maintenance records
     if (vehicles) {
       const maintenanceData = [
         {
-          vehicle_id: vehicles[2].id, // AMB-003 in maintenance
+          vehicle_id: vehicles[2].id,
           maintenance_type: 'Engine Repair',
           description: 'Replace engine oil pump and gaskets',
           service_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -425,7 +463,7 @@ export async function seedSampleData() {
           notes: 'Critical repair needed before return to service'
         },
         {
-          vehicle_id: vehicles[0].id, // AMB-001
+          vehicle_id: vehicles[0].id,
           maintenance_type: 'Preventive Maintenance',
           description: 'Routine 6-month service check',
           service_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -444,7 +482,10 @@ export async function seedSampleData() {
         .insert(maintenanceData)
         .select();
 
-      if (maintenanceError) throw maintenanceError;
+      if (maintenanceError) {
+        console.error('Error creating maintenance records:', maintenanceError);
+        throw maintenanceError;
+      }
       console.log('✅ Maintenance records created:', maintenance?.length);
     }
 
@@ -460,6 +501,14 @@ export async function seedSampleData() {
 export async function clearSampleData() {
   try {
     console.log('Clearing existing sample data...');
+
+    // Check if user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('User must be authenticated to clear data');
+      throw new Error('Authentication required to clear sample data');
+    }
 
     // Clear in reverse order of dependencies
     await supabase.from('maintenance_records').delete().neq('id', '00000000-0000-0000-0000-000000000000');
