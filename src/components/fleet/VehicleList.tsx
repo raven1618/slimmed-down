@@ -1,13 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useResource } from '@/context/ResourceContext';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { Eye, Edit, Fuel, Calendar, MapPin, Truck } from 'lucide-react';
+import VehicleCard from './VehicleCard';
 
 interface Vehicle {
   id: string;
@@ -50,23 +47,6 @@ export default function VehicleList() {
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'available': return 'bg-green-100 text-green-800';
-      case 'in_service': return 'bg-blue-100 text-blue-800';
-      case 'maintenance': return 'bg-orange-100 text-orange-800';
-      case 'out_of_service': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getFuelLevelColor = (level?: number) => {
-    if (!level) return 'text-gray-400';
-    if (level < 25) return 'text-red-600';
-    if (level < 50) return 'text-orange-600';
-    return 'text-green-600';
-  };
-
   const getTransportForVehicle = (vehicleId: string) => {
     return activeTransports.find(t => t.ambulance_id === vehicleId);
   };
@@ -93,109 +73,13 @@ export default function VehicleList() {
             const assignedTransport = getTransportForVehicle(vehicle.id);
             
             return (
-              <Card key={vehicle.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{vehicle.vehicle_number}</CardTitle>
-                    <Badge className={getStatusBadgeColor(vehicle.status)}>
-                      {vehicle.status.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {vehicle.year} {vehicle.make} {vehicle.model}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Type:</span>
-                    <span className="font-medium">{vehicle.vehicle_type}</span>
-                  </div>
-                  
-                  {vehicle.mileage && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Mileage:</span>
-                      <span className="font-medium">{vehicle.mileage.toLocaleString()} mi</span>
-                    </div>
-                  )}
-                  
-                  {vehicle.fuel_level && (
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <Fuel className="h-3 w-3 mr-1" />
-                        Fuel:
-                      </div>
-                      <span className={`font-medium ${getFuelLevelColor(vehicle.fuel_level)}`}>
-                        {vehicle.fuel_level}%
-                      </span>
-                    </div>
-                  )}
-                  
-                  {vehicle.next_inspection && (
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Next Inspection:
-                      </div>
-                      <span className="font-medium">
-                        {format(new Date(vehicle.next_inspection), 'MMM dd, yyyy')}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {vehicle.location && (
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        Location:
-                      </div>
-                      <span className="font-medium">{vehicle.location}</span>
-                    </div>
-                  )}
-
-                  {/* Transport Assignment Info */}
-                  {assignedTransport && (
-                    <div className="bg-blue-50 p-2 rounded text-sm">
-                      <div className="flex items-center gap-1 mb-1">
-                        <Truck className="h-3 w-3 text-blue-600" />
-                        <span className="font-medium text-blue-800">Active Transport</span>
-                      </div>
-                      <p className="text-blue-700">
-                        Case: {assignedTransport.patientcase_id?.slice(0, 8)}...
-                      </p>
-                      <p className="text-blue-600 text-xs">
-                        Level: {assignedTransport.billing_level}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Eye className="h-3 w-3 mr-1" />
-                      View
-                    </Button>
-                    {vehicle.status === 'available' && (
-                      <Button 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => handleQuickDispatch(vehicle)}
-                      >
-                        <Truck className="h-3 w-3 mr-1" />
-                        Dispatch
-                      </Button>
-                    )}
-                    {vehicle.status === 'in_service' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => updateVehicleStatus(vehicle.id, 'available')}
-                      >
-                        Complete
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <VehicleCard
+                key={vehicle.id}
+                vehicle={vehicle}
+                assignedTransport={assignedTransport}
+                onQuickDispatch={handleQuickDispatch}
+                onUpdateStatus={updateVehicleStatus}
+              />
             );
           })}
         </div>
