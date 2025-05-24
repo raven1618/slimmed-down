@@ -22,6 +22,48 @@ const AuthContext = createContext<AuthContextProps>({
   refreshProfile: async () => {},
 });
 
+// Check if we're in demo mode (localhost or demo environment)
+const isDemoMode = () => {
+  return window.location.hostname === 'localhost' || 
+         window.location.hostname.includes('demo') ||
+         window.location.search.includes('demo=true');
+};
+
+// Create mock user and session for demo
+const createMockSession = (): { session: Session; user: User; profile: UserProfile } => {
+  const mockUser: User = {
+    id: 'demo-user-123',
+    email: 'demo@medicaltransport.com',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    aud: 'authenticated',
+    app_metadata: {},
+    user_metadata: {
+      full_name: 'Demo User'
+    }
+  } as User;
+
+  const mockSession: Session = {
+    access_token: 'demo-token',
+    refresh_token: 'demo-refresh',
+    expires_in: 3600,
+    expires_at: Date.now() + 3600000,
+    token_type: 'bearer',
+    user: mockUser
+  } as Session;
+
+  const mockProfile: UserProfile = {
+    id: 'demo-user-123',
+    email: 'demo@medicaltransport.com',
+    role: 'admin',
+    full_name: 'Demo User',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  return { session: mockSession, user: mockUser, profile: mockProfile };
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -31,7 +73,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session
+    // If demo mode, use mock data immediately
+    if (isDemoMode()) {
+      const { session: mockSession, user: mockUser, profile: mockProfile } = createMockSession();
+      if (mounted) {
+        console.log('Demo mode detected - using mock authentication');
+        setSession(mockSession);
+        setUser(mockUser);
+        setProfile(mockProfile);
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Original authentication logic for production
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -47,7 +102,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // For now, create a mock profile to avoid database issues
         if (session?.user) {
           const mockProfile: UserProfile = {
             id: session.user.id,
@@ -82,7 +136,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (event === 'SIGNED_IN' && session?.user) {
-          // Create mock profile for signed in user
           const mockProfile: UserProfile = {
             id: session.user.id,
             email: session.user.email || '',
@@ -108,7 +161,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshProfile = async () => {
     if (user) {
-      // For now, just update the mock profile
       const mockProfile: UserProfile = {
         id: user.id,
         email: user.email || '',
@@ -122,6 +174,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (isDemoMode()) {
+      // In demo mode, just clear the mock data
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      return;
+    }
+
     try {
       await supabase.auth.signOut();
       setProfile(null);

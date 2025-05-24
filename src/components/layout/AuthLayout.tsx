@@ -11,12 +11,38 @@ interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
+// Check if we're in demo mode
+const isDemoMode = () => {
+  return window.location.hostname === 'localhost' || 
+         window.location.hostname.includes('demo') ||
+         window.location.search.includes('demo=true');
+};
+
 export default function AuthLayout({ requiredRoles = [], children }: AuthLayoutProps) {
   const { user, profile, loading } = useAuth();
 
-  // Show loading screen while checking auth
-  if (loading) {
+  // Show loading screen while checking auth (but not in demo mode)
+  if (loading && !isDemoMode()) {
     return <LoadingScreen />;
+  }
+
+  // In demo mode, always allow access
+  if (isDemoMode()) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar />
+        
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header />
+          
+          <main className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    );
   }
 
   // Redirect to login if not authenticated
