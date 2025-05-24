@@ -154,7 +154,7 @@ export default function UnifiedResourceDashboard() {
                       <p className="text-xs text-gray-500">{vehicle.location}</p>
                     )}
                   </div>
-                  <Badge className={getStatusColor(vehicle.status)} className="text-xs">
+                  <Badge className={getStatusColor(vehicle.status) + " text-xs"}>
                     {vehicle.status}
                   </Badge>
                 </div>
@@ -169,7 +169,7 @@ export default function UnifiedResourceDashboard() {
                   {maintenanceVehicles.slice(0, 2).map((vehicle) => (
                     <div key={vehicle.id} className="flex justify-between items-center text-sm">
                       <span>{vehicle.vehicle_number}</span>
-                      <Badge className={getStatusColor(vehicle.status)} className="text-xs">
+                      <Badge className={getStatusColor(vehicle.status) + " text-xs"}>
                         Maintenance
                       </Badge>
                     </div>
