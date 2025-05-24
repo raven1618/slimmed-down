@@ -5,19 +5,38 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, FileText, Clock, MapPin } from 'lucide-react';
-import { PatientCase, CasePriority, CaseStatus } from '@/types/medicalTransport';
+import { PatientCase, CasePriority, CaseStatus, Facility } from '@/types/medicalTransport';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import CreatePatientCaseDialog from '@/components/patient-cases/CreatePatientCaseDialog';
 import PatientCaseDetailDialog from '@/components/patient-cases/PatientCaseDetailDialog';
 
+interface PatientCaseWithFacilities extends PatientCase {
+  origin_facility_name?: string;
+  destination_facility_name?: string;
+}
+
 export default function PatientCases() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedCase, setSelectedCase] = useState<PatientCase | null>(null);
+  const [selectedCase, setSelectedCase] = useState<PatientCaseWithFacilities | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [patientCases, setPatientCases] = useState<PatientCase[]>([]);
+  const [patientCases, setPatientCases] = useState<PatientCaseWithFacilities[]>([]);
   const [loading, setLoading] = useState(true);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+
+  const fetchFacilities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('facility')
+        .select('*');
+      
+      if (error) throw error;
+      setFacilities(data || []);
+    } catch (error) {
+      console.error('Error fetching facilities:', error);
+    }
+  };
 
   const fetchPatientCases = async () => {
     try {
@@ -29,14 +48,25 @@ export default function PatientCases() {
 
       if (error) throw error;
       
-      // Type assertion to ensure proper types for enum fields
       const typedData = (data || []).map(item => ({
         ...item,
         priority: item.priority as CasePriority,
         status: item.status as CaseStatus
       }));
       
-      setPatientCases(typedData);
+      // Map facility IDs to names
+      const casesWithFacilities = typedData.map(case_ => {
+        const originFacility = facilities.find(f => f.id === case_.origin_facility);
+        const destinationFacility = facilities.find(f => f.id === case_.destination_facility);
+        
+        return {
+          ...case_,
+          origin_facility_name: originFacility?.name || 'Unknown Facility',
+          destination_facility_name: destinationFacility?.name
+        };
+      });
+      
+      setPatientCases(casesWithFacilities);
     } catch (error) {
       console.error('Error fetching patient cases:', error);
       toast.error('Failed to load patient cases');
@@ -46,10 +76,16 @@ export default function PatientCases() {
   };
 
   useEffect(() => {
-    fetchPatientCases();
+    fetchFacilities();
   }, []);
 
-  const handleViewCase = (patientCase: PatientCase) => {
+  useEffect(() => {
+    if (facilities.length > 0) {
+      fetchPatientCases();
+    }
+  }, [facilities]);
+
+  const handleViewCase = (patientCase: PatientCaseWithFacilities) => {
     setSelectedCase(patientCase);
     setIsDetailDialogOpen(true);
   };
@@ -84,8 +120,8 @@ export default function PatientCases() {
 
   const filteredCases = patientCases.filter(case_ =>
     case_.patient_hash?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    case_.origin_facility.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    case_.destination_facility?.toLowerCase().includes(searchTerm.toLowerCase())
+    case_.origin_facility_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    case_.destination_facility_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const emergencyCases = patientCases.filter(c => c.priority === 'Emergency');
@@ -166,11 +202,11 @@ export default function PatientCases() {
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-gray-500 mt-0.5" />
                 <div className="text-sm">
-                  <div className="font-medium">{case_.origin_facility}</div>
-                  {case_.destination_facility && (
+                  <div className="font-medium">{case_.origin_facility_name}</div>
+                  {case_.destination_facility_name && (
                     <>
                       <div className="text-gray-500">↓</div>
-                      <div className="font-medium">{case_.destination_facility}</div>
+                      <div className="font-medium">{case_.destination_facility_name}</div>
                     </>
                   )}
                 </div>
@@ -222,6 +258,7 @@ export default function PatientCases() {
         onOpenChange={setIsDetailDialogOpen}
         case={selectedCase}
         onUpdate={handleCaseUpdate}
+        facilities={facilities}
       />
     </div>
   );

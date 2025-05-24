@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PatientCase, CasePriority, CaseStatus } from '@/types/medicalTransport';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { PatientCase, CasePriority, CaseStatus, Facility } from '@/types/medicalTransport';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Edit2, Save, X } from 'lucide-react';
@@ -14,11 +14,12 @@ import { Edit2, Save, X } from 'lucide-react';
 interface PatientCaseDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  case: PatientCase | null;
+  case: any;
   onUpdate: () => void;
+  facilities: Facility[];
 }
 
-export default function PatientCaseDetailDialog({ open, onOpenChange, case: patientCase, onUpdate }: PatientCaseDetailDialogProps) {
+export default function PatientCaseDetailDialog({ open, onOpenChange, case: patientCase, onUpdate, facilities }: PatientCaseDetailDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<PatientCase>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -172,24 +173,46 @@ export default function PatientCaseDetailDialog({ open, onOpenChange, case: pati
           <div>
             <Label>Origin Facility</Label>
             {isEditing ? (
-              <Input
-                value={editData.origin_facility || ''}
-                onChange={(e) => setEditData({...editData, origin_facility: e.target.value})}
-              />
+              <Select 
+                value={editData.origin_facility} 
+                onValueChange={(value) => setEditData({...editData, origin_facility: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {facilities.map((facility) => (
+                    <SelectItem key={facility.id} value={facility.id}>
+                      {facility.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : (
-              <p className="text-sm">{patientCase.origin_facility}</p>
+              <p className="text-sm">{patientCase.origin_facility_name}</p>
             )}
           </div>
 
           <div>
             <Label>Destination Facility</Label>
             {isEditing ? (
-              <Input
-                value={editData.destination_facility || ''}
-                onChange={(e) => setEditData({...editData, destination_facility: e.target.value})}
-              />
+              <Select 
+                value={editData.destination_facility || ''} 
+                onValueChange={(value) => setEditData({...editData, destination_facility: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select destination" />
+                </SelectTrigger>
+                <SelectContent>
+                  {facilities.map((facility) => (
+                    <SelectItem key={facility.id} value={facility.id}>
+                      {facility.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : (
-              <p className="text-sm">{patientCase.destination_facility || 'Not specified'}</p>
+              <p className="text-sm">{patientCase.destination_facility_name || 'Not specified'}</p>
             )}
           </div>
 

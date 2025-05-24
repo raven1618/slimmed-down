@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
-import { CasePriority } from '@/types/medicalTransport';
+import { CasePriority, Facility } from '@/types/medicalTransport';
 import { toast } from 'sonner';
 
 interface CreatePatientCaseDialogProps {
@@ -24,7 +24,32 @@ interface CreateCaseForm {
 }
 
 export default function CreatePatientCaseDialog({ open, onOpenChange, onSuccess }: CreatePatientCaseDialogProps) {
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm<CreateCaseForm>();
+  const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = useForm<CreateCaseForm>();
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [loadingFacilities, setLoadingFacilities] = useState(true);
+
+  useEffect(() => {
+    const fetchFacilities = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('facility')
+          .select('*')
+          .order('name');
+        
+        if (error) throw error;
+        setFacilities(data || []);
+      } catch (error) {
+        console.error('Error fetching facilities:', error);
+        toast.error('Failed to load facilities');
+      } finally {
+        setLoadingFacilities(false);
+      }
+    };
+
+    if (open) {
+      fetchFacilities();
+    }
+  }, [open]);
 
   const onSubmit = async (data: CreateCaseForm) => {
     try {
@@ -33,7 +58,7 @@ export default function CreatePatientCaseDialog({ open, onOpenChange, onSuccess 
         .insert({
           patient_hash: data.patient_hash,
           origin_facility: data.origin_facility,
-          destination_facility: data.destination_facility,
+          destination_facility: data.destination_facility || null,
           priority: data.priority,
           status: 'Pending',
           created_by: (await supabase.auth.getUser()).data.user?.id || ''
@@ -71,23 +96,34 @@ export default function CreatePatientCaseDialog({ open, onOpenChange, onSuccess 
 
           <div>
             <Label htmlFor="origin_facility">Origin Facility</Label>
-            <Input
-              id="origin_facility"
-              {...register('origin_facility', { required: 'Origin facility is required' })}
-              placeholder="General Hospital"
-            />
-            {errors.origin_facility && (
-              <p className="text-sm text-red-600">{errors.origin_facility.message}</p>
-            )}
+            <Select onValueChange={(value) => setValue('origin_facility', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder={loadingFacilities ? "Loading facilities..." : "Select origin facility"} />
+              </SelectTrigger>
+              <SelectContent>
+                {facilities.map((facility) => (
+                  <SelectItem key={facility.id} value={facility.id}>
+                    {facility.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
-            <Label htmlFor="destination_facility">Destination Facility</Label>
-            <Input
-              id="destination_facility"
-              {...register('destination_facility')}
-              placeholder="Specialist Center"
-            />
+            <Label htmlFor="destination_facility">Destination Facility (Optional)</Label>
+            <Select onValueChange={(value) => setValue('destination_facility', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder={loadingFacilities ? "Loading facilities..." : "Select destination facility"} />
+              </SelectTrigger>
+              <SelectContent>
+                {facilities.map((facility) => (
+                  <SelectItem key={facility.id} value={facility.id}>
+                    {facility.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
