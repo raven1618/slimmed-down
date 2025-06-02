@@ -36,7 +36,7 @@ export default function CreatePatientCaseDialog({
     patient_hash: '',
     priority: 'Routine',
     origin_facility: '',
-    destination_facility: ''
+    destination_facility: 'none'
   });
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,7 +95,7 @@ export default function CreatePatientCaseDialog({
           patient_hash: formData.patient_hash.trim(),
           priority: formData.priority,
           origin_facility: formData.origin_facility,
-          destination_facility: formData.destination_facility || null,
+          destination_facility: formData.destination_facility === 'none' ? null : formData.destination_facility,
           status: 'Pending',
           created_by: 'demo-user' // For demo purposes
         })
@@ -115,7 +115,7 @@ export default function CreatePatientCaseDialog({
         patient_hash: '',
         priority: 'Routine',
         origin_facility: '',
-        destination_facility: ''
+        destination_facility: 'none'
       });
       
       onSuccess();
@@ -191,7 +191,7 @@ export default function CreatePatientCaseDialog({
                 <SelectValue placeholder="Select destination facility (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {facilities.map((facility) => (
                   <SelectItem key={facility.id} value={facility.id}>
                     {facility.name} ({facility.type})
