@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,12 +7,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { CasePriority, Facility, FacilityType } from '@/types/medicalTransport';
+import { usePatientCaseForm } from '@/hooks/usePatientCaseForm';
+import { useFacilities } from '@/hooks/useFacilities';
+import { createPatientCase } from '@/services/patientCaseFormService';
+import PatientIdentifierField from './form/PatientIdentifierField';
+import PriorityField from './form/PriorityField';
+import FacilityField from './form/FacilityField';
+import { CasePriority } from '@/types/medicalTransport';
 
 interface CreatePatientCaseDialogProps {
   open: boolean;
@@ -20,108 +22,33 @@ interface CreatePatientCaseDialogProps {
   onSuccess: () => void;
 }
 
-interface FormData {
-  patient_hash: string;
-  priority: CasePriority;
-  origin_facility: string;
-  destination_facility: string;
-}
-
 export default function CreatePatientCaseDialog({ 
   open, 
   onOpenChange, 
   onSuccess 
 }: CreatePatientCaseDialogProps) {
-  const [formData, setFormData] = useState<FormData>({
-    patient_hash: '',
-    priority: 'Routine',
-    origin_facility: '',
-    destination_facility: 'none'
-  });
-  const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingFacilities, setLoadingFacilities] = useState(true);
-
-  useEffect(() => {
-    const fetchFacilities = async () => {
-      if (!open) return;
-      
-      try {
-        setLoadingFacilities(true);
-        const { data, error } = await supabase
-          .from('facility')
-          .select('*')
-          .order('name');
-
-        if (error) throw error;
-        
-        // Cast the data to proper Facility type with FacilityType
-        const typedFacilities: Facility[] = (data || []).map(facility => ({
-          ...facility,
-          type: facility.type as FacilityType
-        }));
-        
-        setFacilities(typedFacilities);
-      } catch (error) {
-        console.error('Error fetching facilities:', error);
-        toast.error('Failed to load facilities');
-      } finally {
-        setLoadingFacilities(false);
-      }
-    };
-
-    fetchFacilities();
-  }, [open]);
+  const { formData, updateField, resetForm, validateForm } = usePatientCaseForm();
+  const { facilities, loading: loadingFacilities } = useFacilities(open);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.patient_hash.trim()) {
-      toast.error('Please enter a patient identifier');
-      return;
-    }
-
-    if (!formData.origin_facility) {
-      toast.error('Please select an origin facility');
+    const validationError = validateForm();
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
     try {
       setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('patientcase')
-        .insert({
-          patient_hash: formData.patient_hash.trim(),
-          priority: formData.priority,
-          origin_facility: formData.origin_facility,
-          destination_facility: formData.destination_facility === 'none' ? null : formData.destination_facility,
-          status: 'Pending',
-          created_by: 'demo-user' // For demo purposes
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating patient case:', error);
-        toast.error(`Failed to create patient case: ${error.message}`);
-        return;
-      }
-
+      await createPatientCase(formData);
       toast.success('Patient case created successfully');
-      
-      // Reset form
-      setFormData({
-        patient_hash: '',
-        priority: 'Routine',
-        origin_facility: '',
-        destination_facility: 'none'
-      });
-      
+      resetForm();
       onSuccess();
     } catch (error) {
       console.error('Error creating patient case:', error);
-      toast.error('Failed to create patient case');
+      toast.error(error instanceof Error ? error.message : 'Failed to create patient case');
     } finally {
       setLoading(false);
     }
@@ -135,71 +62,34 @@ export default function CreatePatientCaseDialog({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="patient_hash">Patient Identifier</Label>
-            <Input
-              id="patient_hash"
-              value={formData.patient_hash}
-              onChange={(e) => setFormData(prev => ({ ...prev, patient_hash: e.target.value }))}
-              placeholder="Enter patient identifier"
-              required
-            />
-          </div>
+          <PatientIdentifierField
+            value={formData.patient_hash}
+            onChange={(value) => updateField('patient_hash', value)}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="priority">Priority</Label>
-            <Select 
-              value={formData.priority} 
-              onValueChange={(value: CasePriority) => setFormData(prev => ({ ...prev, priority: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Emergency">Emergency</SelectItem>
-                <SelectItem value="Routine">Routine</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <PriorityField
+            value={formData.priority}
+            onChange={(value) => updateField('priority', value as CasePriority)}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="origin_facility">Origin Facility</Label>
-            <Select 
-              value={formData.origin_facility} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, origin_facility: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={loadingFacilities ? "Loading..." : "Select origin facility"} />
-              </SelectTrigger>
-              <SelectContent>
-                {facilities.map((facility) => (
-                  <SelectItem key={facility.id} value={facility.id}>
-                    {facility.name} ({facility.type})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <FacilityField
+            label="Origin Facility"
+            value={formData.origin_facility}
+            onChange={(value) => updateField('origin_facility', value)}
+            facilities={facilities}
+            loading={loadingFacilities}
+            placeholder="Select origin facility"
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="destination_facility">Destination Facility (Optional)</Label>
-            <Select 
-              value={formData.destination_facility} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, destination_facility: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select destination facility (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {facilities.map((facility) => (
-                  <SelectItem key={facility.id} value={facility.id}>
-                    {facility.name} ({facility.type})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <FacilityField
+            label="Destination Facility (Optional)"
+            value={formData.destination_facility}
+            onChange={(value) => updateField('destination_facility', value)}
+            facilities={facilities}
+            loading={loadingFacilities}
+            placeholder="Select destination facility (optional)"
+            showNoneOption={true}
+          />
 
           <div className="flex justify-end gap-3 pt-4">
             <Button 
