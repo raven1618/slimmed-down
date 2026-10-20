@@ -200,6 +200,21 @@ a { color: var(--gold); text-underline-offset: 3px; }
   width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
   background: var(--raised); cursor: pointer; font-size: 1.1rem; line-height: 1;
 }
+.drawer .fold {
+  position: absolute; top: 12px; right: 56px;
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--raised); cursor: pointer; display: grid; place-items: center; padding: 0;
+}
+.drawer .fold svg { width: 16px; height: 16px; transition: transform 200ms ease; }
+.drawer.is-collapsed .fold svg { transform: rotate(180deg); }
+.drawer .kicker, .drawer h2 { padding-right: 84px; }
+.drawer.is-collapsed { bottom: auto; gap: 8px; padding: 12px 14px 12px 16px; overflow: visible; }
+.drawer.is-collapsed h2 { font-size: 1.1rem; cursor: pointer; }
+.drawer.is-collapsed #d-body, .drawer.is-collapsed #d-facts, .drawer.is-collapsed #d-actions,
+.drawer.is-collapsed #d-extra, .drawer.is-collapsed #d-note { display: none !important; }
+.compact { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.compact .sum { font-family: var(--mono); font-size: 0.8125rem; color: var(--sand); margin-right: auto; font-variant-numeric: tabular-nums; }
+.compact .btn { padding: 8px 12px; font-size: 0.75rem; }
 .facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
 .facts li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 0.875rem; }
 .facts li span:first-child { color: var(--muted); }
@@ -356,6 +371,10 @@ ul.plain b { color: var(--sand); font-weight: 600; }
     top: auto; left: var(--gutter-l); right: var(--gutter-r); width: auto;
     max-height: 62vh; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   }
+  .drawer.is-collapsed { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); }
+  .drawer .fold svg { transform: rotate(180deg); }
+  .drawer.is-collapsed .fold svg { transform: none; }
+  body:has(.drawer.is-collapsed:not([hidden])) .hint { visibility: hidden; }
   .chip { padding: 5px 8px 5px 7px; font-size: 0.75rem; }
   .chip small { display: none; }
   .compass { bottom: calc(env(safe-area-inset-bottom, 0px) + 104px); }
@@ -396,8 +415,10 @@ ul.plain b { color: var(--sand); font-weight: 600; }
 
 <aside class="drawer" id="drawer" hidden aria-live="polite">
   <button class="close" id="drawer-close" type="button" aria-label="Close">×</button>
+  <button class="fold" id="drawer-fold" type="button" aria-expanded="true" aria-label="Collapse panel"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 10 8 5.5 12.5 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <p class="kicker" id="d-kick"></p>
   <h2 id="d-title"></h2>
+  <div class="compact" id="d-compact" hidden></div>
   <p id="d-body"></p>
   <ul class="facts" id="d-facts"></ul>
   <div class="actions" id="d-actions"></div>
@@ -2116,6 +2137,7 @@ function makeChip(item, cls, onClick) {
 
 function openDrawer(kick, title, body, facts, actions, color, note = '', extra = null) {
   drawer.dataset.panel = '';
+  $('d-compact').innerHTML = '';
   drawer.style.setProperty('--c', color || 'var(--gold)');
   $('d-kick').textContent = kick;
   $('d-title').textContent = title;
@@ -2140,9 +2162,35 @@ function openDrawer(kick, title, body, facts, actions, color, note = '', extra =
   if (extra) ex.appendChild(extra);
   ex.hidden = !extra;
   drawer.hidden = false;
+  setCollapsed(drawerCollapsed);
+}
+let drawerCollapsed = false;
+function setCollapsed(on) {
+  drawerCollapsed = on;
+  drawer.classList.toggle('is-collapsed', on);
+  const f = $('drawer-fold');
+  f.setAttribute('aria-expanded', String(!on));
+  f.setAttribute('aria-label', on ? 'Expand panel' : 'Collapse panel');
+  $('d-compact').hidden = !on || !$('d-compact').childElementCount;
+}
+$('drawer-fold').addEventListener('click', () => setCollapsed(!drawerCollapsed));
+$('d-title').addEventListener('click', () => { if (drawerCollapsed) setCollapsed(false); });
+/* The slim bar shown when the panel is folded: a live summary and the buttons that matter. */
+function fillCompact(summary, buttons) {
+  const row = $('d-compact');
+  row.innerHTML = '';
+  const sp = document.createElement('span'); sp.className = 'sum'; sp.textContent = summary; row.appendChild(sp);
+  buttons.filter(Boolean).forEach(([label, fn, disabled], i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn' + (i ? ' ghost' : ''); b.textContent = label; b.disabled = !!disabled;
+    b.addEventListener('click', fn);
+    row.appendChild(b);
+  });
+  setCollapsed(drawerCollapsed);
 }
 function closeDrawer() {
   drawer.hidden = true;
+  setCollapsed(false);
   drawer.dataset.panel = '';
   if (limits.drawing || limits.editing || limits.textDraft.length) {
     limits.drawing = null; limits.editing = null; limits.selected = -1; limits.textDraft = [];
@@ -2290,11 +2338,15 @@ function renderLimits() {
       <div class="actions"><button class="btn" type="button" id="l-finish"${d.utm.length < 3 ? ' disabled' : ''}>Finish</button><button class="btn ghost" type="button" id="l-undo"${d.utm.length ? '' : ' disabled'}>Undo corner</button><button class="btn ghost" type="button" id="l-cancel">Cancel</button></div>`;
     openDrawer('Property limits', 'Tap each corner', 'Walk the edge of the land and tap every corner in order. Zoom in for accuracy; tap the first corner again, or Finish, to close the shape.', null, null, kindOf(d).color, storageNote(), el);
     drawer.dataset.panel = 'limits';
+    const undoCorner = () => { d.utm.pop(); drawOverlay(); renderLimits(); };
+    const cancel = () => { limits.drawing = null; setCollapsed(false); drawOverlay(); renderLimits(); };
     $('l-name').addEventListener('input', (e) => { d.name = e.target.value; });
     $('l-kind').addEventListener('change', (e) => { d.kind = e.target.value; drawOverlay(); renderLimits(); });
     $('l-finish').addEventListener('click', finishDrawing);
-    $('l-undo').addEventListener('click', () => { d.utm.pop(); drawOverlay(); renderLimits(); });
-    $('l-cancel').addEventListener('click', () => { limits.drawing = null; drawOverlay(); renderLimits(); });
+    $('l-undo').addEventListener('click', undoCorner);
+    $('l-cancel').addEventListener('click', cancel);
+    fillCompact(`${d.utm.length} corner${d.utm.length === 1 ? '' : 's'}${a ? ` · ${fmt(a.ha, 2)} ha` : ''}`,
+      [['Finish', finishDrawing, d.utm.length < 3], ['Undo', undoCorner, !d.utm.length], ['Cancel', cancel]]);
     return;
   }
 
@@ -2318,12 +2370,20 @@ function renderLimits() {
     let t = 0;
     $('l-name').addEventListener('input', (e) => { b.name = e.target.value.slice(0, 80) || 'Boundary'; clearTimeout(t); t = setTimeout(() => { persistLimit(b.id); buildChips(); }, 500); });
     $('l-kind').addEventListener('change', (e) => { b.kind = e.target.value; persistLimit(b.id); limitsChanged(); });
-    $('l-done').addEventListener('click', () => { limits.editing = null; limits.selected = -1; limitsChanged(); });
-    $('l-delcorner').addEventListener('click', () => { if (sel < 0 || b.utm.length <= 3) return; pushUndo(b); b.utm.splice(sel, 1); limits.selected = -1; persistLimit(b.id); limitsChanged(); });
-    $('l-undo').addEventListener('click', () => {
+    const done = () => { limits.editing = null; limits.selected = -1; setCollapsed(false); limitsChanged(); };
+    const delCorner = () => { if (sel < 0 || b.utm.length <= 3) return; pushUndo(b); b.utm.splice(sel, 1); limits.selected = -1; persistLimit(b.id); limitsChanged(); };
+    const undo = () => {
       for (let i = limits.undo.length - 1; i >= 0; i--) if (limits.undo[i].id === b.id) { b.utm = limits.undo.splice(i, 1)[0].utm; break; }
       limits.selected = -1; persistLimit(b.id); limitsChanged();
-    });
+    };
+    $('l-done').addEventListener('click', done);
+    $('l-delcorner').addEventListener('click', delCorner);
+    $('l-undo').addEventListener('click', undo);
+    fillCompact(`${fmt(a.ha, 2)} ha · ${b.utm.length} corners`, [
+      ['Done', done],
+      ['Undo', undo, !limits.undo.some((u) => u.id === b.id)],
+      sel >= 0 ? ['Remove corner', delCorner, b.utm.length <= 3] : null,
+    ]);
     $('l-copy').addEventListener('click', (e) => copyText(JSON.stringify(geojsonOf(b)), e.currentTarget));
     $('l-delete').addEventListener('click', (e) => {
       const btn = e.currentTarget;
@@ -2398,6 +2458,7 @@ function openLimits() { closeDrawer(); renderLimits(); }
 function startDrawing() {
   limits.editing = null; limits.selected = -1; limits.textDraft = [];
   limits.drawing = { name: limits.list.some((b) => b.kind === 'property') ? `Lote ${limits.list.length + 1}` : 'Property', kind: 'property', utm: [] };
+  drawerCollapsed = true;
   rebuildHandles(); drawOverlay(); renderLimits();
 }
 function finishDrawing() {
@@ -2412,6 +2473,7 @@ function finishDrawing() {
 }
 function startEditing(id) {
   limits.drawing = null; limits.editing = id; limits.selected = -1;
+  drawerCollapsed = true;
   const b = limitById(id); if (!b) return;
   const bb = bounds(b.utm); flyAround(bb.x, bb.z, bb.r * 1.3 + 140);
   limitsChanged(); renderLimits();
@@ -2615,8 +2677,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (!planEl.hidden) closePlan();
-  else if (limits.drawing) { limits.drawing = null; drawOverlay(); renderLimits(); }
-  else if (limits.editing) { limits.editing = null; limits.selected = -1; limitsChanged(); renderLimits(); }
+  else if (limits.drawing) { limits.drawing = null; drawerCollapsed = false; drawOverlay(); renderLimits(); }
+  else if (limits.editing) { limits.editing = null; limits.selected = -1; drawerCollapsed = false; limitsChanged(); renderLimits(); }
   else if (!drawer.hidden) closeDrawer();
 });
 addEventListener('resize', () => {
