@@ -1756,6 +1756,12 @@ async function buildHill() {
       treeData.x[i] = dv.getInt16(o, true) / 10; treeData.z[i] = dv.getInt16(o + 2, true) / 10;
       treeData.h[i] = dv.getUint8(o + 4) / 10; treeData.r[i] = dv.getUint8(o + 5) / 10;
     }
+    if (small && SITES.length) {
+      // Phones draw only the tallest 32k trees: put every tree inside a site photo first so none of those is cut.
+      const ins = Uint8Array.from(treeData.x, (x, i) => SITES.some((p) => x >= p.x0 && x < p.x1 && treeData.z[i] >= p.z0 && treeData.z[i] < p.z1));
+      const order = Array.from(ins.keys()).sort((a, b) => ins[b] - ins[a]);
+      for (const k of ['x', 'z', 'h', 'r']) { const src = treeData[k]; treeData[k] = Float32Array.from(order, (i) => src[i]); }
+    }
   }
   {
     const [c, g] = canvas(img.width, img.height);

@@ -355,7 +355,7 @@ def step_layers():
 
 
 # ----------------------------------------------------------- site photos --
-SITE_RES = 0.25                                   # metres per pixel of the draped photos
+SITE_RES = 0.2                                    # metres per pixel of the draped photos (the screenshot is about 0.22)
 
 
 def step_site():
