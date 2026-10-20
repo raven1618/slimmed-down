@@ -1,1 +1,126 @@
-{"type":"FeatureCollection","features":[]}
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Finca 2663 (Yú)",
+    "kind": "property",
+    "color": "#e9bf5a",
+    "measure": "Field measurement (RTK)",
+    "area_m2_plan": 86591.694,
+    "utm_21s": [
+     [
+      487195.01,
+      7201373.22
+     ],
+     [
+      487405.38,
+      7201377.1
+     ],
+     [
+      487591.3,
+      7201173.31
+     ],
+     [
+      487362.89,
+      7200961.52
+     ]
+    ],
+    "source": "Plano georreferenciado, Hendata, 02/09/2026. GPS diferencial Stonex S900A, RTK. UTM zona 21S, WGS84.",
+    "padron": "3126",
+    "finca": "2663",
+    "distrito": "Caacupé",
+    "lugar": "Yú"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -57.12721034,
+       -25.30409735
+      ],
+      [
+       -57.1251204,
+       -25.3040641
+      ],
+      [
+       -57.12327526,
+       -25.30590602
+      ],
+      [
+       -57.12554638,
+       -25.30781671
+      ],
+      [
+       -57.12721034,
+       -25.30409735
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Finca 2663 · per title",
+    "kind": "title",
+    "color": "#f1e9db",
+    "dash": true,
+    "measure": "Per title deed",
+    "area_m2_plan": 86477.3433,
+    "utm_21s": [
+     [
+      487213.0,
+      7201390.0
+     ],
+     [
+      487423.0,
+      7201389.0
+     ],
+     [
+      487590.0,
+      7201171.0
+     ],
+     [
+      487356.0,
+      7200969.0
+     ]
+    ],
+    "source": "Plano georreferenciado, Hendata, 02/09/2026. GPS diferencial Stonex S900A, RTK. UTM zona 21S, WGS84.",
+    "padron": "3126",
+    "finca": "2663",
+    "distrito": "Caacupé",
+    "lugar": "Yú"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -57.12703146,
+       -25.30394597
+      ],
+      [
+       -57.12494525,
+       -25.30395678
+      ],
+      [
+       -57.12328819,
+       -25.30592687
+      ],
+      [
+       -57.12561476,
+       -25.30774911
+      ],
+      [
+       -57.12703146,
+       -25.30394597
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

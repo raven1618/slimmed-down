@@ -1383,7 +1383,7 @@ function drawOverlay() {
     g.setLineDash(dash || []); g.lineWidth = width; g.strokeStyle = color; g.stroke(); g.setLineDash([]);
     g.fillStyle = color; pts.forEach(([x, z]) => { g.beginPath(); g.arc(x, z, width, 0, Math.PI * 2); g.fill(); });
   };
-  for (const o of OFFICIAL) ring(o.utm, o.color || '#e9bf5a', 'rgba(233,191,90,0.12)', 3.6, o.closed !== false);
+  for (const o of OFFICIAL) ring(o.utm, o.color || '#e9bf5a', o.dash ? 'rgba(0,0,0,0)' : 'rgba(233,191,90,0.12)', o.dash ? 2.2 : 3.6, o.closed !== false, o.dash ? [9, 7] : null);
   for (const b of limits.list) { const k = kindOf(b), ed = b.id === limits.editing; ring(b.utm, k.color, k.fill, ed ? 4 : 3.2, true, ed ? [10, 6] : null); }
   if (limits.drawing && limits.drawing.utm.length) { const k = kindOf(limits.drawing); ring(limits.drawing.utm, k.color, k.fill, 3, limits.drawing.utm.length > 2, [9, 6]); }
   if (limits.textDraft.length) ring(limits.textDraft, '#7fb3e3', 'rgba(127,179,227,0.12)', 2.6, limits.textDraft.length > 2, [9, 6]);
@@ -1424,7 +1424,7 @@ function refreshCurtains() {
   hill.curtains.forEach((m) => { hill.scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
   hill.curtains = [];
   const add = (utm, h, glow, k) => { const m = curtain(utm.map(([E, N]) => fromUTM(E, N)), h, glow, k); hill.scene.add(m); hill.curtains.push(m); };
-  for (const o of OFFICIAL) if (o.closed !== false && o.utm.length > 2) add(o.utm, 14, 0xe9bf5a, 0.7);
+  for (const o of OFFICIAL) if (!o.dash && o.closed !== false && o.utm.length > 2) add(o.utm, 14, new THREE.Color(o.color || '#e9bf5a').getHex(), 0.7);
   for (const b of limits.list) if (b.utm.length > 2) add(b.utm, b.kind === 'property' ? 14 : 9, kindOf(b).glow, b.id === limits.editing ? 0.35 : 0.65);
 }
 
@@ -1573,11 +1573,15 @@ function loadOfficial(fc) {
   for (const f of fc.features || []) {
     const g = f.geometry; if (!g) continue;
     const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : g.type === 'LineString' ? [[g.coordinates]] : [];
+    const pr = f.properties || {};
     for (const poly of polys) {
-      const ring = poly[0].map(([lon, lat]) => UTM.fwd(lat, lon));
+      // Surveyed corners are kept exactly as printed on the plan when the file carries them.
+      const ring = polys.length === 1 && Array.isArray(pr.utm_21s) && pr.utm_21s.length > 2
+        ? pr.utm_21s.map(([E, N]) => [+E, +N])
+        : poly[0].map(([lon, lat]) => UTM.fwd(lat, lon));
       if (ring.length > 2 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]) ring.pop();
-      OFFICIAL.push({ name: (f.properties && f.properties.name) || 'Boundary', utm: ring, official: true, closed: g.type !== 'LineString',
-        color: (f.properties && f.properties.color) || '#e9bf5a' });
+      OFFICIAL.push({ name: pr.name || 'Boundary', utm: ring, official: true, closed: g.type !== 'LineString',
+        color: pr.color || '#e9bf5a', dash: !!pr.dash, measure: pr.measure || 'Survey', props: pr });
     }
   }
 }
@@ -2396,7 +2400,7 @@ function renderLimits() {
   const all = [...OFFICIAL.map((o) => ({ ...o, official: true })), ...limits.list];
   const rows = all.map((x, i) => {
     const a = ringArea(x.utm), k = kindOf(x);
-    return `<li><span><i class="sw" style="background:${k.color}"></i>${x.official ? '<b>Survey</b> · ' : ''}${esc(x.name)}<small> · ${k.label}</small></span><span>${fmt(a.ha, 2)} ha</span>
+    return `<li><span><i class="sw" style="background:${x.official ? x.color : k.color}"></i>${x.official ? '<b>Survey</b> · ' : ''}${esc(x.name)}<small> · ${x.official ? esc(x.measure) : k.label}</small></span><span>${fmt(a.ha, x.official ? 4 : 2)} ha</span>
       <div class="rowbtns"><button class="mini" type="button" data-go="${i}">Go</button>${!x.official && limits.canEdit ? `<button class="mini" type="button" data-edit="${x.id}">Edit corners</button>` : ''}<button class="mini" type="button" data-copy="${i}">Copy GeoJSON</button></div></li>`;
   }).join('');
   el.innerHTML = `${err}
@@ -2453,6 +2457,24 @@ function updateTextDraft() {
         (outside ? ` · ${outside} outside the 4 km model` : '') + '.';
   }
   drawOverlay();
+}
+function showSurvey(o) {
+  const pr = o.props || {}, a = ringArea(o.utm);
+  const title = OFFICIAL.find((x) => x !== o && x.dash && (x.props || {}).finca === pr.finca);
+  const facts = [
+    ['Area per plan', pr.area_m2_plan ? `${fmt(pr.area_m2_plan / 10000, 4)} ha` : '—'],
+    ['Area from corners', `${fmt(a.ha, 4)} ha`],
+    ['Perimeter', `${fmt(a.m, 2)} m`],
+    ['Corners', String(o.utm.length)],
+  ];
+  if (title && title.props && title.props.area_m2_plan) facts.push(['Area per title', `${fmt(title.props.area_m2_plan / 10000, 4)} ha`]);
+  if (title) {
+    const off = o.utm.map(([E, N]) => Math.min(...title.utm.map(([e, n]) => Math.hypot(E - e, N - n))));
+    facts.push(['Title vs field, corners', `${fmt(Math.min(...off), 1)}–${fmt(Math.max(...off), 1)} m apart`]);
+  }
+  for (const [k, label] of [['finca', 'Finca / matrícula'], ['padron', 'Padrón'], ['lugar', 'Place'], ['distrito', 'District']]) if (pr[k]) facts.push([label, esc(pr[k])]);
+  openDrawer('Survey', o.name, pr.source || 'Surveyed boundary.', facts, [['Copy GeoJSON', (b) => copyText(JSON.stringify(geojsonOf(o)), b)]], o.color,
+    title ? 'Solid line: field measurement. Dashed line: the corners written in the title.' : '');
 }
 function openLimits() { closeDrawer(); renderLimits(); }
 function startDrawing() {
@@ -2600,12 +2622,12 @@ function buildBar() {
 function buildChips() {
   labelsEl.innerHTML = '';
   if (mode === 'cerro') {
-    limitLabels = [...OFFICIAL.map((o) => ({ ...o, official: true })), ...limits.list].filter((b) => b.utm.length > 2).map((b) => {
+    limitLabels = [...OFFICIAL.filter((o) => !o.dash).map((o) => ({ ...o, official: true })), ...limits.list].filter((b) => b.utm.length > 2).map((b) => {
       const bb = bounds(b.utm), a = ringArea(b.utm), k = kindOf(b);
-      const l = { name: b.name, sub: `${k.label} · ${fmt(a.ha, 2)} ha`, c: k.color, anchor: new THREE.Vector3(bb.x, yAt(bb.x, bb.z) + 30, bb.z) };
+      const l = { name: b.name, sub: `${b.official ? b.measure : k.label} · ${fmt(a.ha, 2)} ha`, c: b.official ? b.color : k.color, anchor: new THREE.Vector3(bb.x, yAt(bb.x, bb.z) + 30, bb.z) };
       l.chip = makeChip(l, '', () => {
         if (!b.official && limits.canEdit) startEditing(b.id);
-        else { flyAround(bb.x, bb.z, bb.r * 1.4 + 160); }
+        else { flyAround(bb.x, bb.z, bb.r * 1.4 + 160); if (b.official) showSurvey(b); }
       });
       return l;
     });
