@@ -2480,21 +2480,35 @@ function startEditing(id) {
 }
 
 /* Dragging corners. Capture-phase listeners run before the orbit controls, so a grab on a
-   handle never starts an orbit. */
-let drag = null;
+   handle never starts an orbit. Only the finger that grabbed a corner is intercepted: every
+   other pointer event reaches the controls untouched, so they never lose track of a finger. */
+let drag = null, gestureMax = 0;
+const activePointers = new Set();
+/* If the controls ever hold on to a finger that has lifted, clear their gesture state. */
+function resetOrbit() {
+  if (!Array.isArray(mc._pointers) || !mc._pointers.length) return;
+  try { mc.disconnect(); } catch (err) {}
+  mc._pointers.length = 0;
+  mc._pointerPositions = {};
+  mc.state = -1;
+  try { mc.connect(renderer.domElement); } catch (err) {}
+}
 {
   const el = renderer.domElement;
   el.addEventListener('pointerdown', (e) => {
+    activePointers.add(e.pointerId);
+    gestureMax = Math.max(gestureMax, activePointers.size);
+    if (drag || activePointers.size > 1) return;
     if (mode !== 'cerro' || !limits.editing || !limits.canEdit || e.button > 0) return;
     const h = pickHandle(e.clientX, e.clientY);
     if (!h) return;
     e.stopImmediatePropagation(); e.preventDefault();
-    drag = { h, x: e.clientX, y: e.clientY, moved: false };
+    drag = { h, x: e.clientX, y: e.clientY, moved: false, id: e.pointerId };
     try { el.setPointerCapture(e.pointerId); } catch (err) {}
     mc.enabled = false; limits.dragging = true;
   }, true);
   el.addEventListener('pointermove', (e) => {
-    if (!drag) return;
+    if (!drag || e.pointerId !== drag.id) return;
     e.stopImmediatePropagation();
     if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 4) return;
     const b = limitById(limits.editing); if (!b) return;
@@ -2513,12 +2527,20 @@ let drag = null;
     limits.selected = drag.h.i;
     queueRedraw();
   }, true);
+  const release = (e) => {
+    activePointers.delete(e.pointerId);
+    if (!activePointers.size) setTimeout(() => { if (!activePointers.size) { gestureMax = 0; resetOrbit(); } }, 0);
+  };
   const end = (e) => {
-    if (!drag) return;
+    if (!drag || e.pointerId !== drag.id) { release(e); return; }
     e.stopImmediatePropagation();
+    release(e);
     const d = drag, b = limitById(limits.editing);
-    drag = null; mc.enabled = true; limits.dragging = false;
+    drag = null; limits.dragging = false;
+    if (!tween) mc.enabled = true;
+    try { el.releasePointerCapture(e.pointerId); } catch (err) {}
     if (!b) return;
+    if (e.type === 'pointercancel') { limitsChanged(); return; }
     if (!d.moved) {
       if (d.h.type === 'corner') limits.selected = d.h.i;
       else {
@@ -2533,6 +2555,7 @@ let drag = null;
   };
   el.addEventListener('pointerup', end, true);
   el.addEventListener('pointercancel', end, true);
+  el.addEventListener('lostpointercapture', (e) => { if (drag && e.pointerId === drag.id) end(Object.assign(new Event('pointercancel'), { pointerId: e.pointerId })); });
 }
 
 function openSources() {
@@ -2651,12 +2674,12 @@ function setMode(m) {
 /* ----------------------------------------------------------- picking -- */
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let down = null;
-renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: e.timeStamp }; });
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (!down || mode !== 'cerro' || e.button > 0) return;
-  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), quick = performance.now() - down.t < 450;
+  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), quick = e.timeStamp - down.t < 700;
   down = null;
-  if (moved > 6 || !quick) return;
+  if (moved > 6 || !quick || gestureMax > 1) return;
   const hit = groundPoint(e.clientX, e.clientY);
   if (!hit) return;
   const { x, z } = hit;
