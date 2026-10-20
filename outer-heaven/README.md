@@ -37,6 +37,7 @@ Add `#cabin`, `#residence` or `#plan` to the URL to open that view directly.
 | `ndvi.jpg`, `falsecolor.jpg` | Vegetation index and infrared base maps | Same Sentinel-2 passes, near-infrared band |
 | `basemaps.json` | Legend data for those maps (colour ramps, class shares) | |
 | `site-*.webp`, `sites.json` | Sharper site photos draped over parts of the hill | The owner's own satellite screenshots (see below) |
+| `objects.json` | The homestead: house, solar array, pond, quincho, cabin and more | Placed from the owner's drone photos (see below) |
 | `context.json` | Roads, building footprints, named places | Overture Maps 2026-09-23.1 |
 | `layers.geojson` | **Surveyed boundaries (title plans)**, WGS84 lon/lat | Added by hand, empty for now |
 | `meta.json` | Origin, extent, sources | |
@@ -110,6 +111,24 @@ The step finds the screenshot's scale, rotation and position by matching it to t
 - adds trees where it shows woods that the canopy model missed
 
 The photo shows only on the Satellite base map and can be switched off under **Display**. Credit the imagery's owner wherever the site is shown. Screenshots of Google Maps are © Google, and a drone orthophoto of your own would remove that restriction.
+
+### The homestead
+
+`data/objects.json` lists what is built on the site. Each entry has a `type` and a position in local metres:
+
+- `house`, `cabin`, `quincho`, `solar`, `tent`, `trampoline`, `oven`, `mast` and `palm` take `x`, `z` and `rot`, the compass bearing the front faces.
+- A `pond` takes a `ring` of corners.
+- A `gravel` drive takes a `path` and a width `w`.
+
+The viewer builds a 3D model for each type. Ponds are cut into the ground with their own banks. Tap a structure for its details; **Homestead** in the bar flies to the camera of the wide drone photo.
+
+The positions came from two drone photos:
+
+1. Each photo's camera was fitted with `data/build/drone_fit.py` so that, projected onto the terrain, the photo lines up with the overhead site photo.
+2. Two roofs that both views show (the house and the wooden cabin) pinned the fit.
+3. The points where things meet the ground were then located from that camera, to about ±3 m.
+
+To move something, change its `x` and `z` and reload. To place something new from another drone photo, run `drone_fit.py` with a rough camera and an anchor or two, then `--locate` the pixels. The drone photos themselves are not in the repository.
 
 ## Concept pages notes
 

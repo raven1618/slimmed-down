@@ -1317,11 +1317,34 @@ function setTerrainY(g) {
   p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
 }
 const BLANK = new THREE.DataTexture(new Uint8Array(4), 1, 1); BLANK.needsUpdate = true;
+/* Fine grain for the ground up close, where even the sharpest photo turns soft: seamless noise, 2 m across. */
+function detailTexture() {
+  const n = 128, R = rng(31), [c, g] = canvas(n, n), im = g.createImageData(n, n);
+  const blur = (a, r) => {
+    const out = new Float32Array(n * n);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      let s = 0;
+      for (let k = -r; k <= r; k++) s += a[y * n + ((x + k + n) % n)] + a[((y + k + n) % n) * n + x];
+      out[y * n + x] = s / (4 * r + 2);
+    }
+    return out;
+  };
+  const white = Float32Array.from({ length: n * n }, () => R());
+  const coarse = blur(blur(white, 5), 5), fine = blur(white, 1);
+  const norm = (a) => { let lo = Infinity, hi = -Infinity; for (const v of a) { lo = Math.min(lo, v); hi = Math.max(hi, v); } return (v) => (v - lo) / (hi - lo); };
+  const nc = norm(coarse), nf = norm(fine);
+  for (let i = 0; i < n * n; i++) { im.data[i * 4] = nc(coarse[i]) * 255; im.data[i * 4 + 1] = nf(fine[i]) * 255; im.data[i * 4 + 2] = 128; im.data[i * 4 + 3] = 255; }
+  g.putImageData(im, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = ANISO;
+  return t;
+}
 /* Contour lines drawn in the terrain shader: thin every 10 m, stronger every 50 m. The annotation
    canvas (boundaries, grid) is laid on top unlit, like a sheet of tracing paper. */
 function contourMaterial(map, ov) {
   const mat = new THREE.MeshStandardMaterial({ map, roughness: 1, metalness: 0 });
-  mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 }, uLine: { value: new THREE.Color(1, 0.93, 0.72) }, uLineK: { value: 0.8 }, uOv: { value: ov }, uPatchOn: { value: 0 } };
+  mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 }, uLine: { value: new THREE.Color(1, 0.93, 0.72) }, uLineK: { value: 0.8 }, uOv: { value: ov }, uPatchOn: { value: 0 }, uDetail: { value: detailTexture() }, uHole: { value: BLANK }, uHoleR: { value: new THREE.Vector4(-1, -1, -1, -1) } };
+  const hole = pondMask();
+  if (hole) { mat.userData.u.uHole.value = hole.tex; mat.userData.u.uHoleR.value = hole.rect; }
   // Site photos: sharper images of parts of the site, each laid over its own rectangle of the map.
   let patchDecl = '', patchCode = '';
   SITES.forEach((p, i) => {
@@ -1337,10 +1360,16 @@ function contourMaterial(map, ov) {
     Object.assign(sh.uniforms, mat.userData.u);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uVS; uniform float uBase;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvElev = position.y / uVS + uBase;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv; uniform float uPatchOn;' + patchDecl)
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv; uniform float uPatchOn; uniform sampler2D uDetail; uniform sampler2D uHole; uniform vec4 uHoleR;' + patchDecl)
       .replace('#include <tonemapping_fragment>', 'vec4 ov = texture2D(uOv, vMapUv);\ngl_FragColor.rgb = gl_FragColor.rgb * (1.0 - ov.a) + ov.rgb;\n#include <tonemapping_fragment>')
       .replace('#include <map_fragment>', `#include <map_fragment>
+        { vec2 hu = (vMapUv - uHoleR.xy) / (uHoleR.zw - uHoleR.xy); float hm = texture2D(uHole, clamp(hu, 0.0, 1.0)).r;
+          if (hu.x > 0.0 && hu.x < 1.0 && hu.y > 0.0 && hu.y < 1.0 && hm > 0.5) discard; }
         ${patchCode}
+        { float k = 1.0 - smoothstep(25.0, 200.0, length(vViewPosition));
+          vec2 wuv = vMapUv * 2000.0;
+          float dn = texture2D(uDetail, wuv).r * 0.5 + texture2D(uDetail, wuv * 3.1 + 0.37).g * 0.5;
+          diffuseColor.rgb *= mix(1.0, 0.55 + 0.9 * dn, k * 0.85); }
         if (uOn > 0.5) {
           float w = max(fwidth(vElev), 1e-4);
           float d10 = abs(fract(vElev / 10.0 + 0.5) - 0.5) * 10.0 / w;
@@ -1413,9 +1442,9 @@ function buildTrees() {
 function placeTrees(mesh) {
   const raw = treeData, m = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), s = new THREE.Vector3(), R = rng(5);
   for (let i = 0; i < mesh.userData.n; i++) {
-    const x = raw.x[i], z = raw.z[i];
+    const x = raw.x[i], z = raw.z[i], k = clearOfStructures(x, z) ? 1 : 0;
     q.setFromAxisAngle(UP, R() * 6.283);
-    mesh.setMatrixAt(i, m.compose(v.set(x, yAt(x, z), z), q, s.set(raw.r[i], raw.h[i], raw.r[i])));
+    mesh.setMatrixAt(i, m.compose(v.set(x, yAt(x, z), z), q, s.set(raw.r[i] * k, raw.h[i] * k, raw.r[i] * k)));
   }
   mesh.instanceMatrix.needsUpdate = true;
   mesh.computeBoundingSphere();
@@ -1477,6 +1506,332 @@ function buildRoads() {
   const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, transparent: true, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, side: THREE.DoubleSide }));
   mesh.receiveShadow = true;
   return mesh;
+}
+
+/* ---------------------------------------------------------- structures -- */
+/* What is built on the site, placed from the owner's drone photos (data/objects.json). Each model
+   is built with its front facing +z and turned to its bearing. Heights stay true under Relief ×2. */
+let OBJECTS = { objects: [] };
+const SITE = {};
+function brickTex() {
+  const r = rng(17), [c, g] = canvas(512, 512);           // 2 × 2 m of pale handmade brick
+  g.fillStyle = '#d6cdbd'; g.fillRect(0, 0, 512, 512);
+  const pal = ['#b9aa95', '#c4b6a1', '#ad9f8b', '#cbbfab', '#a8998a', '#bfae97', '#b3a28c'];
+  const bh = 16.6, bw = 64;
+  for (let row = 0; row * bh < 512; row++) {
+    const off = (row % 2) * bw / 2;
+    for (let x = -bw; x < 512 + bw; x += bw) {
+      g.fillStyle = pal[Math.floor(r() * pal.length)];
+      g.fillRect(x + off + 1.5, row * bh + 1.5, bw - 3, bh - 3);
+      g.fillStyle = `rgba(60,45,30,${r() * 0.12})`; g.fillRect(x + off + 1.5, row * bh + bh - 5, bw - 3, 3.5);
+    }
+  }
+  for (let i = 0; i < 2500; i++) { g.fillStyle = `rgba(${r() < 0.5 ? '70,55,40' : '250,245,235'},${r() * 0.12})`; g.fillRect(r() * 512, r() * 512, 2, 2); }
+  return tex(c);
+}
+function tileTex() {
+  const r = rng(23), [c, g] = canvas(256, 256);           // 1 × 1 m of clay roof tile: courses run down the slope
+  g.fillStyle = '#b8653a'; g.fillRect(0, 0, 256, 256);
+  const cw = 256 / 5, ch = 256 / 3;
+  for (let j = 0; j < 3; j++) for (let i = 0; i < 5; i++) {
+    const x = i * cw, y = j * ch, base = ['#d0814f', '#c97646', '#d88c59', '#c06c3f', '#dc9561'][Math.floor(r() * 5)];
+    const grd = g.createLinearGradient(x, 0, x + cw, 0);
+    grd.addColorStop(0, 'rgba(90,40,20,0.55)'); grd.addColorStop(0.35, base); grd.addColorStop(0.6, base); grd.addColorStop(1, 'rgba(90,40,20,0.5)');
+    g.fillStyle = grd; g.fillRect(x, y, cw, ch);
+    g.fillStyle = 'rgba(70,30,15,0.35)'; g.fillRect(x, y + ch - 6, cw, 6);
+  }
+  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${r() < 0.5 ? '80,40,20' : '255,220,190'},${r() * 0.15})`; g.fillRect(r() * 256, r() * 256, 2, 2); }
+  return tex(c);
+}
+function gravelTex() {
+  const r = rng(29), [c, g] = canvas(256, 256);           // 2 × 2 m of grey gravel
+  g.fillStyle = '#9b958a'; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 9000; i++) {
+    const v = 110 + r() * 110, s = 1 + r() * 2.6;
+    g.fillStyle = `rgba(${v},${v - 4},${v - 12},${0.5 + r() * 0.5})`;
+    g.beginPath(); g.ellipse(r() * 256, r() * 256, s, s * (0.6 + r() * 0.4), r() * 3, 0, 6.3); g.fill();
+  }
+  return tex(c);
+}
+function siteMaterials() {
+  if (SITE.m) return SITE.m;
+  const std = (o) => new THREE.MeshStandardMaterial({ roughness: 0.85, ...o });
+  return (SITE.m = {
+    brick: std({ map: brickTex(), roughness: 0.92 }), tile: std({ map: tileTex(), roughness: 0.7 }),
+    trim: std({ color: 0xf1ece2, roughness: 0.6 }), glass: std({ color: 0x1b232c, roughness: 0.2, metalness: 0.5 }),
+    concrete: std({ color: 0xc6c0b4, roughness: 0.95 }), floor: std({ color: 0xa9563a, roughness: 0.75 }),
+    wood: std({ map: woodTex('#6b4a2e') }), post: std({ map: woodTex('#4f3420') }),
+    panel: std({ map: solarTex(), roughness: 0.25, metalness: 0.5 }), alu: std({ color: 0xc7cbcf, roughness: 0.35, metalness: 0.75 }),
+    black: std({ color: 0x1c1e20, roughness: 0.55 }), tank: std({ color: 0xe9ece6, roughness: 0.5 }), lid: std({ color: 0x3f8a5a, roughness: 0.5 }),
+    canvas: std({ color: 0xf3f0e7, roughness: 0.95, side: THREE.DoubleSide }), mud: std({ color: 0xb06a42, roughness: 1 }),
+    blue: std({ color: 0x2f5fa8, roughness: 0.5 }), tub: std({ color: 0xdfeef3, roughness: 0.3 }),
+    water: std({ color: 0x8a5a32, roughness: 0.15, metalness: 0, envMapIntensity: 0.6 }),
+    bank: std({ map: gravelTex(), vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
+    gravel: std({ map: gravelTex(), roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),
+    mast: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.3 }),
+  });
+}
+const bearingRot = (deg) => Math.PI - (deg * Math.PI) / 180;    // turns a model's +z front to face that bearing
+/* A window with a round top, facing +z, standing on y = 0: white surround and dark glass. */
+function archWindow(w, h, M) {
+  const g = new THREE.Group();
+  const shape = (ww, hh) => {
+    const s = new THREE.Shape(), r = ww / 2;
+    s.moveTo(-r, 0); s.lineTo(r, 0); s.lineTo(r, hh - r); s.absarc(0, hh - r, r, 0, Math.PI, false); s.lineTo(-r, 0);
+    return s;
+  };
+  const trim = new THREE.Mesh(new THREE.ShapeGeometry(shape(w + 0.26, h + 0.13), 12), M.trim); trim.position.set(0, -0.05, 0.02);
+  const glass = new THREE.Mesh(new THREE.ShapeGeometry(shape(w, h), 12), M.glass); glass.position.z = 0.035;
+  g.add(trim, glass);
+  return g;
+}
+function gableRoof(g, W, D, top, pitch, eave, M) {
+  // Ridge runs along z; the two slopes fall to ±x. top = wall height; eave = overhang.
+  const run = W / 2 + eave, L = run / Math.cos(pitch), apex = top + (W / 2) * Math.tan(pitch);
+  for (const s of [-1, 1]) {
+    const geo = new THREE.BoxGeometry(L, 0.14, D + 2 * eave); worldUV(geo, 1);
+    const m = new THREE.Mesh(geo, M.tile);
+    m.rotation.z = -s * pitch;
+    m.position.set((s * run) / 2, apex - (run / 2) * Math.tan(pitch) + 0.08, 0);
+    m.castShadow = m.receiveShadow = true; g.add(m);
+  }
+  box(0.32, 0.18, D + 2 * eave, 0, apex + 0.12, 0, M.tile, g);
+  for (const z of [D / 2 - 0.15, -D / 2 + 0.15]) {          // gable triangles
+    const s = new THREE.Shape(); s.moveTo(-W / 2, 0); s.lineTo(W / 2, 0); s.lineTo(0, apex - top); s.lineTo(-W / 2, 0);
+    const geo = new THREE.ExtrudeGeometry(s, { depth: 0.3, bevelEnabled: false }); geo.translate(0, top, z - 0.15); worldUV(geo, 2);
+    const m = new THREE.Mesh(geo, g.userData.wall || M.brick); m.castShadow = m.receiveShadow = true; g.add(m);
+  }
+  return apex;
+}
+function houseModel(o, M) {
+  const g = new THREE.Group(), W = o.w || 6.4, D = o.d || 7.6, H = 4.6, F = 0.2, P = 2.7, pw = 2.8, pd = 2.6;
+  box(W + 0.3, 2.4, D + 0.3, 0, F - 1.2, 0, M.concrete, g, { uv: 2 });                 // plinth, reaching into the slope
+  box(W - pw, H, D, -pw / 2, F + H / 2, 0, M.brick, g, { uv: 2 });
+  box(pw, H, D - pd, W / 2 - pw / 2, F + H / 2, -pd / 2, M.brick, g, { uv: 2 });
+  box(pw, H - P, pd, W / 2 - pw / 2, F + P + (H - P) / 2, D / 2 - pd / 2, M.brick, g, { uv: 2 });   // upper floor over the porch
+  box(0.42, P, 0.42, W / 2 - 0.21, F + P / 2, D / 2 - 0.21, M.brick, g, { uv: 2 });              // corner pillar
+  box(pw + 0.5, 0.16, pd + 0.9, W / 2 - pw / 2 + 0.25, F + 0.02, D / 2 - pd / 2 + 0.45, M.floor, g);  // porch floor and step
+  box(1.0, 2.1, 0.06, W / 2 - pw + 1.0, F + 1.05, D / 2 - pd + 0.02, M.glass, g);                 // door onto the porch
+  const apex = gableRoof(g, W, D, F + H, 0.6, 0.55, M);
+  const put = (w, h, x, y, z, ry) => { const a = archWindow(w, h, M); a.position.set(x, F + y, z); a.rotation.y = ry; g.add(a); };
+  put(1.55, 1.85, -0.55, 3.0, D / 2, 0);                  // upper window on the gable front
+  put(1.25, 1.45, -W / 2 + 1.1, 0.95, D / 2, 0);
+  put(1.2, 1.4, -W / 2, 0.95, 1.7, -Math.PI / 2); put(1.2, 1.4, -W / 2, 0.95, -1.5, -Math.PI / 2);
+  put(0.9, 1.1, -W / 2, 3.1, 0.2, -Math.PI / 2);
+  put(0.9, 1.2, W / 2, 1.0, -2.2, Math.PI / 2); put(1.1, 1.3, 0.6, 1.0, -D / 2, Math.PI);
+  box(1.0, 0.7, 0.8, 0, apex + 0.45, D / 2 - 1.1, M.tank, g); box(1.05, 0.08, 0.85, 0, apex + 0.82, D / 2 - 1.1, M.lid, g);  // water tank on the ridge
+  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.8, 8), M.black); pipe.position.set(-1.4, apex - 0.4, -D / 2 + 1.3); g.add(pipe);
+  for (const z of [-D / 2 + 1.2, -D / 2 + 2.4]) {         // black water tanks against the side wall
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 1.25, 16), M.black); t.position.set(-W / 2 - 0.75, F + 0.62, z); t.castShadow = true; g.add(t);
+  }
+  return g;
+}
+function cabinModel(o, M) {
+  const g = new THREE.Group(), W = o.w || 4.6, D = o.d || 5.6, H = 2.5;
+  g.userData.wall = M.wood;
+  box(D + 0.2, 1.2, W + 0.2, 0, -0.45, 0, M.concrete, g, { uv: 2 });
+  box(D, H, W, 0, 0.15 + H / 2, 0, M.wood, g, { uv: 2 });                                              // ridge runs across the front
+  const roof = new THREE.Group(); roof.userData.wall = M.wood; roof.rotation.y = Math.PI / 2; g.add(roof);
+  gableRoof(roof, W, D, 0.15 + H, 0.55, 0.45, M);
+  box(1.0, 2.0, 0.06, 0.8, 0.15 + 1.0, W / 2 + 0.02, M.glass, g); box(1.1, 0.9, 0.06, -1.3, 0.15 + 1.4, W / 2 + 0.02, M.glass, g);
+  box(D + 0.4, 0.12, 1.4, 0, 0.2, W / 2 + 0.7, M.wood, g);                                              // deck
+  return g;
+}
+function quinchoModel(o, M) {
+  const g = new THREE.Group(), W = o.w || 6.4, D = o.d || 4.2, hf = 2.55, hb = 3.05;
+  box(W + 0.4, 0.9, D + 0.4, 0, -0.3, 0, M.concrete, g, { uv: 2 });
+  box(W, 0.1, D, 0, 0.18, 0, M.floor, g);
+  for (const x of [-W / 2 + 0.15, 0, W / 2 - 0.15]) {
+    box(0.16, hf, 0.16, x, 0.2 + hf / 2, D / 2 - 0.15, M.post, g);
+    box(0.16, hb, 0.16, x, 0.2 + hb / 2, -D / 2 + 0.15, M.post, g);
+  }
+  const L = (D + 0.8) / Math.cos(Math.atan((hb - hf) / D));
+  const geo = new THREE.BoxGeometry(W + 0.8, 0.12, L); worldUV(geo, 1);
+  const roof = new THREE.Mesh(geo, M.tile); roof.rotation.x = Math.atan((hb - hf) / D); roof.position.set(0, 0.2 + (hf + hb) / 2 + 0.1, 0);
+  roof.castShadow = roof.receiveShadow = true; g.add(roof);
+  box(W - 0.6, 0.95, 0.6, 0, 0.2 + 0.47, -D / 2 + 0.45, M.brick, g, { uv: 2 });                        // counter and sink along the back
+  box(1.8, 0.62, 0.9, 1.6, 0.2 + 0.31, 0.7, M.tub, g);                                                 // plunge tub
+  return g;
+}
+function solarModel(o, M) {
+  const g = new THREE.Group(), tilt = 0.44, pw = 1.13, pl = 2.28, front = 1.0;
+  const tables = o.tables || 3, tw = 3 * pw + 0.06, gap = 0.45, span = tables * tw + (tables - 1) * gap;
+  const depth = 2 * pl * Math.cos(tilt), rise = 2 * pl * Math.sin(tilt);
+  for (let t = 0; t < tables; t++) {
+    const x0 = -span / 2 + t * (tw + gap) + tw / 2;
+    for (let c = 0; c < 3; c++) for (let r = 0; r < 2; r++) {
+      const p = new THREE.Mesh(new THREE.BoxGeometry(pw - 0.03, 0.04, pl - 0.03), [M.alu, M.alu, M.panel, M.alu, M.alu, M.alu]);
+      p.rotation.x = tilt;                                  // tipped up at the back, so the panels face +z
+      const along = (r - 0.5) * pl;
+      p.position.set(x0 + (c - 1) * pw, front + rise / 2 + along * Math.sin(tilt), -along * Math.cos(tilt));
+      p.castShadow = p.receiveShadow = true; g.add(p);
+    }
+    for (const sx of [-1, 1]) {
+      box(0.28, front + 0.4, 0.28, x0 + sx * (tw / 2 - 0.4), (front - 0.4) / 2 + 0.1, depth / 2 - 0.25, M.concrete, g);
+      box(0.28, front + rise + 0.2, 0.28, x0 + sx * (tw / 2 - 0.4), (front + rise - 0.6) / 2 + 0.1, -depth / 2 + 0.25, M.concrete, g);
+    }
+  }
+  return g;
+}
+function mastGeometry(h) {
+  const parts = [], legs = [0, 1, 2].map((k) => [0.32 * Math.cos((k * 2 * Math.PI) / 3), 0.32 * Math.sin((k * 2 * Math.PI) / 3)]);
+  const band = (y) => (Math.floor(y / (h / 7)) % 2 ? 0xf2f0ea : 0xc8322a);
+  const rod = (a, b, r) => {
+    const v = new THREE.Vector3().subVectors(b, a), L = v.length();
+    const geo = new THREE.CylinderGeometry(r, r, L, 4, 1); geo.translate(0, L / 2, 0);
+    geo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(UP, v.normalize())); geo.translate(a.x, a.y, a.z);
+    parts.push(colorize(geo, band((a.y + b.y) / 2)));
+  };
+  const step = 0.6;
+  for (let y = 0; y < h - 0.01; y += step) {
+    for (let k = 0; k < 3; k++) {
+      const [x0, z0] = legs[k], [x1, z1] = legs[(k + 1) % 3];
+      rod(new THREE.Vector3(x0, y, z0), new THREE.Vector3(x0, y + step, z0), 0.035);
+      rod(new THREE.Vector3(x0, y, z0), new THREE.Vector3(x1, y + step, z1), 0.014);
+    }
+  }
+  return mergeGeometries(parts);
+}
+function tentModel(o, M) {
+  const g = new THREE.Group(), r = o.r || 2.5;
+  const wall = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.75, 24, 1, true), M.canvas); wall.position.y = 0.37;
+  const top = new THREE.Mesh(new THREE.ConeGeometry(r + 0.08, 2.3, 24, 1, true), M.canvas); top.position.y = 0.75 + 1.15;
+  wall.castShadow = top.castShadow = true; g.add(wall, top);
+  return g;
+}
+function trampolineModel(o, M) {
+  const g = new THREE.Group(), r = o.r || 1.8;
+  const pad = new THREE.Mesh(new THREE.TorusGeometry(r, 0.13, 8, 32), M.blue); pad.rotation.x = Math.PI / 2; pad.position.y = 0.9;
+  const mat = new THREE.Mesh(new THREE.CircleGeometry(r - 0.1, 32), M.black); mat.rotation.x = -Math.PI / 2; mat.position.y = 0.88;
+  g.add(pad, mat);
+  for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; box(0.06, 0.9, 0.06, Math.cos(a) * r, 0.45, Math.sin(a) * r, M.alu, g); }
+  return g;
+}
+function ovenModel(o, M) {
+  const g = new THREE.Group();
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.85, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), M.mud); dome.scale.y = 0.85; dome.castShadow = true;
+  const mouth = new THREE.Mesh(new THREE.CircleGeometry(0.28, 12), M.black); mouth.position.set(0, 0.25, 0.82);
+  g.add(dome, mouth);
+  return g;
+}
+/* Ground under a footprint: the lowest point, so nothing floats on a slope. */
+function baseY(x, z, r) {
+  let lo = Infinity;
+  for (let a = 0; a < 8; a++) lo = Math.min(lo, yAt(x + Math.cos((a * Math.PI) / 4) * r, z + Math.sin((a * Math.PI) / 4) * r));
+  return Math.min(lo, yAt(x, z));
+}
+/* Ponds: the terrain shader leaves a hole the shape of the water (a fine mask), and the pond brings its own
+   cut bank down from the ground to the water, so the shoreline is exact at any terrain resolution. */
+function pondLevel(o) { return Math.min(...o.ring.map(([x, z]) => groundAt(x, z))) - 0.7; }
+/* Ponds are drawn from a few corners; round them off (Chaikin) so the shore curves. */
+function roundRing(ring, n = 3) {
+  let r = ring;
+  for (let k = 0; k < n; k++) r = r.flatMap(([ax, az], i) => { const [bx, bz] = r[(i + 1) % r.length]; return [[0.75 * ax + 0.25 * bx, 0.75 * az + 0.25 * bz], [0.25 * ax + 0.75 * bx, 0.25 * az + 0.75 * bz]]; });
+  return r;
+}
+const shoreOf = (o) => o.shore || (o.shore = roundRing(o.ring));
+function pondMask() {
+  const ponds = OBJECTS.objects.filter((o) => o.type === 'pond');
+  if (!ponds.length) return null;
+  const xs = ponds.flatMap((o) => o.ring.map((p) => p[0])), zs = ponds.flatMap((o) => o.ring.map((p) => p[1]));
+  const x0 = Math.min(...xs) - 3, x1 = Math.max(...xs) + 3, z0 = Math.min(...zs) - 3, z1 = Math.max(...zs) + 3, k = 10;   // 10 px per metre
+  const [c, g] = canvas(Math.ceil((x1 - x0) * k), Math.ceil((z1 - z0) * k));
+  g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = '#fff';
+  for (const o of ponds) { g.beginPath(); shoreOf(o).forEach(([x, z], i) => (i ? g.lineTo : g.moveTo).call(g, (x - x0) * k, (z - z0) * k)); g.closePath(); g.fill(); }
+  const t = new THREE.CanvasTexture(c);
+  const U = (x) => (x + HHALF) / (2 * HHALF), V = (z) => 1 - (z + HHALF) / (2 * HHALF);
+  return { tex: t, rect: new THREE.Vector4(U(x0), V(z0 + c.height / k), U(x0 + c.width / k), V(z0)) };
+}
+function pondModel(o, M) {
+  const g = new THREE.Group(), wl = (pondLevel(o) - HBASE) * hill.vs, shore = shoreOf(o), ring = [];
+  for (let i = 0; i < shore.length; i++) {
+    const [ax, az] = shore[i], [bx, bz] = shore[(i + 1) % shore.length], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 0.5));
+    for (let s = 0; s < n; s++) ring.push([lerp(ax, bx, s / n), lerp(az, bz, s / n)]);
+  }
+  ring.push(ring[0]);
+  const pos = [], uv = [], idx = [], col = [], grass = new THREE.Color(0x6f7d3f), earth = new THREE.Color(0xa25f3b), deep = new THREE.Color(0x5e3a24), c = new THREE.Color();
+  const cx = o.ring.reduce((a, p) => a + p[0], 0) / o.ring.length, cz = o.ring.reduce((a, p) => a + p[1], 0) / o.ring.length;
+  let acc = 0;
+  ring.forEach(([x, z], i) => {
+    if (i) acc += Math.hypot(x - ring[i - 1][0], z - ring[i - 1][1]);
+    const top = Math.max(yAt(x, z), wl + 0.1) + 0.03, bot = wl - 1.0, d = Math.hypot(cx - x, cz - z) || 1;
+    const run = Math.min((top - bot) * 0.75, d * 0.45);                  // banks slope in, steeper where the cut is deep
+    pos.push(x, top, z, x + ((cx - x) / d) * run, bot, z + ((cz - z) / d) * run); uv.push(acc / 8, top / 8, acc / 8, bot / 8);
+    c.copy(grass).lerp(earth, clamp((top - wl - 0.8) / 1.6, 0, 1)); col.push(c.r, c.g, c.b, deep.r, deep.g, deep.b);   // grassy where low, raw earth where the cut is deep
+    if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  });
+  const bank = new THREE.BufferGeometry();
+  bank.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); bank.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  bank.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  bank.setIndex(idx); bank.computeVertexNormals();
+  const s = new THREE.Shape(shore.map(([x, z]) => new THREE.Vector2(x, -z)));
+  const water = new THREE.ShapeGeometry(s); water.rotateX(-Math.PI / 2); water.translate(0, wl, 0);
+  g.add(new THREE.Mesh(bank, M.bank), new THREE.Mesh(water, M.water));
+  g.traverse((c) => { if (c.isMesh) c.receiveShadow = false; });     // the terrain over the hole would otherwise shade it
+  return g;
+}
+function ribbon(path, w, mat) {
+  const pts = [];
+  for (let i = 0; i < path.length - 1; i++) {
+    const [x0, z0] = path[i], [x1, z1] = path[i + 1], n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 1.5));
+    for (let s = 0; s < n; s++) pts.push([lerp(x0, x1, s / n), lerp(z0, z1, s / n)]);
+  }
+  pts.push(path[path.length - 1]);
+  const pos = [], uv = [], idx = [];
+  let acc = 0;
+  pts.forEach(([x, z], i) => {
+    const [ax, az] = pts[Math.max(0, i - 1)], [bx, bz] = pts[Math.min(pts.length - 1, i + 1)];
+    let dx = bx - ax, dz = bz - az; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
+    if (i) acc += Math.hypot(x - pts[i - 1][0], z - pts[i - 1][1]);
+    for (const s of [-1, 1]) { const px = x - dz * (w / 2) * s, pz = z + dx * (w / 2) * s; pos.push(px, yAt(px, pz) + 0.08, pz); uv.push((s * w) / 4, acc / 2); }
+    if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat); m.receiveShadow = true;
+  return m;
+}
+const BUILDERS = { house: houseModel, cabin: cabinModel, quincho: quinchoModel, solar: solarModel, tent: tentModel, trampoline: trampolineModel, oven: ovenModel };
+const FOOT = { house: 6, cabin: 4, quincho: 4.5, solar: 7, tent: 3, trampoline: 2.4, oven: 1.2, mast: 1.5, palm: 1 };
+function buildStructures() {
+  const M = siteMaterials(), group = new THREE.Group();
+  for (const o of OBJECTS.objects) {
+    let m = null;
+    if (BUILDERS[o.type]) {
+      m = BUILDERS[o.type](o, M);
+      m.position.set(o.x, baseY(o.x, o.z, (FOOT[o.type] || 2) * 0.6), o.z);
+      m.rotation.y = bearingRot(o.rot || 0);
+    } else if (o.type === 'mast') {
+      m = new THREE.Mesh(mastGeometry(o.h || 18), M.mast); m.position.set(o.x, yAt(o.x, o.z), o.z);
+    } else if (o.type === 'palm') {
+      m = new THREE.Mesh(palmGeometry(o.h || 12), palmMat); m.position.set(o.x, yAt(o.x, o.z), o.z);
+    } else if (o.type === 'pond') {
+      m = pondModel(o, M);
+    } else if (o.type === 'gravel') {
+      m = ribbon(o.path, o.w || 3, M.gravel);
+    }
+    if (!m) continue;
+    m.traverse((c) => { if (c.isMesh) { c.castShadow = c.castShadow || (o.type !== 'gravel' && o.type !== 'pond'); if (o.type !== 'pond') c.receiveShadow = true; c.userData.site = o; } });
+    group.add(m);
+  }
+  return group;
+}
+/* Ground the structures stand on is kept free of model trees. */
+function clearOfStructures(x, z) {
+  for (const o of OBJECTS.objects) {
+    if (o.ring) { if (Math.abs(x - o.ring[0][0]) < 40 && Math.abs(z - o.ring[0][1]) < 40 && (inPoly(x, z, o.ring) || o.ring.some(([px, pz]) => Math.hypot(x - px, z - pz) < 4))) return false; continue; }
+    if (o.path) {
+      for (let i = 0; i < o.path.length - 1; i++) {
+        const [ax, az] = o.path[i], [bx, bz] = o.path[i + 1];
+        const t = clamp(((x - ax) * (bx - ax) + (z - az) * (bz - az)) / ((bx - ax) ** 2 + (bz - az) ** 2 || 1), 0, 1);
+        if (Math.hypot(x - ax - t * (bx - ax), z - az - t * (bz - az)) < (o.w || 3) / 2 + 1.5) return false;
+      }
+      continue;
+    }
+    if (FOOT[o.type] && o.type !== 'palm' && Math.hypot(x - o.x, z - o.z) < FOOT[o.type] + 1.5) return false;
+  }
+  return true;
 }
 
 /* Annotations: one transparent canvas laid over the terrain for boundaries and the UTM grid. */
@@ -1736,12 +2091,12 @@ function loadOfficial(fc) {
 
 /* ------------------------------------------------------------ build -- */
 async function buildHill() {
-  const [meta, ter, trees, ctx, layers, img, legends, sites] = await Promise.all([
+  const [meta, ter, trees, ctx, layers, img, legends, sites, objects] = await Promise.all([
     getJSON('data/meta.json'), getJSON('data/terrain.json'), getJSON('data/trees.json'), getJSON('data/context.json'),
     getJSON('data/layers.geojson').catch(() => ({ features: [] })), loadImage('data/imagery.jpg'),
-    getJSON('data/basemaps.json').catch(() => ({})), loadSites(),
+    getJSON('data/basemaps.json').catch(() => ({})), loadSites(), getJSON('data/objects.json').catch(() => ({ objects: [] })),
   ]);
-  LEGENDS = legends; SITES = sites;
+  LEGENDS = legends; SITES = sites; OBJECTS = objects;
   META = meta; CTX = ctx;
   HG = ter.grid; HRES = ter.res; HHALF = meta.half; HBASE = ter.base;
   const raw = new Uint16Array(b64bytes(ter.data).buffer);
@@ -1867,6 +2222,8 @@ function relayout() {
   if (hill.roads) { hill.scene.remove(hill.roads); hill.roads.geometry.dispose(); }
   hill.buildings = buildBuildings(); hill.roads = buildRoads();
   hill.scene.add(hill.buildings, hill.roads);
+  if (hill.structures) { hill.scene.remove(hill.structures); hill.structures.traverse((c) => c.geometry && c.geometry.dispose()); }
+  hill.structures = buildStructures(); hill.scene.add(hill.structures);
   applyLayers();
   refreshCurtains();
   drawOverlay();
@@ -1877,6 +2234,7 @@ function applyLayers() {
   renderer.shadowMap.needsUpdate = true;
   hill.trees.visible = hill.on.trees;
   hill.buildings.visible = hill.on.buildings;
+  if (hill.structures) hill.structures.visible = hill.on.buildings;
   hill.roads.visible = hill.on.roads;
   hill.terrainMat.userData.u.uOn.value = hill.on.contours ? 1 : 0;
 }
@@ -2038,7 +2396,32 @@ function hillLabels() {
     const lodging = LODGING.has(p.k);
     out.push({ name: n, sub: lodging ? 'Lodging' : (p.k || '').replace(/_/g, ' '), x: p.x, z: p.z, lift: 22, c: lodging ? 'var(--earth)' : 'var(--muted)', far: lodging ? 5000 : 2600, cat: lodging ? 'lodging' : 'places' });
   }
+  for (const o of OBJECTS.objects) {
+    if (!['house', 'solar', 'pond', 'quincho', 'cabin'].includes(o.type)) continue;
+    const [x, z] = o.ring ? [o.ring.reduce((a, p) => a + p[0], 0) / o.ring.length, o.ring.reduce((a, p) => a + p[1], 0) / o.ring.length] : [o.x, o.z];
+    out.push({ name: o.name, x, z, lift: o.type === 'house' ? 12 : 7, c: 'var(--sand)', far: 420, cat: 'site', site: o });
+  }
   return out.map((l) => ({ ...l, anchor: new THREE.Vector3(l.x, yAt(l.x, l.z) + l.lift, l.z) }));
+}
+/* Details of one structure, from the drone photos. */
+function showStructure(o) {
+  const [x, z] = o.ring ? [o.ring.reduce((a, p) => a + p[0], 0) / o.ring.length, o.ring.reduce((a, p) => a + p[1], 0) / o.ring.length] : o.path ? o.path[Math.floor(o.path.length / 2)] : [o.x, o.z];
+  const [E, N] = toUTM(x, z), [lat, lon] = UTM.inv(E, N);
+  const facts = [['UTM 21S', `${fmt(E, 0)} E, ${fmt(N, 0)} N`], ['Ground', `≈ ${groundAt(x, z).toFixed(0)} m`]];
+  if (o.w && o.d) facts.push(['Footprint', `≈ ${o.w} × ${o.d} m`]);
+  if (o.ring) facts.push(['Water', `≈ ${fmt(ringArea(o.ring.map(([px, pz]) => toUTM(px, pz))).ha * 10000, 0)} m²`]);
+  if (o.path) facts.push(['Length', `≈ ${fmt(o.path.slice(1).reduce((a, p, i) => a + Math.hypot(p[0] - o.path[i][0], p[1] - o.path[i][1]), 0), 0)} m`]);
+  const text = `${o.name}: ${lat.toFixed(6)}, ${lon.toFixed(6)}\nUTM 21S: ${E.toFixed(1)} E, ${N.toFixed(1)} N`;
+  openDrawer('On the site', o.name, o.note || null, facts, [['Copy coordinates', (b) => copyText(text, b)]], 'var(--sand)', OBJECTS.source);
+}
+/* The camera of the owner's wide drone photo, so the model can be checked against it. */
+function homesteadView() {
+  const v = OBJECTS.view, [cx, cy, cz] = v.camera, b = (v.bearing * Math.PI) / 180, p = (v.pitch * Math.PI) / 180;
+  const dir = new THREE.Vector3(Math.sin(b) * Math.cos(p), Math.sin(p), -Math.cos(b) * Math.cos(p));
+  const pos = new THREE.Vector3(cx, yAt(cx, cz) + (cy - groundAt(cx, cz)), cz);
+  if (innerWidth / innerHeight < 1) pos.addScaledVector(dir, -45);      // portrait screens see a narrower slice
+  const tgt = rayGround(pos, dir) || pos.clone().addScaledVector(dir, 90);
+  flyTo(pos, tgt, 1800);
 }
 
 /* ================================================================ */
@@ -2981,6 +3364,7 @@ function openSources() {
     <li><b>Trees.</b> ${m.canopy}. ${fmt(treeData.count, 0)} tree tops taller than 4 m are drawn at their measured height.</li>
     <li><b>Ground colour.</b> ${m.imagery}. 10 m pixels, sharpened with the 1 m canopy model.</li>
     ${SITES.map((p) => `<li><b>Site photo, ${esc(p.name)}.</b> ${esc(p.source)}. ${esc(p.credit)}. Placed by matching it to the satellite imagery (about ±5 m). Where it shows cleared ground, ${p.trees_removed} model trees are left out; where it shows woods the canopy model missed, ${fmt(p.trees_added || 0, 0)} trees are added at the canopy model's local height.</li>`).join('')}
+    ${OBJECTS.objects.length ? `<li><b>Homestead.</b> House, solar array, pond, quincho, cabin and the rest are modelled from the owner's drone photos. ${esc(OBJECTS.source)}</li>` : ''}
     <li><b>Other base maps.</b> Land cover from ${m.landcover}. Vegetation index and infrared from the same Sentinel-2 passes (near-infrared band). Tree height from the canopy model. Topographic, shaded relief and slope are drawn from the elevation model.</li>
     <li><b>Roads, buildings, names.</b> ${m.context}.</li>
     <li><b>Coordinates.</b> WGS84 / UTM zone 21S (EPSG:32721). Model origin ${fmt(META.origin.easting, 0)} E, ${fmt(META.origin.northing, 0)} N; the model covers 4 × 4 km.</li>
@@ -3000,14 +3384,14 @@ function pill(label, pressed, onClick, cls = '') {
 /* ------------------------------------------------- what the map shows -- */
 const DISPLAY_DEFAULT = {
   base: 'satellite',
-  propLabels: true, propArea: true, summit: false, lodging: false, places: false,
+  propLabels: true, propArea: true, site: true, summit: false, lodging: false, places: false,
   trees: true, buildings: true, roads: true, contours: false, grid: false, relief: false, sitePhoto: true,
   title: true, compass: true, hint: true, legend: true,
 };
 const display = { ...DISPLAY_DEFAULT };
 try { Object.assign(display, JSON.parse(localStorage.getItem('oh-display-v1') || '{}')); } catch (e) {}
 const DISPLAY_GROUPS = [
-  ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
+  ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['site', 'Homestead buildings', 'var(--sand)'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
   ['Map', [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contour lines (10 m)'], ['grid', 'UTM grid (500 m)'], ['relief', 'Relief ×2'], ['sitePhoto', 'Site photos (satellite map only)']]],
   ['Screen', [['title', 'Title and description'], ['compass', 'Compass'], ['hint', 'Hints'], ['legend', 'Map legend']]],
 ];
@@ -3137,6 +3521,7 @@ function buildBar() {
   bar.innerHTML = '';
   if (mode === 'cerro') {
     pill('Overview', null, () => { closeDrawer(); flyTo(HOME.pos, HOME.tgt, 1800); });
+    if (OBJECTS.view) pill('Homestead', null, () => { closeDrawer(); homesteadView(); });
     const db = pill('Display', null, () => toggleDisplay(displayEl.hidden));
     db.dataset.display = '1'; db.setAttribute('aria-expanded', 'false'); db.setAttribute('aria-controls', 'display');
     pill('Property limits', null, () => { toggleDisplay(false); openLimits(); }, 'accent');
@@ -3161,6 +3546,7 @@ function buildChips() {
     });
     for (const l of hill.labels) l.chip = makeChip(l, '', () => {
       document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('is-on', c === l.chip));
+      if (l.site) { flyAround(l.x, l.z, 70); showStructure(l.site); return; }
       flyAround(l.x, l.z, l.far > 6000 ? 900 : 420);
       showPoint(l.x, l.z, l.name);
     });
@@ -3237,6 +3623,13 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), quick = e.timeStamp - down.t < 700;
   down = null;
   if (moved > 6 || !quick || gestureMax > 1) return;
+  if (hill.structures && hill.structures.visible && !limits.drawing && !limits.editing) {
+    hill.camera.updateMatrixWorld();
+    ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, hill.camera);
+    const h = ray.intersectObject(hill.structures, true)[0], o = h && h.object.userData.site;
+    if (o && o.name) { showStructure(o); return; }
+  }
   const hit = groundPoint(e.clientX, e.clientY);
   if (!hit) return;
   const { x, z } = hit;
