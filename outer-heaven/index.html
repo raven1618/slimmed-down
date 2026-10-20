@@ -303,6 +303,10 @@ body.hide-hint .hint { visibility: hidden; }
 .tool details { border-top: 1px solid var(--line); padding-top: 10px; }
 .tool summary { cursor: pointer; font-weight: 600; font-size: 0.875rem; }
 .tool details .tool { margin-top: 10px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pair label { display: grid; gap: 4px; }
+.tool input[type="range"] { padding: 0; border: 0; background: none; accent-color: var(--earth); height: 28px; }
+.notetext { margin: 0; white-space: pre-wrap; color: var(--sand) !important; font-size: 0.9375rem; }
 .lead-num { margin: 0; font-family: var(--mono); font-size: 0.875rem; color: var(--sand) !important; }
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
 .facts small { color: var(--faint); }
@@ -1831,6 +1835,13 @@ function clearOfStructures(x, z) {
     }
     if (FOOT[o.type] && o.type !== 'palm' && Math.hypot(x - o.x, z - o.z) < FOOT[o.type] + 1.5) return false;
   }
+  for (const n of notes.list) {                     // planned buildings too, deck included
+    if (n.kind === 'note') continue;
+    const [nx, nz] = fromUTM(n.E, n.N), dx = x - nx, dz = z - nz;
+    if (dx * dx + dz * dz > 1600) continue;
+    const b = (n.rot * Math.PI) / 180, along = dx * Math.sin(b) - dz * Math.cos(b), across = dx * Math.cos(b) + dz * Math.sin(b);
+    if (Math.abs(across) < n.w / 2 + 1 && along > -n.d / 2 - 1 && along < n.d / 2 + (n.kind === 'cabin' ? 3 : 0) + 1) return false;
+  }
   return true;
 }
 
@@ -2228,6 +2239,7 @@ function relayout() {
   refreshCurtains();
   drawOverlay();
   for (const l of hill.labels || []) l.anchor.y = yAt(l.x, l.z) + l.lift;
+  if (hill.notes) rebuildNoteMeshes();
   if (hill.pin.visible) hill.pin.position.y = yAt(hill.pin.position.x, hill.pin.position.z);
 }
 function applyLayers() {
@@ -2929,6 +2941,10 @@ function closeDrawer() {
     limits.drawing = null; limits.editing = null; limits.selected = -1; limits.textDraft = [];
     if (hill.terrain) limitsChanged();
   }
+  if (notes.placing || notes.moving || notes.open) {
+    notes.placing = notes.moving = notes.open = null;
+    if (hill.terrain) rebuildNoteMeshes();
+  }
   setHint();
   if (hill.pin) hill.pin.visible = false;
   document.querySelectorAll('.chip.is-on').forEach((el) => el.classList.remove('is-on'));
@@ -2986,7 +3002,9 @@ function bounds(utm) {
 }
 const DEFAULT_HINT = () => (mode === 'cerro' ? (small ? 'Drag to orbit · Tap for coordinates' : 'Drag to orbit · Right-drag to pan · Tap the ground for coordinates') : 'Drag to look around · Tap a label');
 function setHint() {
-  hint.textContent = limits.drawing ? 'Tap each corner in order · Tap the first corner to close'
+  hint.textContent = notes.placing ? 'Tap the map where it goes · Zoom in close for accuracy'
+    : notes.moving ? 'Tap the new spot'
+    : limits.drawing ? 'Tap each corner in order · Tap the first corner to close'
     : limits.editing ? 'Drag a corner to move it · Tap a small dot to add a corner'
     : DEFAULT_HINT();
 }
@@ -3356,6 +3374,287 @@ function resetOrbit() {
   el.addEventListener('lostpointercapture', (e) => { if (drag && e.pointerId === drag.id) end(Object.assign(new Event('pointercancel'), { pointerId: e.pointerId })); });
 }
 
+/* --------------------------------------------------- notes on the site -- */
+/* Marks the owner leaves in the model: planned cabins and other buildings as footprints that can be turned
+   and moved, and notes as pins. They live in the artifact's shared database (collection "notes"), where
+   Claude can read them; outside the Claude viewer they stay in this browser. Positions are UTM 21S. */
+const NOTE_KINDS = {
+  cabin: { label: 'Cabin', color: '#93c97c', hex: 0x93c97c, w: 9, d: 6.5, add: 'Add a cabin' },
+  building: { label: 'Building', color: '#e9bf5a', hex: 0xe9bf5a, w: 8, d: 6, add: 'Add a building' },
+  note: { label: 'Note', color: '#7fb3e3', hex: 0x7fb3e3, add: 'Add a note' },
+};
+const notes = { list: [], local: [], shared: false, db: null, canEdit: true, me: null, placing: null, moving: null, open: null, error: '', writing: {}, dirty: {}, chips: [] };
+const NOTES_KEY = 'oh-notes-v1';
+const noteById = (id) => notes.list.find((n) => n.id === id);
+const kindOfNote = (n) => NOTE_KINDS[n.kind] || NOTE_KINDS.note;
+const newNoteId = () => 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const WINDS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+const windOf = (deg) => WINDS[Math.round((((deg % 360) + 360) % 360) / 22.5) % 16];
+function noteFromDoc(id, v) {
+  const kind = NOTE_KINDS[v.kind] ? v.kind : 'note', k = NOTE_KINDS[kind];
+  return {
+    id, kind, name: String(v.name || k.label).slice(0, 80), text: String(v.text || '').slice(0, 4000),
+    E: +v.E || 0, N: +v.N || 0, rot: (((+v.rot || 0) % 360) + 360) % 360,
+    w: clamp(+v.w || k.w || 2, 2, 60), d: clamp(+v.d || k.d || 2, 2, 60), by: v.by || null, updated: +v.updated || 0,
+  };
+}
+const noteDoc = (n) => ({ kind: n.kind, name: n.name, text: n.text, E: +n.E.toFixed(2), N: +n.N.toFixed(2), rot: Math.round(n.rot), w: n.w, d: n.d, by: n.by, updated: Date.now() });
+async function initNotes() {
+  try { notes.list = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]').map((v) => noteFromDoc(v.id, v)); } catch (e) {}
+  notesChanged();
+  const c = window.claude;
+  if (!c || typeof c.use !== 'function') return;
+  const [db, user] = await Promise.all([c.use('db').catch(() => null), c.use('user').catch(() => null)]);
+  if (!db) return;
+  if (user) { try { notes.canEdit = await user.canEdit(); } catch (e) {} try { notes.me = (await user.me()).id || null; } catch (e) {} }
+  notes.db = db; notes.shared = true; notes.local = notes.list; notes.list = [];
+  db.collection('notes').onSnapshot((snap) => {
+    const typing = noteTyping() ? noteById(notes.open) : null;      // keep what is being typed
+    notes.list = snap.docs.map((d) => noteFromDoc(d.id, d.data() || {})).map((n) => (typing && n.id === typing.id ? typing : n));
+    notesChanged();
+  }, () => {});
+}
+function localSaveNotes() { if (!notes.shared) { try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes.list)); } catch (e) {} } }
+async function persistNote(id) {
+  if (!notes.shared) { localSaveNotes(); return; }
+  if (notes.writing[id]) { notes.dirty[id] = true; return; }
+  notes.writing[id] = true;
+  try {
+    do {
+      notes.dirty[id] = false;
+      const n = noteById(id); if (!n) break;
+      await notes.db.collection('notes').doc(id).set(noteDoc(n));
+    } while (notes.dirty[id]);
+  } catch (e) {
+    if (e && e.code === 'invalid_argument') notes.canEdit = false;
+    notes.error = e && e.code === 'quota_exceeded' ? 'The shared model is full; remove a note first.' : 'That change was not saved. Check the connection and try again.';
+    notesChanged();
+  } finally { notes.writing[id] = false; }
+}
+async function deleteNote(id) {
+  notes.list = notes.list.filter((n) => n.id !== id);
+  if (notes.open === id) notes.open = null;
+  if (notes.shared) { try { await notes.db.collection('notes').doc(id).delete(); } catch (e) { notes.error = 'That note was not removed. Try again.'; } }
+  else localSaveNotes();
+  notesChanged();
+}
+const noteTyping = () => { const a = document.activeElement; return !!(a && drawer.contains(a) && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.type !== 'range'); };
+function notesChanged() {
+  if (!hill.terrain) return;
+  rebuildNoteMeshes();
+  if (mode === 'cerro') buildChips();
+  if (!drawer.hidden && drawer.dataset.panel === 'notes' && !noteTyping()) renderNotes();
+  setHint();
+}
+
+/* In the model: footprints for buildings (cabins with a deck on the side they face), pins for notes. */
+const NOTE_GEO = { stem: new THREE.CylinderGeometry(0.22, 0.22, 8, 8), head: new THREE.SphereGeometry(1.3, 16, 12) };
+const noteMats = {};
+function noteMat(hex, sel, extra = {}) {
+  const key = hex + ':' + sel + ':' + JSON.stringify(extra);
+  return noteMats[key] || (noteMats[key] = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.8, emissive: sel ? hex : 0x000000, emissiveIntensity: sel ? 0.35 : 0, ...extra }));
+}
+function footprintModel(n, sel) {
+  const g = new THREE.Group(), k = kindOfNote(n), W = n.w, D = n.d, H = n.kind === 'cabin' ? 3.0 : 3.4;
+  const wall = noteMat(n.kind === 'cabin' ? 0xc9a283 : 0xe6ded0, sel), roof = noteMat(n.kind === 'cabin' ? 0x6f8a45 : 0x8d8a84, sel);
+  box(W, H + 1.2, D, 0, (H - 1.2) / 2, 0, wall, g);                                         // reaches into the slope
+  const r = box(W + 0.8, 0.3, D + 0.8, 0, H + 0.2, 0, roof, g); r.rotation.x = n.kind === 'cabin' ? -0.08 : 0;
+  if (n.kind === 'cabin') {
+    box(W - 0.6, H - 0.7, 0.06, 0, (H - 0.7) / 2 + 0.2, D / 2 + 0.03, noteMat(0x1c242c, sel, { roughness: 0.2, metalness: 0.4 }), g);   // glass to the view
+    box(W, 0.18, 3, 0, 0.25, D / 2 + 1.5, noteMat(0x8a5f3c, sel), g);                                                                // deck
+  }
+  if (sel) {                                                   // the selected one is outlined, through anything in front of it
+    const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => new THREE.Vector3((a * (W + 1)) / 2, 0.15, (b * (D + (n.kind === 'cabin' ? 4 : 1))) / 2 + (n.kind === 'cabin' ? 1.5 : 0)))),
+      new THREE.LineBasicMaterial({ color: k.hex, depthTest: false, transparent: true }));
+    ring.renderOrder = 5; g.add(ring);
+  }
+  return g;
+}
+function rebuildNoteMeshes() {
+  if (hill.notes) { hill.scene.remove(hill.notes); hill.notes.traverse((c) => { if (c.geometry && c.geometry !== NOTE_GEO.stem && c.geometry !== NOTE_GEO.head) c.geometry.dispose(); }); }
+  const g = new THREE.Group(), panel = !drawer.hidden && drawer.dataset.panel === 'notes';
+  for (const n of notes.list) {
+    const [x, z] = fromUTM(n.E, n.N);
+    if (!inSquare(x, z)) continue;
+    const sel = panel && n.id === notes.open;
+    let m;
+    if (n.kind === 'note') {
+      m = new THREE.Group();
+      const mat = noteMat(kindOfNote(n).hex, sel);
+      const stem = new THREE.Mesh(NOTE_GEO.stem, mat), head = new THREE.Mesh(NOTE_GEO.head, mat);
+      stem.position.y = 4; head.position.y = 8.6; m.add(stem, head);
+      m.position.set(x, yAt(x, z), z);
+    } else {
+      m = footprintModel(n, sel);
+      m.position.set(x, baseY(x, z, Math.max(n.w, n.d) * 0.45), z); m.rotation.y = bearingRot(n.rot);
+    }
+    m.traverse((c) => { c.userData.note = n.id; if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    g.add(m);
+  }
+  g.visible = display.notes;
+  hill.notes = g; hill.scene.add(g);
+  const sig = notes.list.filter((n) => n.kind !== 'note').map((n) => [n.E.toFixed(1), n.N.toFixed(1), n.rot, n.w, n.d].join()).join('|');
+  if (hill.trees && sig !== notes.treeSig) { notes.treeSig = sig; placeTrees(hill.trees); }   // trees step aside for planned buildings
+  renderer.shadowMap.needsUpdate = true;
+}
+function noteChips() {
+  notes.chips = notes.list.map((n) => {
+    const [x, z] = fromUTM(n.E, n.N), k = kindOfNote(n);
+    const sub = n.kind === 'note' ? (n.text.split('\n')[0].slice(0, 42) + (n.text.length > 42 ? '…' : '')) || 'Note' : `${k.label} · faces ${windOf(n.rot)}`;
+    const l = { name: n.name, sub, c: k.color, anchor: new THREE.Vector3(x, yAt(x, z) + (n.kind === 'note' ? 11 : 7), z) };
+    l.chip = makeChip(l, '', () => openNote(n.id));
+    return l;
+  });
+}
+
+/* Placing, moving and opening. */
+function startPlacing(kind) {
+  if (!notes.canEdit) return;
+  notes.placing = kind; notes.moving = null; notes.open = null;
+  drawerCollapsed = true; renderNotes();
+}
+function downhillBearing(x, z) {
+  const gx = groundAt(x + 5, z) - groundAt(x - 5, z), gz = groundAt(x, z + 5) - groundAt(x, z - 5);
+  return Math.round(((((Math.atan2(-gx, gz) * 180) / Math.PI) % 360) + 360) % 360 / 5) * 5;   // the view is usually downhill
+}
+function placeNoteAt(x, z) {
+  if (!inSquare(x, z)) return;
+  const [E, N] = toUTM(x, z);
+  if (notes.moving) {
+    const n = noteById(notes.moving); notes.moving = null;
+    if (n) { n.E = E; n.N = N; persistNote(n.id); notes.open = n.id; }
+  } else if (notes.placing) {
+    const kind = notes.placing, k = NOTE_KINDS[kind]; notes.placing = null;
+    const count = notes.list.filter((n) => n.kind === kind).length + 1;
+    const n = noteFromDoc(newNoteId(), { kind, name: `${k.label} ${count}`, E, N, rot: downhillBearing(x, z), w: k.w, d: k.d, by: notes.me });
+    notes.list.push(n); persistNote(n.id); notes.open = n.id;
+  }
+  drawerCollapsed = false; notesChanged(); renderNotes();
+}
+function openNote(id) {
+  const n = noteById(id); if (!n) return;
+  notes.open = id; notes.placing = null; notes.moving = null;
+  drawerCollapsed = false;
+  const [x, z] = fromUTM(n.E, n.N);
+  flyAround(x, z, n.kind === 'note' ? 90 : 70);
+  renderNotes(); rebuildNoteMeshes();
+}
+function notesAsText() {
+  const lines = ['Outer Heaven: notes on the site (UTM 21S)', ''];
+  for (const n of notes.list) {
+    const k = kindOfNote(n);
+    lines.push(`${k.label}: ${n.name}. ${n.E.toFixed(1)} E, ${n.N.toFixed(1)} N${n.kind === 'note' ? '' : `, faces ${windOf(n.rot)} (${Math.round(n.rot)}°), ${n.w} × ${n.d} m`}`);
+    if (n.text) lines.push(n.text);
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+function notesStorage() {
+  if (notes.shared) return notes.canEdit ? 'Saved to the shared model. Everyone with access sees these, and Claude can read them.' : 'You can read these notes. The owner or an editor can add and change them.';
+  return 'Saved in this browser only. Open the page inside Claude to share your notes with Claude.';
+}
+
+/* The panel. */
+function renderNotes() {
+  const el = document.createElement('div');
+  el.className = 'tool';
+  const err = notes.error; notes.error = '';
+  if (err) { const p = document.createElement('p'); p.className = 'note warn'; p.textContent = err; el.appendChild(p); }
+  const btn = (label, cls, go, disabled) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = label; b.disabled = !!disabled; b.addEventListener('click', go); return b; };
+  const row = (...kids) => { const d = document.createElement('div'); d.className = 'actions'; d.append(...kids.filter(Boolean)); return d; };
+
+  if (notes.placing || notes.moving) {
+    const n = notes.moving && noteById(notes.moving), k = NOTE_KINDS[notes.placing] || (n && kindOfNote(n));
+    const what = notes.moving ? `Tap the new spot for ${n ? n.name : 'it'}` : `Tap the map where the ${k.label.toLowerCase()} goes`;
+    const cancel = () => { const back = notes.moving; notes.placing = null; notes.moving = null; drawerCollapsed = false; if (back) notes.open = back; renderNotes(); };
+    el.appendChild(row(btn('Cancel', 'btn ghost', cancel)));
+    openDrawer('Notes', what, 'Zoom in close for accuracy. You can move it afterwards.', null, null, k.color, notesStorage(), el);
+    drawer.dataset.panel = 'notes';
+    fillCompact(what, [['Cancel', cancel]]);
+    setHint();
+    return;
+  }
+
+  const n = noteById(notes.open);
+  if (n) {
+    const k = kindOfNote(n), [x, z] = fromUTM(n.E, n.N);
+    const facts = [['Ground', `≈ ${groundAt(x, z).toFixed(0)} m`], ['Slope', `≈ ${slopeAt(x, z).toFixed(0)}°`]];
+    const house = OBJECTS.objects.find((o) => o.type === 'house');
+    if (house) facts.push(['To the house', `≈ ${fmt(Math.hypot(x - house.x, z - house.z), 0)} m`]);
+    if (n.kind !== 'note') facts.push(['Footprint', `${n.w} × ${n.d} m · ${fmt(n.w * n.d, 0)} m²${n.kind === 'cabin' ? ' + deck' : ''}`]);
+    facts.push(['UTM 21S', `${fmt(n.E, 1)} E, ${fmt(n.N, 1)} N`]);
+    let t = 0;
+    const save = (ms = 600) => { n.updated = Date.now(); clearTimeout(t); t = setTimeout(() => persistNote(n.id), ms); };
+    if (notes.canEdit) {
+      const lab = (txt, forId) => { const l = document.createElement('label'); l.textContent = txt; if (forId) l.htmlFor = forId; return l; };
+      const name = document.createElement('input'); name.id = 'n-name'; name.type = 'text'; name.value = n.name; name.autocomplete = 'off'; name.maxLength = 80;
+      name.addEventListener('input', () => { n.name = name.value.trim() || k.label; save(); });
+      name.addEventListener('blur', () => buildChips());
+      const text = document.createElement('textarea'); text.id = 'n-text'; text.rows = 6; text.value = n.text; text.maxLength = 4000;
+      text.placeholder = n.kind === 'cabin' ? 'For Claude: who it is for, what the view should be, trees to keep, how you reach it…' : 'For Claude: what you want here, what to keep, what to avoid…';
+      text.addEventListener('input', () => { n.text = text.value; save(); });
+      text.addEventListener('blur', () => buildChips());
+      el.append(lab('Name', 'n-name'), name, lab('Notes for Claude', 'n-text'), text);
+      if (n.kind !== 'note') {
+        const rl = lab(`Faces ${windOf(n.rot)} · ${Math.round(n.rot)}°`, 'n-rot');
+        const rot = document.createElement('input'); rot.id = 'n-rot'; rot.type = 'range'; rot.min = 0; rot.max = 355; rot.step = 5; rot.value = n.rot;
+        rot.addEventListener('input', () => { n.rot = +rot.value; rl.textContent = `Faces ${windOf(n.rot)} · ${n.rot}°`; rebuildNoteMeshes(); save(400); });
+        rot.addEventListener('change', () => buildChips());
+        const size = document.createElement('div'); size.className = 'pair';
+        for (const [key, label] of [['w', 'Width (m)'], ['d', 'Depth (m)']]) {
+          const wrap = document.createElement('label'); wrap.textContent = label;
+          const inp = document.createElement('input'); inp.type = 'number'; inp.min = 2; inp.max = 60; inp.step = 0.5; inp.value = n[key]; inp.inputMode = 'decimal';
+          inp.addEventListener('change', () => { n[key] = clamp(+inp.value || n[key], 2, 60); inp.value = n[key]; rebuildNoteMeshes(); save(0); });
+          wrap.appendChild(inp); size.appendChild(wrap);
+        }
+        el.append(rl, rot, size);
+      }
+    } else if (n.text) {
+      const p = document.createElement('p'); p.className = 'notetext'; p.textContent = n.text; el.appendChild(p);
+    }
+    const ul = document.createElement('ul'); ul.className = 'facts';
+    for (const [a, b] of facts) { const li = document.createElement('li'); const s1 = document.createElement('span'), s2 = document.createElement('span'); s1.textContent = a; s2.textContent = b; li.append(s1, s2); ul.appendChild(li); }
+    el.appendChild(ul);
+    const done = () => { notes.open = null; renderNotes(); rebuildNoteMeshes(); };
+    const move = () => { notes.moving = n.id; drawerCollapsed = true; renderNotes(); };
+    const turn = () => { n.rot = (n.rot + 15) % 360; rebuildNoteMeshes(); save(400); renderNotes(); };
+    const del = btn('Delete', 'btn ghost', (e) => { const b = e.currentTarget; if (b.dataset.armed) deleteNote(n.id); else { b.dataset.armed = '1'; b.textContent = 'Tap again to delete'; } });
+    el.appendChild(row(btn('Done', 'btn', done), notes.canEdit && btn('Move', 'btn ghost', move), notes.canEdit && n.kind !== 'note' && btn('Turn 15°', 'btn ghost', turn), notes.canEdit && del));
+    openDrawer(k.label, n.name, null, null, null, k.color, notesStorage(), el);
+    drawer.dataset.panel = 'notes';
+    fillCompact(`${n.name}${n.kind === 'note' ? '' : ` · faces ${windOf(n.rot)}`}`, [['Done', done], notes.canEdit ? ['Move', move] : null, notes.canEdit && n.kind !== 'note' ? ['Turn', turn] : null]);
+    setHint();
+    return;
+  }
+
+  // Overview
+  if (notes.canEdit) el.appendChild(row(...Object.entries(NOTE_KINDS).map(([kind, k], i) => btn(k.add, i ? 'btn ghost' : 'btn', () => startPlacing(kind)))));
+  if (notes.shared && notes.canEdit && notes.local.length) {
+    el.appendChild(btn(`Add ${notes.local.length} note${notes.local.length > 1 ? 's' : ''} saved earlier in this browser`, 'mini', async () => {
+      const items = notes.local; notes.local = [];
+      for (const it of items) { const m = noteFromDoc(newNoteId(), it); notes.list.push(m); await persistNote(m.id); }
+      notesChanged();
+    }));
+  }
+  const h = document.createElement('h3'); h.textContent = notes.list.length ? 'On the map' : 'Nothing marked yet'; el.appendChild(h);
+  const ul = document.createElement('ul'); ul.className = 'facts';
+  for (const m of notes.list) {
+    const k = kindOfNote(m), li = document.createElement('li'), nm = document.createElement('span'), sw = document.createElement('i'), meta = document.createElement('small');
+    nm.className = 'nm'; sw.className = 'sw'; sw.style.background = k.color;
+    meta.textContent = ` · ${k.label}${m.kind === 'note' ? '' : `, faces ${windOf(m.rot)}`}`;
+    nm.append(sw, document.createTextNode(m.name), meta);
+    const snippet = document.createElement('span'); snippet.textContent = m.text ? (m.text.slice(0, 60) + (m.text.length > 60 ? '…' : '')) : '';
+    const rb = document.createElement('div'); rb.className = 'rowbtns';
+    rb.append(btn('Open', 'mini', () => openNote(m.id)));
+    li.append(nm, snippet, rb); ul.appendChild(li);
+  }
+  el.appendChild(ul);
+  if (notes.list.length) el.appendChild(btn('Copy all as text', 'mini', (e) => copyText(notesAsText(), e.currentTarget)));
+  openDrawer('Notes', 'Lay out the site', notes.canEdit ? 'Put down cabins and other buildings where you want them, turn them to face the view, and leave notes for Claude anywhere on the map.' : '', null, null, '#7fb3e3', notesStorage(), el);
+  drawer.dataset.panel = 'notes';
+  setHint();
+}
+
 function openSources() {
   const el = document.createElement('div');
   const m = META.sources;
@@ -3384,14 +3683,14 @@ function pill(label, pressed, onClick, cls = '') {
 /* ------------------------------------------------- what the map shows -- */
 const DISPLAY_DEFAULT = {
   base: 'satellite',
-  propLabels: true, propArea: true, site: true, summit: false, lodging: false, places: false,
+  propLabels: true, propArea: true, site: true, notes: true, summit: false, lodging: false, places: false,
   trees: true, buildings: true, roads: true, contours: false, grid: false, relief: false, sitePhoto: true,
   title: true, compass: true, hint: true, legend: true,
 };
 const display = { ...DISPLAY_DEFAULT };
 try { Object.assign(display, JSON.parse(localStorage.getItem('oh-display-v1') || '{}')); } catch (e) {}
 const DISPLAY_GROUPS = [
-  ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['site', 'Homestead buildings', 'var(--sand)'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
+  ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['site', 'Homestead buildings', 'var(--sand)'], ['notes', 'Notes and planned cabins', '#7fb3e3'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
   ['Map', [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contour lines (10 m)'], ['grid', 'UTM grid (500 m)'], ['relief', 'Relief ×2'], ['sitePhoto', 'Site photos (satellite map only)']]],
   ['Screen', [['title', 'Title and description'], ['compass', 'Compass'], ['hint', 'Hints'], ['legend', 'Map legend']]],
 ];
@@ -3405,6 +3704,7 @@ function applyDisplay() {
   const gridChanged = hill.on.grid !== display.grid;
   hill.on.grid = display.grid;
   if (!BASES[display.base]) display.base = 'satellite';
+  if (hill.notes) hill.notes.visible = display.notes;
   renderLegend();
   if (!hill.terrain) { hill.vs = display.relief ? 2 : 1; return; }
   if (display.base !== baseWant) setBase(display.base);
@@ -3522,6 +3822,7 @@ function buildBar() {
   if (mode === 'cerro') {
     pill('Overview', null, () => { closeDrawer(); flyTo(HOME.pos, HOME.tgt, 1800); });
     if (OBJECTS.view) pill('Homestead', null, () => { closeDrawer(); homesteadView(); });
+    pill('Notes', null, () => { toggleDisplay(false); closeDrawer(); renderNotes(); }, 'accent');
     const db = pill('Display', null, () => toggleDisplay(displayEl.hidden));
     db.dataset.display = '1'; db.setAttribute('aria-expanded', 'false'); db.setAttribute('aria-controls', 'display');
     pill('Property limits', null, () => { toggleDisplay(false); openLimits(); }, 'accent');
@@ -3544,6 +3845,7 @@ function buildChips() {
       });
       return l;
     });
+    noteChips();
     for (const l of hill.labels) l.chip = makeChip(l, '', () => {
       document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('is-on', c === l.chip));
       if (l.site) { flyAround(l.x, l.z, 70); showStructure(l.site); return; }
@@ -3623,6 +3925,14 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), quick = e.timeStamp - down.t < 700;
   down = null;
   if (moved > 6 || !quick || gestureMax > 1) return;
+  if (notes.placing || notes.moving) { const p = groundPoint(e.clientX, e.clientY); if (p) placeNoteAt(p.x, p.z); return; }
+  if (hill.notes && hill.notes.visible && notes.list.length && !limits.drawing && !limits.editing) {
+    hill.camera.updateMatrixWorld();
+    ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, hill.camera);
+    const h = ray.intersectObject(hill.notes, true).find((x) => x.object.isMesh);
+    if (h && h.object.userData.note) { openNote(h.object.userData.note); return; }
+  }
   if (hill.structures && hill.structures.visible && !limits.drawing && !limits.editing) {
     hill.camera.updateMatrixWorld();
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
@@ -3651,6 +3961,7 @@ addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (!displayEl.hidden) toggleDisplay(false);
   else if (!planEl.hidden) closePlan();
+  else if (notes.placing || notes.moving) { const back = notes.moving; notes.placing = notes.moving = null; notes.open = back; drawerCollapsed = false; renderNotes(); }
   else if (limits.drawing) { limits.drawing = null; drawerCollapsed = false; drawOverlay(); renderLimits(); }
   else if (limits.editing) { limits.editing = null; limits.selected = -1; drawerCollapsed = false; limitsChanged(); renderLimits(); }
   else if (!drawer.hidden) closeDrawer();
@@ -3690,6 +4001,7 @@ function tick() {
     needle.setAttribute('transform', `rotate(${(ctl.getAzimuthalAngle() * 180) / Math.PI} 15 15)`);
     for (const l of hill.labels) place(l.chip, l.anchor, cam, !display[l.cat] || cam.position.distanceTo(l.anchor) > l.far || !!limits.drawing || !!limits.editing);
     for (const l of limitLabels) place(l.chip, l.anchor, cam, !display.propLabels || !!limits.editing || !!limits.drawing);
+    for (const l of notes.chips) place(l.chip, l.anchor, cam, !display.notes || !!limits.editing || !!limits.drawing || !!notes.placing || !!notes.moving);
     for (const h of handleGroup.children) h.scale.setScalar(Math.max(0.6, cam.position.distanceTo(h.position) * 0.011 * h.userData.s));
   } else {
     active.tick(elapsed);
@@ -3745,6 +4057,7 @@ async function boot() {
   if (want === 'plan') openPlan();
   requestAnimationFrame(tick);
   initLimits().catch((err) => console.error(err));
+  initNotes().catch((err) => console.error(err));
 }
 boot().catch((err) => { console.error(err); fail('Something went wrong building the 3D view. The plan still works.'); });
 </script>

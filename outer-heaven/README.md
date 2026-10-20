@@ -51,6 +51,17 @@ cd outer-heaven/data/build
 python3 build.py            # or one step: dem chm s2 trees layers site overture export
 ```
 
+### Notes and the cabin layout
+
+Open **Notes** in the hill view to lay out the site:
+
+- **Add a cabin** or **Add a building**, then tap where it goes. It appears as a 3D footprint (cabins with their deck) facing downhill.
+- Turn it with the slider or **Turn 15°**, change its width and depth, or tap **Move** and then the new spot.
+- **Add a note** drops a pin anywhere.
+- Every mark has a name and a free-text note. Tap a mark or its label to open it.
+
+Inside the Claude viewer the marks are saved in the artifact's shared database (collection `notes`: kind, name, text, UTM 21S `E`/`N`, `rot` bearing, `w`/`d` in metres), where Claude can read them. Elsewhere they stay in that browser. **Copy all as text** gives a plain summary to paste anywhere.
+
 ### Setting the property limits
 
 Open **Property limits** in the hill view. There are two ways to add a boundary:
