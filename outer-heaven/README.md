@@ -36,6 +36,7 @@ Add `#cabin`, `#residence` or `#plan` to the URL to open that view directly.
 | `landcover.png` | Land cover base map | ESA WorldCover 2021, 10 m |
 | `ndvi.jpg`, `falsecolor.jpg` | Vegetation index and infrared base maps | Same Sentinel-2 passes, near-infrared band |
 | `basemaps.json` | Legend data for those maps (colour ramps, class shares) | |
+| `site-*.webp`, `sites.json` | Sharper site photos draped over parts of the hill | The owner's own satellite screenshots (see below) |
 | `context.json` | Roads, building footprints, named places | Overture Maps 2026-09-23.1 |
 | `layers.geojson` | **Surveyed boundaries (title plans)**, WGS84 lon/lat | Added by hand, empty for now |
 | `meta.json` | Origin, extent, sources | |
@@ -46,7 +47,7 @@ To rebuild (needs Python with rasterio, pyproj, scipy, pyarrow, requests and Pil
 
 ```sh
 cd outer-heaven/data/build
-python3 build.py            # or one step: dem chm s2 trees layers overture export
+python3 build.py            # or one step: dem chm s2 trees layers site overture export
 ```
 
 ### Setting the property limits
@@ -85,6 +86,30 @@ A drone mapping flight over the property (an orthophoto plus a surface model at 
 ### Base maps
 
 Topographic, shaded relief and slope are drawn in the browser from `terrain.json`. The topographic map numbers the 50 m contours and turns the contour lines on. Each base map comes with the layers that suit it: trees are on for satellite and off for the others, because the crowns would cover the data. Any layer can be switched back on in **Display**.
+
+### Site photos
+
+A phone screenshot of a satellite map of part of the site can be laid onto the hill at about 0.25 m per pixel. That is 40 times sharper than the Sentinel-2 imagery. The first one covers the public sector.
+
+To add another:
+
+1. Save it in `data/build/sources/`.
+2. Add an entry to `data/build/sites.json` with:
+   - `near`: rough local x and z in metres.
+   - `bearing_hint`: the compass bearing the top of the screen faces. Read it from the map's compass; 0 if the map is north-up.
+   - `hide`: pixel boxes `[x0, y0, x1, y1]` over the map's buttons and logo.
+   - `marks`: pixel boxes around labels and the blue location dot.
+   - `pins`: pixel boxes around place pins.
+3. Run `python3 build.py site`.
+
+The step finds the screenshot's scale, rotation and position by matching it to the Sentinel-2 imagery, and saves that fit into `sites.json`. Expect about ±5 m. It then:
+
+- covers the buttons, pins and labels with texture from beside them
+- matches the photo's colours to the satellite base
+- removes 3D trees standing where the photo shows open ground
+- adds trees where it shows woods that the canopy model missed
+
+The photo shows only on the Satellite base map and can be switched off under **Display**. Credit the imagery's owner wherever the site is shown. Screenshots of Google Maps are © Google, and a drone orthophoto of your own would remove that restriction.
 
 ## Concept pages notes
 

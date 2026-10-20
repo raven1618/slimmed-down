@@ -1,0 +1,77 @@
+[
+ {
+  "id": "public",
+  "name": "Public sector",
+  "file": "sources/public-2026-08.jpg",
+  "source": "Google Maps satellite view, phone screenshot of 9 Aug 2026 shared by the owner",
+  "credit": "Imagery © Google",
+  "near": [
+   300,
+   800
+  ],
+  "bearing_hint": 108,
+  "hide": [
+   [
+    1110,
+    20,
+    1260,
+    320
+   ],
+   [
+    1060,
+    1400,
+    1260,
+    1600
+   ],
+   [
+    1060,
+    1620,
+    1260,
+    1810
+   ],
+   [
+    30,
+    1720,
+    380,
+    1810
+   ],
+   [
+    0,
+    1835,
+    1290,
+    1859
+   ]
+  ],
+  "marks": [
+   [
+    180,
+    1120,
+    530,
+    1190
+   ],
+   [
+    600,
+    1000,
+    800,
+    1215
+   ]
+  ],
+  "pins": [
+   [
+    530,
+    1100,
+    615,
+    1205
+   ]
+  ],
+  "fit": {
+   "m_per_px": 0.2164,
+   "up_bearing": 112.75,
+   "centre": [
+    293.0,
+    781.0
+   ],
+   "score": 0.922
+  }
+ }
+]

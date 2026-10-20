@@ -11,10 +11,12 @@ Outputs (in outer-heaven/data/):
   trees.json     tree tops from the 1 m canopy height model
   falsecolor.jpg, ndvi.jpg, canopy.jpg, landcover.png, basemaps.json
                  other base maps and their legend data
+  site-*.webp, sites.json
+                 the owner's own satellite screenshots, georeferenced and draped (see sites.json here)
   context.json   roads, buildings, protected areas and place names (Overture)
 
 Run from this folder:  python3 build.py [step ...]
-Steps: dem chm s2 trees layers overture export  (default: all)
+Steps: dem chm s2 trees layers site overture export  (default: all)
 """
 import base64, json, math, os, re, sys, time
 import numpy as np
@@ -246,13 +248,21 @@ def step_trees():
     spacing = d[:, 1:].mean(1)
     r = np.clip(0.62 * spacing, 1.4, 0.42 * h + 2.5)
     print("kept", len(h), "crown radius p50/p95", np.percentile(r, [50, 95]).round(1))
-    rec = np.zeros(len(h), dtype=[("x", "<i2"), ("z", "<i2"), ("h", "u1"), ("r", "u1")])
+    rec = np.zeros(len(h), dtype=TREE_DTYPE)
     rec["x"] = np.round(x * 10); rec["z"] = np.round(z * 10)
     rec["h"] = np.clip(np.round(h * 10), 0, 255); rec["r"] = np.clip(np.round(r * 10), 0, 255)
     order = np.argsort(-rec["h"], kind="stable")   # tallest first, so a viewer can cut the tail on phones
+    np.save(os.path.join(CACHE, "trees_all.npy"), rec[order])
+    write_trees(rec[order])
+
+
+TREE_DTYPE = [("x", "<i2"), ("z", "<i2"), ("h", "u1"), ("r", "u1")]
+
+
+def write_trees(rec):
     with open(os.path.join(OUT, "trees.json"), "w") as f:
         json.dump({"count": int(len(rec)), "layout": "int16 x dm, int16 z dm, uint8 height dm, uint8 crown radius dm; tallest first",
-                   "data": base64.b64encode(rec[order].tobytes()).decode()}, f)
+                   "data": base64.b64encode(rec.tobytes()).decode()}, f)
 
 
 # ------------------------------------------------------------ base maps --
@@ -342,6 +352,99 @@ def step_layers():
 
     with open(os.path.join(OUT, "basemaps.json"), "w") as f:
         json.dump(legends, f, indent=1)
+
+
+# ----------------------------------------------------------- site photos --
+SITE_RES = 0.25                                   # metres per pixel of the draped photos
+
+
+def step_site():
+    """Drape the owner's satellite screenshots (listed in sites.json) over the model, and take out the
+    3D trees that stand on ground those photos show as cleared. Run after trees and layers."""
+    from PIL import Image
+    from scipy import ndimage
+    import site_photos as sp
+    cfg_path = os.path.join(HERE, "sites.json")
+    sites = json.load(open(cfg_path))
+    imagery = np.asarray(Image.open(os.path.join(OUT, "imagery.jpg")).convert("RGB")).astype(np.float32) / 255
+    all_path = os.path.join(CACHE, "trees_all.npy")
+    if not os.path.exists(all_path):              # first run on an existing build: start from trees.json as it is
+        t = json.load(open(os.path.join(OUT, "trees.json")))
+        np.save(all_path, np.frombuffer(base64.b64decode(t["data"]), dtype=TREE_DTYPE))
+    rec = np.load(all_path)
+    tx, tz = rec["x"] / 10, rec["z"] / 10
+    keep = np.ones(len(rec), bool)
+    chm = load_npy("chm1").astype(np.float32)
+    added = []
+    out = []
+    for site in sites:
+        shot = np.asarray(Image.open(os.path.join(HERE, site["file"])).convert("RGB")).astype(np.float32) / 255
+        valid = np.ones(shot.shape[:2], bool)
+        # Buttons and the logo ("hide") and pins are covered with nearby texture; labels and the location dot are lifted off.
+        shot = sp.clean_marks(shot, site.get("marks", []), site.get("pins", []) + site.get("hide", []))
+        if "fit" not in site:
+            site["fit"] = sp.fit(shot, valid, imagery, HALF, site["near"], site["bearing_hint"])
+            with open(cfg_path, "w") as f:
+                json.dump(sites, f, indent=1, ensure_ascii=False)
+        fit = site["fit"]
+        print(site["id"], "fit", fit)
+        rgb, ok, (x0, z0) = sp.warp(shot, valid, fit, SITE_RES)
+        nz, nx = ok.shape
+        x1, z1 = x0 + nx * SITE_RES, z0 + nz * SITE_RES
+
+        # Match the photo's colours to the satellite base around it, so the edge is quiet.
+        k = imagery.shape[0] / (2 * HALF)
+        j0, i0 = int((x0 + HALF) * k), int((z0 + HALF) * k)
+        base = imagery[i0:i0 + int(nz * SITE_RES * k), j0:j0 + int(nx * SITE_RES * k)]
+        small = ndimage.zoom(rgb, (base.shape[0] / nz, base.shape[1] / nx, 1), order=1)
+        m = ndimage.zoom(ok.astype(np.float32), (base.shape[0] / nz, base.shape[1] / nx), order=0) > 0.5
+        sm = [ndimage.gaussian_filter(a, (2.5, 2.5, 0))[m] for a in (small, base)]
+        gain = sm[1].std(0) / np.maximum(sm[0].std(0), 1e-3)
+        rgb = np.clip((rgb - sm[0].mean(0)) * gain + sm[1].mean(0), 0, 1)
+        print("  colour gain", gain.round(2), "offset", (sm[1].mean(0) - sm[0].mean(0) * gain).round(3))
+
+        alpha = np.clip(ndimage.distance_transform_edt(ok) * SITE_RES / 8, 0, 1)   # 8 m soft edge
+        near = ndimage.distance_transform_edt(~ok, return_distances=False, return_indices=True)
+        rgb = rgb[near[0], near[1]]                    # no dark fringe where the edge is filtered
+        name = f"site-{site['id']}.webp"
+        Image.fromarray((np.dstack([rgb, alpha]) * 255).round().astype(np.uint8), "RGBA").save(os.path.join(OUT, name), quality=86, method=6)
+        print(" ", name, f"{nx} x {nz} px,", os.path.getsize(os.path.join(OUT, name)) // 1024, "KB")
+
+        # Trees standing where the photo shows open ground were cleared after the canopy model was made.
+        openf = ndimage.gaussian_filter((sp.open_ground(rgb, SITE_RES) & ok).astype(np.float32), 2.0 / SITE_RES)
+        okf = ndimage.gaussian_filter(ok.astype(np.float32), 2.0 / SITE_RES)
+        ci, cj = ((tz - z0) / SITE_RES).astype(int), ((tx - x0) / SITE_RES).astype(int)
+        inside = (ci >= 0) & (ci < nz) & (cj >= 0) & (cj < nx)
+        gone = np.zeros(len(rec), bool)
+        gone[inside] = (okf[ci[inside], cj[inside]] > 0.9) & (openf[ci[inside], cj[inside]] > 0.55 * okf[ci[inside], cj[inside]])
+        keep &= ~gone
+        print("  trees on cleared ground:", int(gone.sum()), "of", int(inside.sum()), "inside the photo")
+
+        # Low, even canopy has few distinct tops in the canopy model, so woods the photo shows can look thin.
+        # Fill them in: a jittered 5 m grid, wherever the photo shows canopy and no model tree stands within 4 m.
+        from scipy.spatial import cKDTree
+        wood = ndimage.gaussian_filter(((~sp.open_ground(rgb, SITE_RES)) & ok).astype(np.float32), 2.0 / SITE_RES)
+        rng = np.random.default_rng(11)
+        gz, gx = np.mgrid[z0:z1:5.0, x0:x1:5.0]
+        gx = gx + rng.uniform(-1.6, 1.6, gx.shape); gz = gz + rng.uniform(-1.6, 1.6, gz.shape)
+        gi, gj = ((gz - z0) / SITE_RES).astype(int).clip(0, nz - 1), ((gx - x0) / SITE_RES).astype(int).clip(0, nx - 1)
+        cand = (wood[gi, gj] > 0.75) & (okf[gi, gj] > 0.95)
+        cx_, cz_ = gx[cand], gz[cand]
+        near = cKDTree(np.stack([tx[keep], tz[keep]], 1)).query(np.stack([cx_, cz_], 1), distance_upper_bound=4.0)[0]
+        cx_, cz_ = cx_[np.isinf(near)], cz_[np.isinf(near)]
+        local = ndimage.gaussian_filter(chm, 3)[(cz_ + HALF).astype(int).clip(0, chm.shape[0] - 1), (cx_ + HALF).astype(int).clip(0, chm.shape[1] - 1)]
+        h = np.clip(local, 5, 16) * rng.uniform(0.85, 1.1, len(cx_))
+        new = np.zeros(len(cx_), dtype=TREE_DTYPE)
+        new["x"], new["z"] = np.round(cx_ * 10), np.round(cz_ * 10)
+        new["h"], new["r"] = np.round(h * 10).clip(0, 255), np.round(rng.uniform(2.4, 3.3, len(cx_)) * 10)
+        added.append(new)
+        print("  trees added where the photo shows woods:", len(new), "(canopy model height there, at least 5 m)")
+        out.append({"id": site["id"], "name": site["name"], "file": name, "x0": x0, "z0": z0, "x1": x1, "z1": z1,
+                    "source": site["source"], "credit": site["credit"], "trees_removed": int(gone.sum()), "trees_added": len(new)})
+    allt = np.concatenate([rec[keep]] + added)
+    write_trees(allt[np.argsort(-allt["h"], kind="stable")])
+    with open(os.path.join(OUT, "sites.json"), "w") as f:
+        json.dump({"patches": out}, f, indent=1, ensure_ascii=False)
 
 
 # -------------------------------------------------------------- Overture --
@@ -489,7 +592,7 @@ def step_export():
 
 
 if __name__ == "__main__":
-    steps = sys.argv[1:] or ["dem", "chm", "s2", "trees", "layers", "overture", "export"]
+    steps = sys.argv[1:] or ["dem", "chm", "s2", "trees", "layers", "site", "overture", "export"]
     for s in steps:
         t0 = time.time()
         globals()["step_" + s]()

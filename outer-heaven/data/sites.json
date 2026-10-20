@@ -1,0 +1,17 @@
+{
+ "patches": [
+  {
+   "id": "public",
+   "name": "Public sector",
+   "file": "site-public.webp",
+   "x0": 53.0,
+   "z0": 574.0,
+   "x1": 532.5,
+   "z1": 987.75,
+   "source": "Google Maps satellite view, phone screenshot of 9 Aug 2026 shared by the owner",
+   "credit": "Imagery © Google",
+   "trees_removed": 6,
+   "trees_added": 2083
+  }
+ ]
+}

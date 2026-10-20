@@ -174,6 +174,11 @@ a { color: var(--gold); text-underline-offset: 3px; }
   display: grid; place-items: center; pointer-events: none;
 }
 .compass svg { width: 30px; height: 30px; }
+.credit {
+  position: fixed; z-index: 14; margin: 0; pointer-events: none;
+  right: calc(var(--gutter-r) + 58px); bottom: calc(env(safe-area-inset-bottom, 0px) + 30px);
+  font-size: 0.6875rem; color: rgb(241 233 219 / 0.75); text-shadow: 0 1px 4px rgb(0 0 0 / 0.7);
+}
 
 /* ---------- details drawer ---------- */
 .drawer {
@@ -427,6 +432,7 @@ ul.plain b { color: var(--sand); font-weight: 600; }
   .chip { padding: 5px 8px 5px 7px; font-size: 0.75rem; }
   .chip small { display: none; }
   .compass { bottom: calc(env(safe-area-inset-bottom, 0px) + 104px); }
+  .credit { bottom: calc(env(safe-area-inset-bottom, 0px) + 118px); }
   .maplegend { padding: 8px 10px; gap: 5px; }
   .maplegend .lg-note { display: none; }
   .plan-nav { display: none; }
@@ -462,6 +468,7 @@ ul.plain b { color: var(--sand); font-weight: 600; }
   <div class="bar" id="bar" role="group" aria-label="Places"></div>
 </div>
 <div class="display" id="display" hidden role="dialog" aria-label="Choose what the map shows"></div>
+<p class="credit" id="credit" hidden></p>
 <div class="compass" id="compass" aria-hidden="true">
   <svg viewBox="0 0 30 30"><g id="needle"><path d="M15 3 L19 15 L15 13.5 L11 15 Z" fill="#e9bf5a"/><path d="M15 27 L19 15 L15 16.5 L11 15 Z" fill="#5d675a"/></g><text x="15" y="9.5" text-anchor="middle" font-size="0" fill="none">N</text></svg>
 </div>
@@ -1269,6 +1276,16 @@ function loadImage(src) { return new Promise((res, rej) => { const im = new Imag
 
 let imgPx = null, imgW = 0;
 function imageryColor(x, z, out) {
+  for (const p of SITES) {
+    if (x < p.x0 || x >= p.x1 || z < p.z0 || z >= p.z1) continue;
+    const u = Math.floor(((x - p.x0) / (p.x1 - p.x0)) * p.w), v = Math.floor(((z - p.z0) / (p.z1 - p.z0)) * p.h);
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let dv = -4; dv <= 4; dv += 4) for (let du = -4; du <= 4; du += 4) {   // about 2 m across, like the base imagery
+      const k = (clamp(v + dv, 0, p.h - 1) * p.w + clamp(u + du, 0, p.w - 1)) * 4;
+      if (p.px[k + 3] > 230) { r += p.px[k]; g += p.px[k + 1]; b += p.px[k + 2]; n++; }
+    }
+    if (n === 9) return out.setRGB(r / n / 255, g / n / 255, b / n / 255, THREE.SRGBColorSpace);
+  }
   const u = clamp(Math.floor(((x + HHALF) / (2 * HHALF)) * imgW), 0, imgW - 1), v = clamp(Math.floor(((z + HHALF) / (2 * HHALF)) * imgW), 0, imgW - 1);
   const k = (v * imgW + u) * 4;
   return out.setRGB(imgPx[k] / 255, imgPx[k + 1] / 255, imgPx[k + 2] / 255, THREE.SRGBColorSpace);
@@ -1299,18 +1316,31 @@ function setTerrainY(g) {
   for (let i = 0; i < p.count; i++) p.setY(i, (HF[i] - HBASE) * hill.vs);
   p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
 }
+const BLANK = new THREE.DataTexture(new Uint8Array(4), 1, 1); BLANK.needsUpdate = true;
 /* Contour lines drawn in the terrain shader: thin every 10 m, stronger every 50 m. The annotation
    canvas (boundaries, grid) is laid on top unlit, like a sheet of tracing paper. */
 function contourMaterial(map, ov) {
   const mat = new THREE.MeshStandardMaterial({ map, roughness: 1, metalness: 0 });
-  mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 }, uLine: { value: new THREE.Color(1, 0.93, 0.72) }, uLineK: { value: 0.8 }, uOv: { value: ov } };
+  mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 }, uLine: { value: new THREE.Color(1, 0.93, 0.72) }, uLineK: { value: 0.8 }, uOv: { value: ov }, uPatchOn: { value: 0 } };
+  // Site photos: sharper images of parts of the site, each laid over its own rectangle of the map.
+  let patchDecl = '', patchCode = '';
+  SITES.forEach((p, i) => {
+    const U = (x) => (x + HHALF) / (2 * HHALF), V = (z) => 1 - (z + HHALF) / (2 * HHALF);
+    mat.userData.u['uP' + i] = { value: BLANK };
+    mat.userData.u['uPR' + i] = { value: new THREE.Vector4(U(p.x0), V(p.z1), U(p.x1), V(p.z0)) };
+    patchDecl += ` uniform sampler2D uP${i}; uniform vec4 uPR${i};`;
+    patchCode += `{ vec2 pu = (vMapUv - uPR${i}.xy) / (uPR${i}.zw - uPR${i}.xy); vec4 pc = texture2D(uP${i}, clamp(pu, 0.0, 1.0));
+      float pa = pc.a * uPatchOn * step(0.0, pu.x) * step(pu.x, 1.0) * step(0.0, pu.y) * step(pu.y, 1.0);
+      diffuseColor.rgb = mix(diffuseColor.rgb, pc.rgb, pa); }\n`;
+  });
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, mat.userData.u);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uVS; uniform float uBase;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvElev = position.y / uVS + uBase;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv; uniform float uPatchOn;' + patchDecl)
       .replace('#include <tonemapping_fragment>', 'vec4 ov = texture2D(uOv, vMapUv);\ngl_FragColor.rgb = gl_FragColor.rgb * (1.0 - ov.a) + ov.rgb;\n#include <tonemapping_fragment>')
       .replace('#include <map_fragment>', `#include <map_fragment>
+        ${patchCode}
         if (uOn > 0.5) {
           float w = max(fwidth(vElev), 1e-4);
           float d10 = abs(fract(vElev / 10.0 + 0.5) - 0.5) * 10.0 / w;
@@ -1437,7 +1467,7 @@ function buildRoads() {
         const px = x - dz * w * sgn, pz = z + dx * w * sgn;
         pos.push(px, yAt(px, pz) + 0.5 * hill.vs, pz); col.push(k.r, k.g, k.b);
       }
-      if (i) { const a = base + (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+      if (i && !(underPhoto(pts[i - 1][0], pts[i - 1][1]) && underPhoto(x, z))) { const a = base + (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
     }
   }
   const g = new THREE.BufferGeometry();
@@ -1706,12 +1736,12 @@ function loadOfficial(fc) {
 
 /* ------------------------------------------------------------ build -- */
 async function buildHill() {
-  const [meta, ter, trees, ctx, layers, img, legends] = await Promise.all([
+  const [meta, ter, trees, ctx, layers, img, legends, sites] = await Promise.all([
     getJSON('data/meta.json'), getJSON('data/terrain.json'), getJSON('data/trees.json'), getJSON('data/context.json'),
     getJSON('data/layers.geojson').catch(() => ({ features: [] })), loadImage('data/imagery.jpg'),
-    getJSON('data/basemaps.json').catch(() => ({})),
+    getJSON('data/basemaps.json').catch(() => ({})), loadSites(),
   ]);
-  LEGENDS = legends;
+  LEGENDS = legends; SITES = sites;
   META = meta; CTX = ctx;
   HG = ter.grid; HRES = ter.res; HHALF = meta.half; HBASE = ter.base;
   const raw = new Uint16Array(b64bytes(ter.data).buffer);
@@ -1777,6 +1807,47 @@ async function buildHill() {
     g.drawImage(im, 0, 0); lcPx = g.getImageData(0, 0, im.width, im.height).data; lcW = im.width;
   }).catch(() => {});
   if (display.base !== 'satellite') setBase(display.base);
+  SITES.forEach((p, i) => {
+    const t = new THREE.Texture(p.img);
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO; t.needsUpdate = true;
+    hill.terrainMat.userData.u['uP' + i].value = t;
+  });
+  showSitePhotos();
+}
+/* Site photos: the owner's own sharper satellite views of parts of the site (data/sites.json). */
+async function loadSites() {
+  let list = [];
+  try { list = ((await getJSON('data/sites.json')).patches || []).slice(0, 4); } catch (e) { return []; }
+  const ok = await Promise.all(list.map(async (p) => {
+    try {
+      p.img = await loadImage('data/' + p.file);
+      const [c, g] = canvas(p.img.width, p.img.height);
+      g.drawImage(p.img, 0, 0); p.px = g.getImageData(0, 0, c.width, c.height).data; p.w = c.width; p.h = c.height;
+      return p;
+    } catch (err) { console.error(err); return null; }
+  }));
+  return ok.filter(Boolean);
+}
+/* Where a site photo shows, its own roads are the truth: the map's road ribbons step aside. */
+function underPhoto(x, z) {
+  if (!hill.photosOn) return false;
+  for (const p of SITES) {
+    if (x < p.x0 || x >= p.x1 || z < p.z0 || z >= p.z1) continue;
+    const u = Math.floor(((x - p.x0) / (p.x1 - p.x0)) * p.w), v = Math.floor(((z - p.z0) / (p.z1 - p.z0)) * p.h);
+    if (p.px[(v * p.w + u) * 4 + 3] > 150) return true;
+  }
+  return false;
+}
+/* Site photos only sit on the satellite base, where their colours belong. */
+function showSitePhotos() {
+  const on = display.sitePhoto && hill.base === 'satellite' && SITES.length > 0;
+  if (hill.terrainMat) hill.terrainMat.userData.u.uPatchOn.value = on ? 1 : 0;
+  if (on !== !!hill.photosOn) {
+    hill.photosOn = on;
+    if (hill.roads) { hill.scene.remove(hill.roads); hill.roads.geometry.dispose(); hill.roads = buildRoads(); hill.roads.visible = hill.on.roads; hill.scene.add(hill.roads); }
+  }
+  creditEl.hidden = !on || mode !== 'cerro';
+  creditEl.textContent = 'Site photo: ' + [...new Set(SITES.map((p) => p.credit))].join(' · ');
 }
 
 /* Everything that sits on the ground, recomputed when the relief scale changes. */
@@ -1807,7 +1878,7 @@ function applyLayers() {
 /* ------------------------------------------------------- base maps -- */
 /* What the ground shows. Image layers are made by data/build/build.py; the ones that come from
    elevation alone (topographic, relief, slope) are drawn here from the terrain grid. */
-let LEGENDS = {}, lcPx = null, lcW = 0;
+let LEGENDS = {}, lcPx = null, lcW = 0, SITES = [];
 const CREAM = new THREE.Color(1, 0.93, 0.72), BROWN = new THREE.Color(0x4a3220);
 const TOPO = [[110, '#8fb68c'], [140, '#bcd197'], [170, '#e4e2a8'], [200, '#e9cd95'], [230, '#d6a974'], [260, '#b9875c'], [290, '#efe6da']];
 const SLOPE = [[5, '#eef0dc', '0–5°', 'flat to gentle'], [10, '#e9d27a', '5–10°', 'moderate'], [20, '#e19a45', '10–20°', 'steep'], [30, '#c45a32', '20–30°', 'very steep'], [91, '#7f2a24', 'over 30°', 'extreme']];
@@ -1936,6 +2007,7 @@ async function setBase(id) {
   hill.terrainMat.map = t;
   u.uLine.value.copy(b.line); u.uLineK.value = b.line === CREAM ? 0.8 : 0.6;
   hill.base = id;
+  showSitePhotos();
 }
 /* ESA WorldCover class under a point, read from the land cover map. */
 function landcoverAt(x, z) {
@@ -2902,6 +2974,7 @@ function openSources() {
     <li><b>Ground shape.</b> ${m.elevation}.</li>
     <li><b>Trees.</b> ${m.canopy}. ${fmt(treeData.count, 0)} tree tops taller than 4 m are drawn at their measured height.</li>
     <li><b>Ground colour.</b> ${m.imagery}. 10 m pixels, sharpened with the 1 m canopy model.</li>
+    ${SITES.map((p) => `<li><b>Site photo, ${esc(p.name)}.</b> ${esc(p.source)}. ${esc(p.credit)}. Placed by matching it to the satellite imagery (about ±5 m). Where it shows cleared ground, ${p.trees_removed} model trees are left out; where it shows woods the canopy model missed, ${fmt(p.trees_added || 0, 0)} trees are added at the canopy model's local height.</li>`).join('')}
     <li><b>Other base maps.</b> Land cover from ${m.landcover}. Vegetation index and infrared from the same Sentinel-2 passes (near-infrared band). Tree height from the canopy model. Topographic, shaded relief and slope are drawn from the elevation model.</li>
     <li><b>Roads, buildings, names.</b> ${m.context}.</li>
     <li><b>Coordinates.</b> WGS84 / UTM zone 21S (EPSG:32721). Model origin ${fmt(META.origin.easting, 0)} E, ${fmt(META.origin.northing, 0)} N; the model covers 4 × 4 km.</li>
@@ -2922,17 +2995,17 @@ function pill(label, pressed, onClick, cls = '') {
 const DISPLAY_DEFAULT = {
   base: 'satellite',
   propLabels: true, propArea: true, summit: false, lodging: false, places: false,
-  trees: true, buildings: true, roads: true, contours: false, grid: false, relief: false,
+  trees: true, buildings: true, roads: true, contours: false, grid: false, relief: false, sitePhoto: true,
   title: true, compass: true, hint: true, legend: true,
 };
 const display = { ...DISPLAY_DEFAULT };
 try { Object.assign(display, JSON.parse(localStorage.getItem('oh-display-v1') || '{}')); } catch (e) {}
 const DISPLAY_GROUPS = [
   ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
-  ['Map', [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contour lines (10 m)'], ['grid', 'UTM grid (500 m)'], ['relief', 'Relief ×2']]],
+  ['Map', [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contour lines (10 m)'], ['grid', 'UTM grid (500 m)'], ['relief', 'Relief ×2'], ['sitePhoto', 'Site photos (satellite map only)']]],
   ['Screen', [['title', 'Title and description'], ['compass', 'Compass'], ['hint', 'Hints'], ['legend', 'Map legend']]],
 ];
-const displayEl = $('display'), legendEl = $('legend');
+const displayEl = $('display'), legendEl = $('legend'), creditEl = $('credit');
 function applyDisplay() {
   try { localStorage.setItem('oh-display-v1', JSON.stringify(display)); } catch (e) {}
   document.body.classList.toggle('hide-title', !display.title);
@@ -2945,6 +3018,7 @@ function applyDisplay() {
   renderLegend();
   if (!hill.terrain) { hill.vs = display.relief ? 2 : 1; return; }
   if (display.base !== baseWant) setBase(display.base);
+  showSitePhotos();
   applyLayers();
   const vs = display.relief ? 2 : 1;
   if (vs !== hill.vs) { hill.vs = vs; relayout(); } else if (gridChanged) drawOverlay();
@@ -3138,6 +3212,7 @@ function setMode(m) {
   toggleDisplay(false);
   compass.hidden = m !== 'cerro' || !display.compass;
   renderLegend();
+  showSitePhotos();
   // The hill keeps imagery colours true; the concept scenes keep their filmic look. The hill's shadows never move.
   renderer.toneMapping = m === 'cerro' ? THREE.NeutralToneMapping : THREE.ACESFilmicToneMapping;
   renderer.shadowMap.autoUpdate = m !== 'cerro';
