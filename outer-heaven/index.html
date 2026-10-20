@@ -1,0 +1,2364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Outer Heaven: glamping cabins and a private off-grid community at the foot of Cerro Kavaju, Cordillera, Paraguay.">
+</head>
+<body>
+<!-- artifact:start -->
+<title>Outer Heaven</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the hill is the page. A full-bleed 3D world with the chrome at the edges,
+   a details drawer for each place, and the investor plan as a full overlay.
+   One deliberate look (forest at first light), so a single dark palette. */
+:root {
+  --night: #0d1310;
+  --panel: #141c17;
+  --raised: #1c2620;
+  --line: #2d3a31;
+  --sand: #f1e9db;
+  --muted: #b1b9ab;
+  --faint: #8e9889;
+  --earth: #dd7a4b;
+  --earth-ink: #1d0f07;
+  --gold: #e9bf5a;
+  --public: #93c97c;
+  --private: #7fb3e3;
+  --glass: rgb(20 28 23 / 0.84);
+  --display: "Syne", "Arial Black", "Helvetica Neue", sans-serif;
+  --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--night);
+  color: var(--sand);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.5;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; }
+a { color: var(--gold); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.shade {
+  position: fixed; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgb(13 19 16 / 0.72) 0%, rgb(13 19 16 / 0) 24%),
+    linear-gradient(to top, rgb(13 19 16 / 0.62) 0%, rgb(13 19 16 / 0) 22%);
+}
+
+/* ---------- top bar ---------- */
+.top {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 20;
+  padding: calc(env(safe-area-inset-top, 0px) + 18px) var(--gutter-r) 0 var(--gutter-l);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+  pointer-events: none;
+}
+.brand { pointer-events: auto; max-width: 30rem; position: relative; }
+.brand::before {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  inset: -80px -120px -60px -80px;
+  background: radial-gradient(closest-side, rgb(13 19 16 / 0.62), rgb(13 19 16 / 0));
+}
+.brand h1, .brand .lede { text-shadow: 0 1px 14px rgb(0 0 0 / 0.55); }
+.eyebrow {
+  margin: 0;
+  font-family: var(--mono); font-size: 0.6875rem; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold);
+}
+.brand h1 {
+  margin: 4px 0 0;
+  font-family: var(--display); font-weight: 800;
+  font-size: clamp(2rem, 4.6vw, 3.4rem); line-height: 0.92; letter-spacing: 0.01em;
+  text-transform: uppercase; text-wrap: balance;
+}
+.brand .lede { margin: 10px 0 0; font-size: 0.9375rem; color: var(--muted); max-width: 34ch; text-wrap: pretty; }
+.tabs {
+  pointer-events: auto;
+  display: flex; gap: 4px; padding: 4px;
+  border-radius: 999px; background: var(--glass); border: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+}
+.tab {
+  border: 0; background: transparent; cursor: pointer;
+  padding: 8px 14px; border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; color: var(--muted);
+  white-space: nowrap;
+}
+.tab:hover { color: var(--sand); }
+.tab[aria-current="true"] { background: var(--sand); color: var(--night); }
+
+/* ---------- labels on the 3D world ---------- */
+.labels { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+.chip {
+  position: absolute; left: 0; top: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 11px 7px 9px; border-radius: 10px;
+  border: 1px solid rgb(241 233 219 / 0.16);
+  background: var(--glass); backdrop-filter: blur(6px);
+  font-size: 0.8125rem; font-weight: 600; text-align: left; white-space: nowrap;
+  pointer-events: auto; cursor: pointer;
+  transition: opacity 200ms ease, background-color 160ms ease, border-color 160ms ease;
+  will-change: transform;
+}
+.chip::after {
+  content: ""; position: absolute; left: 50%; top: 100%;
+  width: 1px; height: 18px; transform: translateX(-50%);
+  background: linear-gradient(rgb(241 233 219 / 0.6), rgb(241 233 219 / 0));
+}
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--c, var(--gold)); box-shadow: 0 0 10px var(--c, var(--gold)); }
+.chip small { display: block; font-weight: 400; font-size: 0.6875rem; color: var(--muted); }
+.chip:hover, .chip.is-on { background: var(--sand); color: var(--night); border-color: var(--sand); }
+.chip:hover small, .chip.is-on small { color: #3c4639; }
+.chip[data-hidden="true"] { opacity: 0; pointer-events: none; }
+.chip.spot { padding: 6px 10px 6px 8px; font-size: 0.75rem; }
+
+/* ---------- bottom bars ---------- */
+.dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;
+  padding: 0 var(--gutter-r) calc(env(safe-area-inset-bottom, 0px) + 16px) var(--gutter-l);
+  display: grid; gap: 10px; justify-items: start;
+  pointer-events: none;
+}
+.bar {
+  pointer-events: auto;
+  display: flex; gap: 6px; max-width: 100%;
+  overflow-x: auto; scrollbar-width: none;
+  padding: 4px; border-radius: 14px;
+  background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(8px);
+}
+.bar::-webkit-scrollbar { display: none; }
+.pill {
+  flex: none; display: inline-flex; align-items: center; gap: 7px;
+  border: 0; cursor: pointer; background: transparent;
+  padding: 8px 12px; border-radius: 10px;
+  font-size: 0.8125rem; font-weight: 600; color: var(--sand); white-space: nowrap;
+}
+.pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--gold)); }
+.pill:hover { background: var(--raised); }
+.pill[aria-pressed="true"] { background: var(--sand); color: var(--night); }
+.hint {
+  margin: 0; font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
+}
+.specs {
+  pointer-events: auto;
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline;
+  padding: 10px 14px; border-radius: 14px; max-width: 100%;
+  background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(8px);
+}
+.specs b { font-family: var(--display); font-size: 1rem; letter-spacing: 0.02em; text-transform: uppercase; }
+.specs span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.compass {
+  position: fixed; z-index: 15;
+  right: calc(var(--gutter-r) + 2px); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  width: 46px; height: 46px; border-radius: 50%;
+  background: var(--glass); border: 1px solid var(--line);
+  display: grid; place-items: center; pointer-events: none;
+}
+.compass svg { width: 30px; height: 30px; }
+
+/* ---------- details drawer ---------- */
+.drawer {
+  position: fixed; z-index: 25;
+  top: calc(env(safe-area-inset-top, 0px) + 92px);
+  right: var(--gutter-r);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  width: min(380px, calc(100vw - 32px));
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 22px 22px 20px;
+  border-radius: 18px;
+  background: rgb(20 28 23 / 0.94); border: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.8);
+  display: grid; gap: 14px; align-content: start;
+  transition: transform 260ms ease, opacity 260ms ease;
+}
+.drawer[hidden] { display: none !important; }
+.drawer .kicker { font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c, var(--gold)); margin: 0; }
+.drawer h2 { margin: -4px 0 0; font-family: var(--display); font-weight: 700; font-size: 1.75rem; line-height: 1.02; text-wrap: balance; }
+.drawer p { margin: 0; color: var(--muted); }
+.drawer .close {
+  position: absolute; top: 12px; right: 12px;
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--raised); cursor: pointer; font-size: 1.1rem; line-height: 1;
+}
+.facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+.facts li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 0.875rem; }
+.facts li span:first-child { color: var(--muted); }
+.facts li span:last-child { font-family: var(--mono); font-size: 0.8125rem; text-align: right; font-variant-numeric: tabular-nums; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  border: 0; cursor: pointer; border-radius: 12px; padding: 11px 16px;
+  background: var(--earth); color: var(--earth-ink);
+  font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.04em;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; color: var(--sand); border: 1px solid var(--line); }
+.btn.ghost:hover { background: var(--raised); }
+.note { font-size: 0.75rem; color: var(--faint); }
+
+/* ---------- veil / loader ---------- */
+.veil {
+  position: fixed; inset: 0; z-index: 40;
+  display: grid; place-items: center; padding: 0 16px;
+  background: radial-gradient(ellipse at 50% 60%, #1b2a20 0%, var(--night) 70%);
+  opacity: 0; pointer-events: none; transition: opacity 500ms ease;
+}
+.veil.is-on { opacity: 1; pointer-events: auto; }
+.loader { display: grid; justify-items: center; gap: 14px; text-align: center; max-width: 34ch; }
+.loader p { margin: 0; font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.loader .err { text-transform: none; letter-spacing: 0; font-family: var(--body); font-size: 0.9375rem; color: var(--sand); }
+.track { width: 160px; height: 3px; border-radius: 3px; background: var(--raised); overflow: hidden; }
+.track span { display: block; width: 40%; height: 100%; background: var(--gold); animation: slide 1.1s ease-in-out infinite; }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+
+/* ---------- plan overlay ---------- */
+.plan {
+  position: fixed; inset: 0; z-index: 30;
+  overflow-y: auto; overscroll-behavior: contain;
+  background: var(--night);
+}
+.plan[hidden] { display: none !important; }
+.plan-head {
+  position: sticky; top: 0; z-index: 2;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) var(--gutter-r) 14px var(--gutter-l);
+  background: rgb(13 19 16 / 0.94); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.plan-head .in { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.plan-head .mark { font-family: var(--display); font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; font-size: 1.05rem; }
+.plan-nav { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.plan-nav a { padding: 6px 10px; border-radius: 8px; font-size: 0.8125rem; color: var(--muted); text-decoration: none; white-space: nowrap; }
+.plan-nav a:hover { color: var(--sand); background: var(--raised); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+.plan section { padding-block: 56px; border-top: 1px solid var(--line); scroll-margin-top: 70px; }
+.plan section:first-of-type { border-top: 0; padding-top: 48px; }
+.plan .kick { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin: 0; }
+.plan h2 { font-family: var(--display); font-weight: 700; font-size: clamp(1.9rem, 4.2vw, 2.9rem); line-height: 1.02; margin: 10px 0 0; text-wrap: balance; max-width: 22ch; }
+.plan h3 { font-size: 1.1rem; margin: 0; font-weight: 600; text-wrap: balance; }
+.plan p { margin: 0; max-width: 64ch; color: var(--muted); text-wrap: pretty; }
+.plan p.lead { color: var(--sand); font-size: 1.125rem; }
+.stack { display: grid; gap: 18px; }
+.stack.lg { gap: 28px; }
+.grid2 { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+.grid3 { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .grid3 { grid-template-columns: repeat(3, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card .tag { font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c, var(--gold)); }
+.sitefacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.sitefacts div { background: var(--panel); padding: 16px; display: grid; gap: 2px; min-width: 0; }
+.sitefacts b { font-family: var(--display); font-size: 1.35rem; font-weight: 700; }
+.sitefacts span { font-size: 0.8125rem; color: var(--muted); }
+
+/* calculator */
+.calc { display: grid; gap: 20px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .calc { grid-template-columns: 360px 1fr; } }
+.controls { display: grid; gap: 14px; align-content: start; }
+.seg { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--raised); }
+.seg button { flex: 1; border: 0; cursor: pointer; background: transparent; padding: 8px 6px; border-radius: 9px; font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--sand); color: var(--night); }
+.field { display: grid; gap: 6px; }
+.field label { display: flex; justify-content: space-between; gap: 10px; font-size: 0.875rem; color: var(--muted); }
+.field output { font-family: var(--mono); color: var(--sand); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--earth); }
+.results { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.big { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+.big div { background: var(--panel); padding: 16px; display: grid; gap: 4px; min-width: 0; }
+.big b { font-family: var(--mono); font-size: 1.6rem; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.big span { font-size: 0.8125rem; color: var(--muted); }
+.split { display: grid; gap: 8px; }
+.split .barline { display: flex; height: 34px; border-radius: 8px; overflow: hidden; background: var(--raised); }
+.split .barline i { display: block; height: 100%; transition: width 200ms ease; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8125rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.legend b { font-family: var(--mono); font-weight: 500; color: var(--sand); font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 0.875rem; }
+th { text-align: left; font-family: var(--mono); font-weight: 400; font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); background: var(--panel); padding: 11px 14px; }
+td { padding: 12px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.us td { background: rgb(221 122 75 / 0.08); }
+.phases { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: ph; }
+.phases li { counter-increment: ph; display: grid; grid-template-columns: 48px 1fr; gap: 14px; padding: 16px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); }
+.phases li::before { content: counter(ph, decimal-leading-zero); font-family: var(--display); font-weight: 800; font-size: 1.4rem; color: var(--gold); line-height: 1.1; }
+.phases .when { font-family: var(--mono); font-size: 0.75rem; color: var(--gold); letter-spacing: 0.06em; }
+.phases li > div { display: grid; gap: 4px; min-width: 0; }
+.ba { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 16 / 9; max-width: 100%; background: var(--panel); }
+.ba img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; max-width: none; }
+.ba .after { clip-path: inset(0 0 0 var(--cut, 50%)); }
+.ba .line { position: absolute; top: 0; bottom: 0; left: var(--cut, 50%); width: 2px; background: var(--sand); box-shadow: 0 0 12px rgb(0 0 0 / 0.5); }
+.ba .lbl { position: absolute; bottom: 12px; padding: 5px 10px; border-radius: 8px; background: var(--glass); font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.ba .lbl.l { left: 12px; } .ba .lbl.r { right: 12px; }
+.ba input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+.photos { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 560px) { .photos { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 860px) { .photos { grid-template-columns: repeat(3, 1fr); } }
+.photos figure { margin: 0; display: grid; gap: 6px; }
+.photos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; display: block; background: var(--panel); }
+.photos figcaption { font-size: 0.8125rem; color: var(--muted); }
+ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: 8px; max-width: 64ch; color: var(--muted); }
+ul.plain li::marker { color: var(--gold); }
+ul.plain b { color: var(--sand); font-weight: 600; }
+.sources { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; font-size: 0.8125rem; color: var(--muted); }
+.plan footer { padding-block: 28px 64px; border-top: 1px solid var(--line); font-size: 0.8125rem; color: var(--faint); }
+.ok { color: var(--public); } .warn { color: var(--earth); }
+
+@media (max-width: 760px) {
+  .top { flex-direction: column; gap: 10px; padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
+  .brand .lede { display: none; }
+  .tabs { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .drawer {
+    top: auto; left: var(--gutter-l); right: var(--gutter-r); width: auto;
+    max-height: 62vh; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+  .chip { padding: 5px 8px 5px 7px; font-size: 0.75rem; }
+  .chip small { display: none; }
+  .compass { bottom: calc(env(safe-area-inset-bottom, 0px) + 104px); }
+  .plan-nav { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .veil, .chip, .drawer, .split .barline i { transition: none; }
+  .track span { animation: none; width: 100%; }
+}
+</style>
+
+<div id="stage" aria-hidden="true"></div>
+<div class="shade" aria-hidden="true"></div>
+<nav class="labels" id="labels" aria-label="Places on the map"></nav>
+
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow" id="eyebrow">Cerro Kavaju · Cordillera, Paraguay</p>
+    <h1>Outer Heaven</h1>
+    <p class="lede" id="lede">Glamping cabins and a private community on about 29 hectares at the foot of a protected forest hill, 65 km from Asunción. Built to run on its own sun and rain.</p>
+  </div>
+  <nav class="tabs" aria-label="Views">
+    <button class="tab" type="button" data-go="cerro" aria-current="true">The hill</button>
+    <button class="tab" type="button" data-go="cabin" aria-current="false">The cabin</button>
+    <button class="tab" type="button" data-go="residence" aria-current="false">The residence</button>
+    <button class="tab" type="button" data-go="plan" aria-current="false">The plan</button>
+  </nav>
+</header>
+
+<div class="dock" id="dock">
+  <p class="hint" id="hint">Drag to orbit · Pinch or scroll to zoom · Tap a place</p>
+  <div class="specs" id="specs" hidden></div>
+  <div class="bar" id="bar" role="group" aria-label="Places"></div>
+</div>
+<div class="compass" id="compass" aria-hidden="true">
+  <svg viewBox="0 0 30 30"><g id="needle"><path d="M15 3 L19 15 L15 13.5 L11 15 Z" fill="#e9bf5a"/><path d="M15 27 L19 15 L15 16.5 L11 15 Z" fill="#5d675a"/></g><text x="15" y="9.5" text-anchor="middle" font-size="0" fill="none">N</text></svg>
+</div>
+
+<aside class="drawer" id="drawer" hidden aria-live="polite">
+  <button class="close" id="drawer-close" type="button" aria-label="Close">×</button>
+  <p class="kicker" id="d-kick"></p>
+  <h2 id="d-title"></h2>
+  <p id="d-body"></p>
+  <ul class="facts" id="d-facts"></ul>
+  <div class="actions" id="d-actions"></div>
+  <p class="note" id="d-note"></p>
+</aside>
+
+<div class="veil is-on" id="loader">
+  <div class="loader">
+    <div class="track"><span></span></div>
+    <p id="loader-text">Raising Cerro Kavaju</p>
+    <button class="btn" id="loader-plan" type="button" hidden>Open the plan</button>
+  </div>
+</div>
+
+<!-- ======================= THE PLAN ======================= -->
+<div class="plan" id="plan" hidden>
+  <div class="plan-head">
+    <div class="in">
+      <span class="mark">Outer Heaven · The plan</span>
+      <nav class="plan-nav" aria-label="Plan sections">
+        <a href="#p-site">Site</a><a href="#p-numbers">Cabin numbers</a><a href="#p-homes">Homesites</a><a href="#p-market">Market</a><a href="#p-energy">Self-sufficiency</a><a href="#p-phases">Phases</a><a href="#p-risks">To confirm</a><a href="#p-in">Ways in</a>
+      </nav>
+      <button class="btn" type="button" id="plan-close">Back to 3D</button>
+    </div>
+  </div>
+
+  <main>
+    <section id="p-site">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Cerro Kavaju · Cordillera, Paraguay</p>
+          <h2>One property, two sides, one forest behind them</h2>
+          <p class="lead">Outer Heaven runs along the foot of Cerro Kavaju, a protected hill between Caacupé, Atyrá and Tobatí. The south end opens to guests as a glamping retreat. The north end, under the summit, is a private community for family and friends. Both share the same solar power, water and staff.</p>
+        </div>
+        <div class="sitefacts">
+          <div><b>≈ 29 ha</b><span>Property, traced from the owners' sketch</span></div>
+          <div><b>65 km</b><span>From Asunción, in Cordillera department</span></div>
+          <div><b>110 ha</b><span>Protected forest next door (Law 5377/2014)</span></div>
+          <div><b>15 kWh</b><span>Solar battery already on site</span></div>
+          <div><b>1 court</b><span>Tennis court already built</span></div>
+        </div>
+        <div class="grid2">
+          <div class="card" style="--c: var(--public)">
+            <span class="tag">Public side · ≈ 10 ha</span>
+            <h3>Glamping cabins, a natural pond, the tennis court</h3>
+            <p>Eight cabins dug into the bank at the forest edge, each facing east over the valley. Guests share a swimming pond cleaned by plants, the court, a food forest and the trail up the valley.</p>
+          </div>
+          <div class="card" style="--c: var(--private)">
+            <span class="tag">Private side · ≈ 11 ha</span>
+            <h3>About eight homesites of roughly one hectare</h3>
+            <p>The quiet north end under the summit. Kybo and Kian Betancourt are buying the first hectare. Homes use the same earth walls and living roofs as the cabins and plug into the shared energy and water systems.</p>
+          </div>
+        </div>
+        <div class="stack">
+          <h3>The bank today, and a cabin in it</h3>
+          <div class="ba" id="ba" style="--cut: 50%">
+            <img src="img/site-before.jpg" alt="The cut bank at the forest edge where the first cabin would go, marked in red" loading="lazy">
+            <img class="after" src="img/render-cabin.jpg" alt="Concept render of a rammed-earth cabin with a solar carport in the same spot" loading="lazy">
+            <div class="line" aria-hidden="true"></div>
+            <span class="lbl l">Today</span><span class="lbl r">Concept</span>
+            <input id="ba-range" type="range" min="0" max="100" value="50" aria-label="Compare today and the concept render">
+          </div>
+        </div>
+        <div class="photos">
+          <figure><img src="img/bank.jpg" alt="Grass field below an eroded bank and forest" loading="lazy"><figcaption>The bank at the forest edge, where the cabins step into the slope.</figcaption></figure>
+          <figure><img src="img/valley.jpg" alt="Open grassland with the forested hill on the left" loading="lazy"><figcaption>The valley floor along the hill.</figcaption></figure>
+          <figure><img src="img/field.jpg" alt="Red soil under sparse grass beside a dirt track" loading="lazy"><figcaption>Red earth under the grass. After a lab test of the mix, the cabin walls come from this soil.</figcaption></figure>
+          <figure><img src="img/track.jpg" alt="Two-track dirt road through a grassy valley with a pickup truck" loading="lazy"><figcaption>The track that runs the length of the property.</figcaption></figure>
+          <figure><img src="img/drone-clearing.jpg" alt="Aerial view of a clearing with a house, solar panels, a pond and an excavated court" loading="lazy"><figcaption>From the air: the house, solar panels, pond and court.</figcaption></figure>
+          <figure><img src="img/drone-wide.jpg" alt="Wide aerial view of forest, roads and a small town" loading="lazy"><figcaption>The property against the forest of the hill.</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-numbers">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Cabin numbers</p>
+          <h2>What one cabin earns</h2>
+          <p>Move the sliders. The model is simple on purpose: nights sold times the nightly rate, minus running costs and the operator's fee. The default case is the middle one, and every input is an estimate until the first season of bookings.</p>
+        </div>
+        <div class="calc">
+          <div class="controls">
+            <div class="seg" role="group" aria-label="Scenario">
+              <button type="button" data-scn="cautious" aria-pressed="false">Cautious</button>
+              <button type="button" data-scn="base" aria-pressed="true">Base</button>
+              <button type="button" data-scn="strong" aria-pressed="false">Strong</button>
+            </div>
+            <div class="field"><label for="in-adr">Nightly rate <output id="o-adr"></output></label><input id="in-adr" type="range" min="90" max="280" step="5"></div>
+            <div class="field"><label for="in-occ">Nights booked <output id="o-occ"></output></label><input id="in-occ" type="range" min="15" max="80" step="1"></div>
+            <div class="field"><label for="in-price">Cabin cost <output id="o-price"></output></label><input id="in-price" type="range" min="50000" max="90000" step="1000"></div>
+            <div class="field"><label for="in-opex">Running costs, % of rent <output id="o-opex"></output></label><input id="in-opex" type="range" min="20" max="55" step="1"></div>
+            <div class="field"><label for="in-fee">Operator fee, % of rent <output id="o-fee"></output></label><input id="in-fee" type="range" min="0" max="30" step="1"></div>
+            <div class="field"><label for="in-n">Cabins <output id="o-n"></output></label><input id="in-n" type="range" min="4" max="16" step="1"></div>
+            <p class="note">Running costs cover cleaning, laundry, booking-site commissions, supplies, maintenance and insurance.</p>
+          </div>
+          <div class="results">
+            <div class="big">
+              <div><b id="r-net"></b><span>Net per cabin, per year</span></div>
+              <div><b id="r-yield"></b><span>Yearly return on the cabin cost</span></div>
+              <div><b id="r-pay"></b><span>Years to pay back the cabin</span></div>
+            </div>
+            <div class="split">
+              <div class="legend"><span>Rent per cabin per year: <b id="r-rev"></b></span><span id="r-nights"></span></div>
+              <div class="barline" aria-hidden="true"><i id="b-opex" style="background:#6b7568"></i><i id="b-fee" style="background:var(--gold)"></i><i id="b-net" style="background:var(--public)"></i></div>
+              <div class="legend">
+                <span><i style="background:#6b7568"></i>Running costs <b id="r-opex"></b></span>
+                <span><i style="background:var(--gold)"></i>Operator fee <b id="r-fee"></b></span>
+                <span><i style="background:var(--public)"></i>Net to the cabin <b id="r-net2"></b></span>
+              </div>
+            </div>
+            <div class="big">
+              <div><b id="r-cap"></b><span>Cabins built (<span id="r-n"></span>)</span></div>
+              <div><b id="r-rent"></b><span>Rent from all cabins, per year</span></div>
+              <div><b id="r-op"></b><span>Operator fees, per year</span></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th scope="col">Scenario</th><th scope="col">Rate</th><th scope="col">Booked</th><th scope="col">Rent / cabin</th><th scope="col">Net / cabin</th><th scope="col">Return</th><th scope="col">Payback</th></tr></thead>
+                <tbody id="scn-table"></tbody>
+              </table>
+            </div>
+            <p class="note">Why 45% booked in the base case: Friday and Saturday nights alone are 29% of the year. Long weekends, holidays and some weekday retreats fill the rest. Cautious assumes weekends only and a lower rate; strong assumes the cabins become a destination.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-homes">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Homesites</p>
+          <h2>The private side pays for what both sides share</h2>
+          <p>Selling homesites on the private side can fund the pond, the hub, the roads, the water and the battery room. The cabins then only have to pay for themselves.</p>
+        </div>
+        <div class="calc">
+          <div class="controls">
+            <div class="field"><label for="in-lots">Homesites sold <output id="o-lots"></output></label><input id="in-lots" type="range" min="2" max="10" step="1" value="8"></div>
+            <div class="field"><label for="in-lotp">Price per homesite <output id="o-lotp"></output></label><input id="in-lotp" type="range" min="80000" max="220000" step="5000" value="150000"></div>
+            <div class="field"><label for="in-lotc">Cost to deliver each <output id="o-lotc"></output></label><input id="in-lotc" type="range" min="5000" max="40000" step="1000" value="20000"></div>
+            <p class="note">Delivery covers survey and title, the lane, and water and power to the lot line. Houses are built by each owner, or by us at roughly $900–1,100 per m².</p>
+          </div>
+          <div class="results">
+            <div class="big">
+              <div><b id="h-gross"></b><span>Homesite sales</span></div>
+              <div><b id="h-net"></b><span>After delivery costs</span></div>
+              <div><b id="h-left"></b><span id="h-left-l">Left after shared infrastructure</span></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th scope="col">Shared infrastructure, phase 1</th><th scope="col">Estimate</th></tr></thead>
+                <tbody>
+                  <tr><td>Natural swimming pond, about 1,000 m²</td><td class="num">$40,000</td></tr>
+                  <tr><td>Hub: reception, laundry, staff room, storage</td><td class="num">$40,000</td></tr>
+                  <tr><td>Solar expansion and battery room (≈30 kWp, ≈100 kWh)</td><td class="num">$60,000</td></tr>
+                  <tr><td>Gravel access road, parking, paths</td><td class="num">$30,000</td></tr>
+                  <tr><td>Water: well, tanks, filtration, wastewater wetland</td><td class="num">$30,000</td></tr>
+                  <tr><td>Design, environmental license, permits</td><td class="num">$20,000</td></tr>
+                  <tr><td>Contingency, 10%</td><td class="num">$22,000</td></tr>
+                  <tr><td><b>Total</b></td><td class="num"><b>$242,000</b></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">Context: raw land near the Caacupé–Atyrá road lists at about $75,000–95,000 per hectare. $150,000 per hectare is a premium that the shared power, water, security, pond, court and protected-forest views have to earn.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-market">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Market</p>
+          <h2>What comparable stays charge</h2>
+          <p>Glamping in Paraguay is young. The closest comparable is Tava in San Bernardino, on the other side of the same Cordillera hills. Paraguayan hotels ran at 61% occupancy in the first half of 2026, and holiday weeks sell out.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Place</th><th scope="col">Where</th><th scope="col">What</th><th scope="col">Per night</th><th scope="col">Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Tava Glamping</td><td>San Bernardino, Cordillera</td><td>Raised wood and bamboo cabins by Lake Ypacaraí</td><td class="num">$120–130</td><td>Listings range $57–182 by room and date</td></tr>
+              <tr><td>Nomade Glamping</td><td>Yaguarón–Pirayú, Paraguarí</td><td>4 tents on 2 ha</td><td class="num">≈ $120–150</td><td>G 800,000–990,000 for two, at about G 6,700 per US$</td></tr>
+              <tr><td>Vista Alegre Natural Resort</td><td>Independencia, Guairá</td><td>Villas and bungalows</td><td class="num">$118–156</td><td>Resort format, not glamping</td></tr>
+              <tr><td>San Bernardino short-term rentals</td><td>Cordillera</td><td>329 active Airbnb listings</td><td class="num">$191 avg</td><td>21% average occupancy; mostly holiday homes</td></tr>
+              <tr><td>Asunción hotels, H1 2026</td><td>Asunción</td><td>400+ hotels surveyed nationwide</td><td class="num">$96 avg</td><td>64% occupancy in Asunción, 61% nationally</td></tr>
+              <tr class="us"><td><b>Outer Heaven cabin</b></td><td>Cerro Kavaju, Cordillera</td><td>Rammed-earth cabin, pond, court, food forest</td><td class="num">$150–200</td><td>Base case $170 at 45% booked</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-energy">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Self-sufficiency</p>
+          <h2>Sun, rain, soil and shade</h2>
+          <p>The goal is a site that runs without the grid. The design starts by needing less: thick earth walls, living roofs and the hill's own afternoon shade cut the cooling load in summers that reach 38 °C.</p>
+        </div>
+        <div class="grid2">
+          <div class="card"><span class="tag">Energy</span><h3>Solar carports and one battery room</h3><p>Panels and a 15 kWh battery already run the house. Phase 1 grows that to roughly 30 kWp and 100 kWh (a sizing estimate): about 3 kWp per cabin over the parking, plus the hub and the pond pump. Paraguay averages about 4 kWh per installed kWp per day.</p></div>
+          <div class="card"><span class="tag">Water</span><h3>Rain first, the well as backup</h3><p>Around 1,400–1,600 mm of rain falls here a year. A 38 m² carport roof catches roughly what one cabin's guests use in a year at 45% booked, into a 10,000 L tank. A well and filtration cover dry spells.</p></div>
+          <div class="card"><span class="tag">Waste</span><h3>Biodigesters and a reed-bed wetland</h3><p>Wastewater is treated on site and kept well away from the swimming pond. Kitchen scraps go to compost for the food forest.</p></div>
+          <div class="card"><span class="tag">Food</span><h3>A food forest along the corridor</h3><p>Orchard, vegetable beds and chickens between the two sides. Breakfast baskets come from it; the rest comes from farms in Atyrá, Tobatí and Caacupé.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-phases">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Phases</p>
+          <h2>Build in the order the money arrives</h2>
+        </div>
+        <ol class="phases">
+          <li><div><span class="when">Now – early 2027</span><h3>Paper and pre-sales</h3><p>Survey the boundary, environmental license, subdivision approval, cabin design, a soil test for the walls. The Betancourt hectare closes and the next homesites are reserved.</p></div></li>
+          <li><div><span class="when">2027</span><h3>Four cabins, the pond, the hub</h3><p>Shared infrastructure goes in with the first four cabins. Opening season tests the rate and the occupancy.</p></div></li>
+          <li><div><span class="when">2027 – 2028</span><h3>Eight cabins and the first homes</h3><p>Four more cabins once bookings prove out. The first houses go up on the private side.</p></div></li>
+          <li><div><span class="when">Later</span><h3>Up to twelve cabins, events, retreats</h3><p>Only if occupancy holds above about 50%. Weekday retreats and small events fill the gaps.</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="p-risks">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">To confirm</p>
+          <h2>What has to be true</h2>
+        </div>
+        <ul class="plain">
+          <li><b>The boundary sits outside the protected area.</b> Cerro Kavaju is public land under Law 5377/2014 and the protected-areas regime of Law 352/94, with a management plan for 2025–2035. A survey has to confirm where the property ends and what the plan allows on neighbouring land.</li>
+          <li><b>Environmental license.</b> A tourism project needs an environmental impact study approved by MADES before building.</li>
+          <li><b>Subdivision and titles.</b> The private side needs municipal approval to split into homesites, and a clean title for each.</li>
+          <li><b>The road.</b> Red earth turns to mud after rain. The access road needs gravel before the first guest arrives.</li>
+          <li><b>Weekday demand.</b> Asunción fills weekends. Weekdays need retreats, foreign visitors and events.</li>
+          <li><b>The rate.</b> $170 is above every glamping comparable we found. The design, the pond and the court have to justify it, and the first season will tell.</li>
+          <li><b>Currency.</b> Most bookings will be paid in guaraníes; some build costs are in dollars.</li>
+          <li><b>The map.</b> The boundary in the 3D view is traced from a phone sketch and the elevation is satellite data. A survey file (KML or DWG) will replace both.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="p-in">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Ways in</p>
+          <h2>Starting points for the conversation</h2>
+          <p>Terms are open. These are the shapes that fit the plan.</p>
+        </div>
+        <div class="grid3">
+          <div class="card" style="--c: var(--public)"><span class="tag">Own a cabin</span><h3>From $60–70k</h3><p>Pay for one cabin. We run it and you take the net after running costs and the operator fee. Use it yourself a set number of nights a year.</p></div>
+          <div class="card" style="--c: var(--private)"><span class="tag">Own a homesite</span><h3>From $150k</h3><p>About a hectare on the private side, with shared energy, water and staff. Build your own house or have us build it.</p></div>
+          <div class="card"><span class="tag">Fund what's shared</span><h3>About $240k</h3><p>The pond, hub, roads, water and battery room. Repaid from homesite sales, or turned into a stake in the operating company.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-sources">
+      <div class="wrap stack">
+        <p class="kick">Sources and notes</p>
+        <ol class="sources">
+          <li><a href="https://www.glamping.com/destination/south-america/cordillera/san-bernardino/tava-glamping/" target="_blank" rel="noopener">Tava Glamping rates (Glamping.com)</a> and <a href="https://www.tripadvisor.com/Hotel_Review-g1635342-d11776039-Reviews-Tava_Glamping-San_Bernardino_Cordillera_Department.html" target="_blank" rel="noopener">Tripadvisor</a></li>
+          <li><a href="https://www.nomadeglamping.com/en" target="_blank" rel="noopener">Nomade Glamping</a></li>
+          <li><a href="https://www.booking.com/lodges/country/py.en-gb.html" target="_blank" rel="noopener">Lodges in Paraguay (Booking.com)</a></li>
+          <li><a href="https://www.airroi.com/airbnb-data/paraguay" target="_blank" rel="noopener">AirROI Paraguay short-term rental markets, 2026</a></li>
+          <li><a href="https://www.elinmobiliario.com.py/post/hoteler%C3%ADa-paraguaya-cierra-el-semestre-con-64-de-ocupaci%C3%B3n-en-asunci%C3%B3n-y-acelera-su-expansi%C3%B3n" target="_blank" rel="noopener">Hotel occupancy, first half of 2026 (El Inmobiliario)</a>; <a href="https://en.mercopress.com/2026/04/07/holy-week-boosts-paraguayan-tourism-90-hotel-occupancy-and-36-revenue-increase" target="_blank" rel="noopener">Holy Week 2026 at 90% (MercoPress)</a></li>
+          <li><a href="https://edconstructora.com.py/costo-construccion-casa-paraguay-2025/" target="_blank" rel="noopener">Construction cost per m² in Paraguay, 2026 (ED Constructora)</a></li>
+          <li><a href="https://www.infocasas.com.py/venta/terrenos/cordillera/atyra" target="_blank" rel="noopener">Land listings in Atyrá and Caacupé (InfoCasas)</a></li>
+          <li><a href="https://www.bacn.gov.py/leyes-paraguayas/4559/ley-n-5377-declara-area-silvestre-protegida-bajo-dominio-publico-departamental-y-con-la-categoria-de-manejo-de-paisaje-protegido-al-cerro-kavaju-ubicado-en-los-municipios-de-atyra-y-caacupe-departamento-cordillera" target="_blank" rel="noopener">Law 5377/2014, Cerro Kavaju protected landscape</a>; <a href="https://www.kavaju.org/en" target="_blank" rel="noopener">Kavaju management</a></li>
+          <li><a href="https://www.lanacion.com.py/gran-diario-domingo/2024/07/07/cerro-kavaju-una-maravilla-escondida-en-la-capital-espiritual-del-pais/" target="_blank" rel="noopener">Cerro Kavaju profile (La Nación)</a>; <a href="https://mapcarta.com/N6264739387" target="_blank" rel="noopener">coordinates (Mapcarta)</a></li>
+          <li>Terrain: SRTM elevation from the <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Terrain Tiles open dataset</a>. Satellite elevation includes the forest canopy, so the hill reads a little taller than the ground.</li>
+          <li>Infrastructure, energy and water sizing, and the cabin and pond budgets, are our estimates for discussion.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+  <footer><div class="wrap">Outer Heaven is a working name. Prepared October 2026 for discussion; figures are estimates, not an offer.</div></footer>
+</div>
+
+<!-- ======================= plan logic (works without WebGL) ======================= -->
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  var SCN = {
+    cautious: { adr: 130, occ: 30, opex: 40 },
+    base: { adr: 170, occ: 45, opex: 35 },
+    strong: { adr: 200, occ: 55, opex: 30 }
+  };
+  var DEF = { price: 65000, fee: 20, n: 8 };
+  var INFRA = 242000;
+
+  function model(p) {
+    var nights = 365 * p.occ / 100;
+    var rent = nights * p.adr;
+    var opex = rent * p.opex / 100;
+    var fee = rent * p.fee / 100;
+    var net = rent - opex - fee;
+    return { nights: nights, rent: rent, opex: opex, fee: fee, net: net, yld: net / p.price, pay: net > 0 ? p.price / net : Infinity };
+  }
+  window.__ohModel = model;
+
+  var ins = { adr: $('in-adr'), occ: $('in-occ'), price: $('in-price'), opex: $('in-opex'), fee: $('in-fee'), n: $('in-n') };
+  function read() { return { adr: +ins.adr.value, occ: +ins.occ.value, price: +ins.price.value, opex: +ins.opex.value, fee: +ins.fee.value, n: +ins.n.value }; }
+  function setScn(name) {
+    var s = SCN[name];
+    ins.adr.value = s.adr; ins.occ.value = s.occ; ins.opex.value = s.opex;
+    document.querySelectorAll('[data-scn]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.scn === name)); });
+    render();
+  }
+  function pct(x) { return (x * 100).toFixed(1) + '%'; }
+  function yrs(x) { return isFinite(x) ? x.toFixed(1) : '—'; }
+  function render() {
+    var p = read(), m = model(p);
+    $('o-adr').textContent = usd.format(p.adr);
+    $('o-occ').textContent = p.occ + '% · ' + Math.round(m.nights) + ' nights';
+    $('o-price').textContent = usd.format(p.price);
+    $('o-opex').textContent = p.opex + '%';
+    $('o-fee').textContent = p.fee + '%';
+    $('o-n').textContent = p.n;
+    $('r-net').textContent = usd.format(m.net);
+    $('r-net2').textContent = usd.format(m.net);
+    $('r-yield').textContent = pct(m.yld);
+    $('r-pay').textContent = yrs(m.pay);
+    $('r-rev').textContent = usd.format(m.rent);
+    $('r-nights').textContent = Math.round(m.nights) + ' nights at ' + usd.format(p.adr);
+    $('r-opex').textContent = usd.format(m.opex);
+    $('r-fee').textContent = usd.format(m.fee);
+    var tot = Math.max(m.rent, 1);
+    $('b-opex').style.width = (m.opex / tot * 100) + '%';
+    $('b-fee').style.width = (m.fee / tot * 100) + '%';
+    $('b-net').style.width = (Math.max(m.net, 0) / tot * 100) + '%';
+    $('r-cap').textContent = usd.format(p.price * p.n);
+    $('r-n').textContent = p.n + ' × ' + usd.format(p.price);
+    $('r-rent').textContent = usd.format(m.rent * p.n);
+    $('r-op').textContent = usd.format(m.fee * p.n);
+    var rows = '';
+    ['cautious', 'base', 'strong'].forEach(function (k) {
+      var s = SCN[k], q = { adr: s.adr, occ: s.occ, opex: s.opex, fee: p.fee, price: p.price }, r = model(q);
+      rows += '<tr><td>' + k.charAt(0).toUpperCase() + k.slice(1) + '</td><td class="num">' + usd.format(s.adr) + '</td><td class="num">' + s.occ + '%</td><td class="num">' + usd.format(r.rent) + '</td><td class="num">' + usd.format(r.net) + '</td><td class="num">' + pct(r.yld) + '</td><td class="num">' + yrs(r.pay) + ' yrs</td></tr>';
+    });
+    $('scn-table').innerHTML = rows;
+  }
+  Object.keys(ins).forEach(function (k) {
+    ins[k].addEventListener('input', function () {
+      if (k === 'adr' || k === 'occ' || k === 'opex') document.querySelectorAll('[data-scn]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+      render();
+    });
+  });
+  document.querySelectorAll('[data-scn]').forEach(function (b) { b.addEventListener('click', function () { setScn(b.dataset.scn); }); });
+  ins.price.value = DEF.price; ins.fee.value = DEF.fee; ins.n.value = DEF.n;
+  setScn('base');
+
+  var lots = $('in-lots'), lotp = $('in-lotp'), lotc = $('in-lotc');
+  function renderHomes() {
+    var n = +lots.value, pr = +lotp.value, c = +lotc.value;
+    $('o-lots').textContent = n + (n >= 1 ? ' (incl. Betancourt)' : '');
+    $('o-lotp').textContent = usd.format(pr);
+    $('o-lotc').textContent = usd.format(c);
+    var gross = n * pr, net = n * (pr - c), left = net - INFRA;
+    $('h-gross').textContent = usd.format(gross);
+    $('h-net').textContent = usd.format(net);
+    var el = $('h-left');
+    el.textContent = usd.format(left);
+    el.className = left >= 0 ? 'ok' : 'warn';
+    $('h-left-l').textContent = left >= 0 ? 'Left after shared infrastructure ($242k)' : 'Short of shared infrastructure ($242k)';
+  }
+  [lots, lotp, lotc].forEach(function (i) { i.addEventListener('input', renderHomes); });
+  renderHomes();
+
+  $('loader-plan').addEventListener('click', function () {
+    $('loader').classList.remove('is-on');
+    $('plan').hidden = false;
+  });
+
+  var ba = $('ba'), bar = $('ba-range');
+  bar.addEventListener('input', function () { ba.style.setProperty('--cut', bar.value + '%'); });
+})();
+</script>
+
+<script>
+  // If the 3D modules never arrive (offline, blocked CDN), say so instead of spinning.
+  setTimeout(function () {
+    if (!window.__ohReady) {
+      var t = document.getElementById('loader-text');
+      if (t) { t.className = 'err'; t.textContent = 'The 3D view could not load. Check the connection and reload, or read the plan.'; }
+      document.getElementById('loader-plan').hidden = false;
+    }
+  }, 25000);
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const small = matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+const $ = (id) => document.getElementById(id);
+const loaderText = $('loader-text');
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+function fail(msg) {
+  loaderText.className = 'err';
+  loaderText.textContent = msg;
+  $('loader-plan').hidden = false;
+  window.__ohReady = true;
+}
+
+/* ------------------------------------------------------------- noise -- */
+function hash2(x, y) {
+  let h = (Math.imul(x, 374761393) + Math.imul(y, 668265263)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+function vnoise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function fbm(x, y) {
+  let s = 0, a = 0.5, f = 1;
+  for (let i = 0; i < 4; i++) { s += a * vnoise(x * f, y * f); f *= 2.03; a *= 0.5; }
+  return s / 0.9375;
+}
+function rng(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function inPoly(x, z, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, zi] = poly[i], [xj, zj] = poly[j];
+    if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/* -------------------------------------------------------------- data -- */
+// Local metres: x east, z south. Origin ≈ 25.3101° S, 57.1233° W.
+const GEO = {
+  size: 3600, grid: 289, scale: 20,
+  peak: [-454, -589],
+  outline: [[-211.0,-824.6],[-120.9,-771.6],[60.5,-674.6],[141.2,-597.0],[168.7,-351.3],[206.3,-231.9],[282.0,-32.8],[318.9,126.1],[436.2,207.2],[584.3,336.3],[425.4,668.9],[292.7,618.2],[283.7,451.9],[286.4,293.6],[114.4,-65.3],[39.7,-323.8],[-93.6,-340.9],[-145.0,-514.8],[-180.5,-752.8]],
+  priv: [[-211.0,-824.6],[-120.9,-771.6],[60.5,-674.6],[141.2,-597.0],[168.7,-351.3],[39.7,-323.8],[-93.6,-340.9],[-145.0,-514.8],[-180.5,-752.8]],
+  pub: [[318.9,126.1],[436.2,207.2],[584.3,336.3],[425.4,668.9],[292.7,618.2],[283.7,451.9],[286.4,293.6]],
+};
+const BASE = 112, EX = 2.2;
+const AX = [0.342, 0.940];   // along the valley, toward the south end
+const PX = [0.940, -0.342];  // across, toward the east (the valley)
+const PUB_C = [375, 386], PRIV_C = [-38, -572];
+const FACE_EAST = Math.atan2(PX[0], PX[1]);
+const ap = (c, a, p) => [c[0] + a * AX[0] + p * PX[0], c[1] + a * AX[1] + p * PX[1]];
+function polyAP(poly, c) { return poly.map(([x, z]) => [(x - c[0]) * AX[0] + (z - c[1]) * AX[1], (x - c[0]) * PX[0] + (z - c[1]) * PX[1]]); }
+function spanAt(polyap, a) {
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0, j = polyap.length - 1; i < polyap.length; j = i++) {
+    const [a1, p1] = polyap[i], [a2, p2] = polyap[j];
+    if ((a1 > a) !== (a2 > a)) { const p = p1 + (p2 - p1) * (a - a1) / (a2 - a1); lo = Math.min(lo, p); hi = Math.max(hi, p); }
+  }
+  return [lo, hi];
+}
+const PUB_AP = polyAP(GEO.pub, PUB_C), PRIV_AP = polyAP(GEO.priv, PRIV_C);
+
+// Where things go on the public side (a along, p across).
+const CABINS = [];
+for (let i = 0; i < 8; i++) {
+  const a = -200 + i * 50;
+  const [lo] = spanAt(PUB_AP, a);
+  CABINS.push(ap(PUB_C, a, lo + 20));
+}
+const POND = ap(PUB_C, 25, 50);
+const COURT = ap(PUB_C, 140, 20);
+const HUB = ap(PUB_C, 70, 118);
+const SOLAR = ap(PUB_C, 112, 96);
+const PARK = ap(PUB_C, 30, 140);
+const ORCHARD = [250, -40];
+const ENTRY = ap(PUB_C, 60, 185);
+
+// Homesites on the private side.
+const PARCELS = [
+  { a: [-200, -90], p: [-140, 180] },
+  { a: [-90, 10], p: [-140, 15] }, { a: [-90, 10], p: [15, 190] },
+  { a: [10, 110], p: [-140, 15] }, { a: [10, 110], p: [15, 190], betancourt: true },
+  { a: [110, 200], p: [-140, 15] }, { a: [110, 200], p: [15, 190] },
+  { a: [200, 290], p: [-140, 180] },
+];
+PARCELS.forEach((pc, i) => {
+  const am = (pc.a[0] + pc.a[1]) / 2;
+  const [lo, hi] = spanAt(PRIV_AP, am);
+  const p0 = Math.max(pc.p[0], lo + 8), p1 = Math.min(pc.p[1], hi - 8);
+  pc.center = ap(PRIV_C, am, (p0 + p1) / 2);
+  pc.house = !pc.betancourt && i !== 0 && i !== 7;
+});
+const BETAN = PARCELS.find((p) => p.betancourt);
+
+const PLACES = [
+  { id: 'cabins', name: 'Glamping cabins', sub: '8 cabins · public side', c: 'var(--public)', at: CABINS[3], h: 30, far: 2600, r: 300, th: 1.25,
+    kick: 'Public side', title: 'Eight cabins dug into the bank',
+    body: 'Each cabin backs into the slope at the foot of the hill and opens east to the valley. Guests wake to sunrise over the trees; by mid-afternoon the hill puts them in shade. Earth walls and a living roof keep them cool with little air conditioning.',
+    facts: [['Inside', '58 m² + 30 m² deck'], ['Sleeps', '2, plus 2 on the sofa'], ['Build budget', '$60–70k each'], ['Target rate', '$150–200 / night']],
+    actions: [['Walk around a cabin', 'cabin'], ['Cabin numbers', 'plan:p-numbers']] },
+  { id: 'pond', name: 'Natural pond', sub: 'Swim, no chlorine', c: 'var(--public)', at: POND, h: 18, far: 1100, r: 200, th: 1.1,
+    kick: 'Public side', title: 'A swimming pond cleaned by plants',
+    body: 'One zone for swimming, one planted zone that filters the water. No chlorine, no salt. It is also the coolest place on the property on a January afternoon, and where everyone ends up at sunset.',
+    facts: [['Water surface', 'about 1,000 m²'], ['Budget', 'about $40k (estimate)'], ['Chemicals', 'none']],
+    actions: [['Shared infrastructure', 'plan:p-homes']] },
+  { id: 'court', name: 'Tennis court', sub: 'Already built', c: 'var(--public)', at: COURT, h: 14, far: 1100, r: 180, th: 1.35,
+    kick: 'Public side', title: 'The tennis court is already there',
+    body: 'A full-size court that guests and residents share. Lessons, clinics and weekend tournaments add income on top of the nights, and give city guests a reason to come back.',
+    facts: [['Status', 'built'], ['Shared by', 'guests and residents']], actions: [] },
+  { id: 'solar', name: 'Solar & storage', sub: '15 kWh on site today', c: 'var(--gold)', at: SOLAR, h: 16, far: 1100, r: 170, th: 0.95,
+    kick: 'Energy', title: 'A small grid of its own',
+    body: 'Panels and a 15 kWh battery already run the existing house. The plan grows that into one battery room for the whole site, fed by solar carports over the parking.',
+    facts: [['Today', 'solar + 15 kWh battery'], ['Phase 1', '≈30 kWp + ≈100 kWh'], ['Per cabin', '≈3 kWp']],
+    actions: [['How it runs itself', 'plan:p-energy']] },
+  { id: 'forest', name: 'Food forest', sub: 'Orchard, gardens, trail', c: 'var(--public)', at: ORCHARD, h: 16, far: 1500, r: 260, th: 1.2,
+    kick: 'The corridor', title: 'The kilometre between the two sides',
+    body: 'An orchard, vegetable beds and chickens along the track that joins the cabins to the homes. Guests walk it and eat from it; residents share it.',
+    facts: [['Trail', 'about 1 km'], ['Grows', 'fruit, vegetables, eggs']], actions: [] },
+  { id: 'private', name: 'Private community', sub: 'Homesites from $150k', c: 'var(--private)', at: ap(PRIV_C, 0, 20), h: 40, far: 2800, r: 420, th: 1.15,
+    kick: 'Private side', title: 'Homes for family and friends',
+    body: 'About 11 hectares at the quiet north end, under the summit. Roughly eight homesites of about a hectare each, on the same solar, water and staff as the cabins, with the protected forest as the back fence.',
+    facts: [['Homesites', '≈ 8 of ≈ 1 ha'], ['Price', 'from $150k each'], ['Shared', 'power, water, security']],
+    actions: [['See a residence', 'residence'], ['Homesite numbers', 'plan:p-homes']] },
+  { id: 'betancourt', name: 'Betancourt hectare', sub: 'First homesite', c: 'var(--private)', at: BETAN.center, h: 20, far: 1300, r: 230, th: 1.3,
+    kick: 'Private side', title: 'The first hectare is spoken for',
+    body: 'Kybo and Kian Betancourt are buying the first hectare. Their house will be the first one on the private side, and the model for the ones after it.',
+    facts: [['Size', 'about 1 ha'], ['Status', 'purchase in progress']], actions: [['See a residence', 'residence']] },
+  { id: 'hill', name: 'Cerro Kavaju', sub: 'Protected forest', c: 'var(--gold)', at: GEO.peak, h: 30, far: 4000, r: 900, th: 1.05,
+    kick: 'The hill', title: 'A forest no one can clear',
+    body: 'Cerro Kavaju is a 110-hectare protected landscape under Law 5377/2014, run by the Cordillera departmental government. The forest that rises behind the property stays forest. On satellite elevation the summit sits about 150 m above the valley floor.',
+    facts: [['Protected', '110 ha since 2014'], ['Summit', '≈ 294 m above sea level'], ['Above the valley', '≈ 150 m']], actions: [] },
+];
+
+const SPOTS = {
+  cabin: [
+    { id: 'earth', name: 'Rammed-earth walls', at: [5.95, 1.7, 0.4], cam: [13, 3.2, 8], tgt: [3, 1.4, 0], text: '45 cm walls of compacted local soil, built in layers you can see. The mass soaks up afternoon heat and gives it back at night.' },
+    { id: 'roof', name: 'Living roof', at: [0, 4.0, -1], cam: [-7, 12, -16], tgt: [0, 2.5, 0], text: 'Native grasses on about 20 cm of soil. It insulates, slows the rain, and from the hill above, the cabin disappears.' },
+    { id: 'eaves', name: 'Deep eaves', at: [-3.2, 2.6, 5.15], cam: [-1, 1.7, 12], tgt: [-2, 2.2, 3.5], text: 'The roof reaches 2 m past the glass, so the high summer sun never touches it. Posts in local hardwood.' },
+    { id: 'glass', name: 'Glass to the valley', at: [-3.4, 1.4, 3.4], cam: [-3, 1.7, 9.5], tgt: [-3, 1.4, 0], text: 'The east side is glass from floor to ceiling: sunrise from bed. The back of the cabin is set into the slope.' },
+    { id: 'inside', name: 'Inside', at: [0.6, 1.4, 0], cam: [3.6, 1.6, 2.1], tgt: [-2.5, 1.0, -1.2], text: 'One bedroom, a kitchen island and a bathroom with an outdoor shower. Tobatí ceramics and Atyrá leather from the towns next door.' },
+    { id: 'solar', name: 'Solar carport', at: [-14, 3.6, 6], cam: [-6, 4, 18], tgt: [-14, 2, 5], text: 'About 3 kWp over each parking bay, wired to the shared battery room. Shade for the car comes free.' },
+    { id: 'rain', name: 'Rain tank', at: [-18.8, 2.9, 2.2], cam: [-12, 2.4, 10], tgt: [-18, 1.4, 2], text: 'The carport roof feeds a 10,000 L tank. Over a year it catches about what the cabin’s guests use.' },
+  ],
+  residence: [
+    { id: 'pool', name: 'Pool', at: [-4, 0.8, 9.2], cam: [6, 3, 20], tgt: [-4, 0.5, 7], text: 'A 12 m lap pool on the valley side, heated by the sun and filtered without chlorine like the pond.' },
+    { id: 'roof', name: 'Living roofs', at: [2, 4.2, -1], cam: [-8, 14, -18], tgt: [2, 2.6, 0], text: 'Two volumes, two living roofs, stepped with the slope. From the trail above you see grass, not a house.' },
+    { id: 'earth', name: 'Same earth walls', at: [-12.6, 1.8, 0], cam: [-22, 3, 10], tgt: [-11, 1.6, 0], text: 'The cabins and the homes share one language: rammed earth from the site, hardwood, glass and grass.' },
+    { id: 'wing', name: 'Bedroom wing', at: [8.6, 1.6, 1.4], cam: [16, 2.4, 12], tgt: [8, 1.6, -1], text: 'Three bedrooms, about 180 m² in all. The bedroom wing sits back from the living room for privacy.' },
+    { id: 'carport', name: 'Carport for two', at: [-22, 3.6, 7], cam: [-14, 4, 20], tgt: [-22, 2, 6], text: 'About 6 kWp over two bays. Homes draw on the shared battery room like the cabins.' },
+    { id: 'lot', name: 'About a hectare', at: [20, 1.2, 16], cam: [30, 18, 40], tgt: [4, 1, 4], text: 'Each homesite is roughly 100 by 100 m, with the protected forest behind it and the valley in front.' },
+  ],
+};
+const VIEWS = {
+  cabin: [['Front', [4, 2.8, 23], [0, 1.7, 0]], ['Deck', [-6.4, 1.7, 6.2], [1.5, 1.3, 2.4]], ['From the hill', [-6, 13, -20], [0, 2, 2]], ['Inside', [3.6, 1.6, 2.1], [-2.5, 1.0, -1.2]]],
+  residence: [['Front', [6, 3.4, 34], [0, 1.7, 0]], ['Pool', [8, 1.8, 13], [-6, 1, 4]], ['From the hill', [-10, 16, -26], [2, 2, 3]], ['Living room', [-1.5, 1.6, 2.2], [-9, 1.1, -1]]],
+};
+const SPECS = {
+  cabin: '<b>Cabin</b><span>58 m² inside</span><span>30 m² deck</span><span>1 bedroom</span><span>build budget $60–70k</span>',
+  residence: '<b>Residence</b><span>≈180 m²</span><span>3 bedrooms</span><span>on ≈1 ha</span><span>homesite from $150k</span><span>build ≈$900–1,100/m²</span>',
+};
+
+/* ---------------------------------------------------------- renderer -- */
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: !small, powerPreference: 'high-performance' });
+} catch (err) {
+  fail('This browser cannot show the 3D view. The plan still works.');
+  throw err;
+}
+const PR = Math.min(devicePixelRatio, small ? 1.6 : 2);
+renderer.setPixelRatio(PR);
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+$('stage').appendChild(renderer.domElement);
+const ANISO = renderer.capabilities.getMaxAnisotropy();
+const pmrem = new THREE.PMREMGenerator(renderer);
+const ENV = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+/* ---------------------------------------------------------- textures -- */
+function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
+function tex(c, rep = 1) {
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep);
+  return t;
+}
+function rammedEarth() {
+  const r = rng(11), [c, g] = canvas(1024, 1024);
+  const pal = ['#c9a283', '#bd9274', '#d4b597', '#b48468', '#c79d80', '#dcc2a6', '#b98d72', '#cfab8d', '#c2967a', '#a97b62'];
+  let y = 0;
+  while (y < 1024) {
+    const h = 10 + r() * 34;
+    const top = pal[Math.floor(r() * pal.length)], bot = pal[Math.floor(r() * pal.length)];
+    const grd = g.createLinearGradient(0, y, 0, y + h);
+    grd.addColorStop(0, top); grd.addColorStop(1, bot);
+    g.fillStyle = grd;
+    g.fillRect(0, y, 1024, h + 1);
+    for (let k = 0; k < 60; k++) {
+      g.fillStyle = r() < 0.5 ? `rgba(80,45,25,${r() * 0.08})` : `rgba(255,240,215,${r() * 0.08})`;
+      g.fillRect(r() * 1024, y + r() * h, 30 + r() * 200, 1 + r() * 3);
+    }
+    g.fillStyle = 'rgba(80,45,28,0.08)'; g.fillRect(0, y + h - 1.5, 1024, 1.5);
+    y += h;
+  }
+  for (let i = 0; i < 4000; i++) {
+    const d = r() < 0.7;
+    g.fillStyle = d ? `rgba(70,40,25,${0.1 + r() * 0.22})` : `rgba(250,235,215,${0.06 + r() * 0.14})`;
+    const s = 0.8 + r() * 2.4;
+    g.fillRect(r() * 1024, r() * 1024, s, s * (0.6 + r() * 0.6));
+  }
+  return tex(c);
+}
+function woodTex(base = '#7a5233') {
+  const r = rng(5), [c, g] = canvas(512, 512);
+  g.fillStyle = base; g.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 16; i++) {
+    const y = i * 32;
+    g.fillStyle = `rgba(${r() < 0.5 ? '40,22,10' : '255,220,170'},${0.05 + r() * 0.1})`;
+    g.fillRect(0, y, 512, 32);
+    g.fillStyle = 'rgba(25,14,6,0.55)'; g.fillRect(0, y + 31, 512, 1.5);
+    for (let k = 0; k < 14; k++) { g.fillStyle = `rgba(30,16,6,${r() * 0.12})`; g.fillRect(r() * 512, y + r() * 30, 40 + r() * 160, 1); }
+  }
+  return tex(c);
+}
+function grassTex(seed = 3, dry = 0.4) {
+  const r = rng(seed), [c, g] = canvas(512, 512);
+  g.fillStyle = '#6f7a40'; g.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 260; i++) {
+    const x = r() * 512, y = r() * 512, rad = 20 + r() * 60;
+    const grd = g.createRadialGradient(x, y, 0, x, y, rad);
+    const col = r() < dry ? '160,140,85' : (r() < 0.5 ? '78,104,46' : '96,118,54');
+    grd.addColorStop(0, `rgba(${col},0.35)`); grd.addColorStop(1, `rgba(${col},0)`);
+    g.fillStyle = grd; g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  for (let i = 0; i < 16000; i++) {
+    const x = r() * 512, y = r() * 512, l = 2 + r() * 6;
+    g.strokeStyle = r() < dry * 0.6 ? `rgba(200,180,120,${0.25 + r() * 0.3})` : `rgba(${40 + r() * 50},${70 + r() * 60},${20 + r() * 30},${0.3 + r() * 0.4})`;
+    g.lineWidth = 0.8;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 2, y - l); g.stroke();
+  }
+  return tex(c);
+}
+function solarTex() {
+  const [c, g] = canvas(256, 256);
+  g.fillStyle = '#121a2a'; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 10; j++) {
+    const grd = g.createLinearGradient(0, j * 25.6, 0, j * 25.6 + 25);
+    grd.addColorStop(0, '#22324f'); grd.addColorStop(1, '#16223a');
+    g.fillStyle = grd; g.fillRect(i * 42.6 + 1.5, j * 25.6 + 1.5, 39.6, 22.6);
+  }
+  return tex(c);
+}
+function courtTex() {
+  const [c, g] = canvas(512, 256);
+  g.fillStyle = '#b8603b'; g.fillRect(0, 0, 512, 256);
+  const r = rng(9);
+  for (let i = 0; i < 3000; i++) { g.fillStyle = `rgba(${r() < 0.5 ? '90,40,20' : '230,150,110'},${r() * 0.12})`; g.fillRect(r() * 512, r() * 256, 2, 2); }
+  const k = 512 / 36.6, ox = (36.6 - 23.77) / 2 * k, oy = (18.3 - 10.97) / 2 * k;
+  g.strokeStyle = 'rgba(250,245,235,0.95)'; g.lineWidth = 1.6;
+  g.strokeRect(ox, oy, 23.77 * k, 10.97 * k);
+  const sy = oy + 1.37 * k, sh = 8.23 * k;
+  g.beginPath();
+  g.moveTo(ox, sy); g.lineTo(ox + 23.77 * k, sy);
+  g.moveTo(ox, sy + sh); g.lineTo(ox + 23.77 * k, sy + sh);
+  g.moveTo(ox + (23.77 / 2 - 6.4) * k, sy); g.lineTo(ox + (23.77 / 2 - 6.4) * k, sy + sh);
+  g.moveTo(ox + (23.77 / 2 + 6.4) * k, sy); g.lineTo(ox + (23.77 / 2 + 6.4) * k, sy + sh);
+  g.moveTo(ox + (23.77 / 2 - 6.4) * k, 128); g.lineTo(ox + (23.77 / 2 + 6.4) * k, 128);
+  g.stroke();
+  g.strokeStyle = 'rgba(30,30,30,0.8)'; g.lineWidth = 2.5;
+  g.beginPath(); g.moveTo(256, oy - 4); g.lineTo(256, oy + 10.97 * k + 4); g.stroke();
+  const t = tex(c); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
+}
+
+const T = {};
+function textures() {
+  T.earth = rammedEarth();
+  T.wood = woodTex();
+  T.deck = woodTex('#8a5f3c');
+  T.grass = grassTex(3, 0.45);
+  T.roofGrass = grassTex(8, 0.2);
+  T.solar = solarTex();
+  T.court = courtTex();
+}
+
+/* Box UVs in world metres, so one material tiles evenly on any wall size. */
+function worldUV(geo, s = 4) {
+  const p = geo.attributes.position, n = geo.attributes.normal, uv = geo.attributes.uv;
+  for (let i = 0; i < p.count; i++) {
+    const nx = Math.abs(n.getX(i)), ny = Math.abs(n.getY(i));
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    if (nx > 0.5) uv.setXY(i, z / s, y / s);
+    else if (ny > 0.5) uv.setXY(i, x / s, z / s);
+    else uv.setXY(i, x / s, y / s);
+  }
+  uv.needsUpdate = true;
+  return geo;
+}
+
+/* ---------------------------------------------------- shared helpers -- */
+const UP = new THREE.Vector3(0, 1, 0);
+function box(w, h, d, x, y, z, mat, parent, opts = {}) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  if (opts.uv) worldUV(geo, opts.uv);
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  m.castShadow = opts.cast !== false; m.receiveShadow = true;
+  if (parent) parent.add(m);
+  return m;
+}
+function skyDome(top, horizon, sunDir) {
+  const mat = new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, fog: false,
+    uniforms: { top: { value: new THREE.Color(top) }, horizon: { value: new THREE.Color(horizon) }, sun: { value: sunDir.clone().normalize() }, sunCol: { value: new THREE.Color(0xffd7a0) }, sunAmt: { value: 1 } },
+    vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: `
+      uniform vec3 top; uniform vec3 horizon; uniform vec3 sun; uniform vec3 sunCol; uniform float sunAmt; varying vec3 vP;
+      void main(){
+        float h = clamp(vP.y, -0.3, 1.0);
+        vec3 c = mix(horizon, top, smoothstep(-0.02, 0.55, h));
+        float s = max(dot(normalize(vP), sun), 0.0);
+        c += sunCol * (pow(s, 600.0) * 3.0 + pow(s, 12.0) * 0.35) * sunAmt;
+        gl_FragColor = vec4(c, 1.0);
+      }`,
+  });
+  return new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mat);
+}
+function stars(r, n) {
+  const pts = [], R = rng(21);
+  for (let i = 0; i < n; i++) {
+    const th = R() * Math.PI * 2, ph = Math.acos(0.15 + R() * 0.85);
+    pts.push(new THREE.Vector3().setFromSphericalCoords(r, ph, th));
+  }
+  return new THREE.Points(new THREE.BufferGeometry().setFromPoints(pts), new THREE.PointsMaterial({ color: 0xcfd8ea, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.8, fog: false }));
+}
+
+/* A palm: grey trunk and a drooping crown, vertex-coloured so one draw call holds them all. */
+function palmGeometry(H = 14) {
+  const parts = [];
+  const trunk = new THREE.CylinderGeometry(0.2, 0.3, H, 6, 1);
+  trunk.translate(0, H / 2, 0);
+  parts.push(colorize(trunk, 0x8d877b));
+  const fronds = [];
+  for (let f = 0; f < 10; f++) {
+    const a = (f / 10) * Math.PI * 2 + (f % 2) * 0.2;
+    const dx = Math.cos(a), dz = Math.sin(a), sx = -dz, sz = dx;
+    const pos = [], seg = 6, L = 4.6;
+    for (let s = 0; s <= seg; s++) {
+      const t = s / seg, r = L * t, y = 1.3 * t - 3.1 * t * t, w = 0.75 * Math.sin(Math.PI * Math.min(1, t * 1.15));
+      pos.push([dx * r, H + y, dz * r, sx * w, sz * w]);
+    }
+    const v = [];
+    for (let s = 0; s < seg; s++) {
+      const [x0, y0, z0, ax0, az0] = pos[s], [x1, y1, z1, ax1, az1] = pos[s + 1];
+      const L0 = [x0 + ax0, y0 - 0.12, z0 + az0], R0 = [x0 - ax0, y0 - 0.12, z0 - az0], C0 = [x0, y0, z0];
+      const L1 = [x1 + ax1, y1 - 0.12, z1 + az1], R1 = [x1 - ax1, y1 - 0.12, z1 - az1], C1 = [x1, y1, z1];
+      v.push(...C0, ...L0, ...C1, ...L0, ...L1, ...C1, ...C0, ...C1, ...R0, ...R0, ...C1, ...R1);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    g.computeVertexNormals();
+    fronds.push(g);
+  }
+  const crown = mergeGeometries(fronds);
+  parts.push(colorize(crown, 0x55703a));
+  const merged = mergeGeometries(parts.map((p) => p.index ? p.toNonIndexed() : p));
+  return merged;
+}
+function colorize(geo, hex) {
+  const g = geo.index ? geo.toNonIndexed() : geo;
+  const c = new THREE.Color(hex), n = g.attributes.position.count, arr = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { arr[i * 3] = c.r; arr[i * 3 + 1] = c.g; arr[i * 3 + 2] = c.b; }
+  g.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+  if (!g.attributes.normal) g.computeVertexNormals();
+  g.deleteAttribute('uv');
+  return g;
+}
+const palmMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, side: THREE.DoubleSide });
+
+/* A clump of five thin blades leaning outward; flat normals keep it reading as grass. */
+function tuftGeometry(h = 0.5) {
+  const pos = [], nrm = [];
+  for (let k = 0; k < 5; k++) {
+    const a = (k / 5) * Math.PI * 2 + 0.3, dx = Math.cos(a), dz = Math.sin(a);
+    const px = -dz * 0.03, pz = dx * 0.03, lean = 0.16 + (k % 2) * 0.08, hh = h * (0.7 + 0.3 * ((k * 3) % 5) / 4);
+    pos.push(-px, 0, -pz, px, 0, pz, dx * lean, hh, dz * lean);
+    nrm.push(0, 1, 0, 0, 1, 0, 0, 1, 0);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+  return g;
+}
+
+/* ================================================================ */
+/*                          THE HILL (map)                          */
+/* ================================================================ */
+const S = GEO.size, G = GEO.grid, CELL = S / (G - 1);
+let H = null;
+function elevAt(x, z) {
+  const gx = clamp((x + S / 2) / CELL, 0, G - 1.001), gz = clamp((z + S / 2) / CELL, 0, G - 1.001);
+  const x0 = gx | 0, z0 = gz | 0, fx = gx - x0, fz = gz - z0, i = z0 * G + x0;
+  return H[i] * (1 - fx) * (1 - fz) + H[i + 1] * fx * (1 - fz) + H[i + G] * (1 - fx) * fz + H[i + G + 1] * fx * fz;
+}
+const yAt = (x, z) => (elevAt(x, z) - BASE) * EX;
+
+function prepareHeights(raw) {
+  H = new Float32Array(G * G);
+  for (let i = 0; i < G * G; i++) H[i] = raw[i] / GEO.scale;
+  // Satellite elevation carries the canopy: calm the cleared land inside the property.
+  for (let pass = 0; pass < 3; pass++) {
+    const copy = H.slice();
+    for (let r = 1; r < G - 1; r++) for (let c = 1; c < G - 1; c++) {
+      const x = -S / 2 + c * CELL, z = -S / 2 + r * CELL;
+      if (!inPoly(x, z, GEO.outline)) continue;
+      let s = 0;
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) s += copy[(r + dr) * G + c + dc];
+      H[r * G + c] = s / 9;
+    }
+  }
+  // Flat pads where buildings sit.
+  const pads = [...CABINS.map((p) => [p, 16]), [POND, 34], [COURT, 30], [HUB, 22], [SOLAR, 20], [PARK, 20],
+    ...PARCELS.filter((p) => p.house).map((p) => [p.center, 26])];
+  for (const [[px, pz], rad] of pads) {
+    const target = elevAt(px, pz), R = rad + 14;
+    const c0 = Math.floor((px - R + S / 2) / CELL), c1 = Math.ceil((px + R + S / 2) / CELL);
+    const r0 = Math.floor((pz - R + S / 2) / CELL), r1 = Math.ceil((pz + R + S / 2) / CELL);
+    for (let r = Math.max(0, r0); r <= Math.min(G - 1, r1); r++) for (let c = Math.max(0, c0); c <= Math.min(G - 1, c1); c++) {
+      const x = -S / 2 + c * CELL, z = -S / 2 + r * CELL, d = Math.hypot(x - px, z - pz);
+      const w = 1 - smooth(rad, R, d);
+      H[r * G + c] = lerp(H[r * G + c], target, w);
+    }
+  }
+  // Ease the edges down so the world ends in a soft shoulder, not a cliff.
+  let edgeMin = Infinity;
+  for (let i = 0; i < G; i++) edgeMin = Math.min(edgeMin, H[i], H[(G - 1) * G + i], H[i * G], H[i * G + G - 1]);
+  for (let r = 0; r < G; r++) for (let c = 0; c < G; c++) {
+    const e = Math.min(r, c, G - 1 - r, G - 1 - c) * CELL;
+    const w = smooth(0, 320, e);
+    H[r * G + c] = lerp(edgeMin - 4, H[r * G + c], w);
+  }
+}
+
+function isForest(x, z, e, n) {
+  if (inPoly(x, z, GEO.outline)) return false;
+  let s = (e - 152) / 24 + (n - 0.5) * 2.6;
+  if (x > 620 && z > 120) s -= 0.75;
+  return s > 0.15;
+}
+
+function paintTerrain(W) {
+  const B = small ? 512 : 768;
+  const [bc, bg] = canvas(B, B);
+  const img = bg.createImageData(B, B), d = img.data;
+  const forestA = [31, 47, 28], forestB = [52, 70, 39], grassA = [118, 124, 70], grassB = [92, 108, 56], dry = [158, 140, 92];
+  for (let py = 0; py < B; py++) for (let px = 0; px < B; px++) {
+    const x = -S / 2 + (px + 0.5) / B * S, z = -S / 2 + (py + 0.5) / B * S;
+    const e = elevAt(x, z), n = fbm(x * 0.0045 + 3.1, z * 0.0045 - 1.7), n2 = fbm(x * 0.035 + 7, z * 0.035 + 2);
+    let col;
+    if (isForest(x, z, e, n)) {
+      col = forestA.map((v, i) => lerp(v, forestB[i], n2));
+    } else {
+      col = grassA.map((v, i) => lerp(v, grassB[i], n2));
+      if (n > 0.62) col = col.map((v, i) => lerp(v, dry[i], (n - 0.62) * 2));
+      if (inPoly(x, z, GEO.outline)) col = col.map((v, i) => lerp(v, [128, 136, 74][i], 0.35));
+    }
+    const k = (py * B + px) * 4;
+    d[k] = col[0]; d[k + 1] = col[1]; d[k + 2] = col[2]; d[k + 3] = 255;
+  }
+  bg.putImageData(img, 0, 0);
+  const [c, g] = canvas(W, W);
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(bc, 0, 0, W, W);
+
+  // Fine speckle so the ground doesn't read as flat paint up close.
+  const [sc, sg] = canvas(256, 256), R = rng(4);
+  for (let i = 0; i < 5000; i++) { sg.fillStyle = `rgba(${R() < 0.5 ? '0,0,0' : '255,240,200'},${R() * 0.12})`; sg.fillRect(R() * 256, R() * 256, 1.5, 1.5); }
+  g.fillStyle = g.createPattern(sc, 'repeat'); g.fillRect(0, 0, W, W);
+
+  const k = W / S;
+  g.setTransform(k, 0, 0, k, W / 2, W / 2);
+  const path = (pts) => { g.beginPath(); pts.forEach(([x, z], i) => (i ? g.lineTo(x, z) : g.moveTo(x, z))); };
+  const poly = (pts) => { path(pts); g.closePath(); };
+
+  // Town edge to the east-south-east: a loose grid of dirt streets.
+  g.save();
+  g.beginPath(); g.rect(-S / 2, -S / 2, S, S);
+  GEO.outline.forEach(([x, z], i) => (i ? g.lineTo(x, z) : g.moveTo(x, z))); g.closePath();
+  g.clip('evenodd');
+  g.beginPath(); g.rect(640, 150, 1200, 1700); g.clip();
+  g.strokeStyle = 'rgba(196,160,112,0.75)'; g.lineWidth = 7;
+  const ang = -0.36, ca = Math.cos(ang), sa = Math.sin(ang);
+  for (let i = -6; i <= 6; i++) {
+    const o = i * 150;
+    path([[1150 + ca * -700 - sa * o, 820 + sa * -700 + ca * o], [1150 + ca * 700 - sa * o, 820 + sa * 700 + ca * o]]); g.stroke();
+    path([[1150 - sa * -700 + ca * o, 820 + ca * -700 + sa * o], [1150 - sa * 700 + ca * o, 820 + ca * 700 + sa * o]]); g.stroke();
+  }
+  g.restore();
+  // Access road from the east into the public side.
+  g.strokeStyle = 'rgba(176,96,58,0.95)'; g.lineWidth = 7;
+  path([[1800, 560], [1300, 600], [900, 520], [700, 470], ENTRY, HUB]); g.stroke();
+
+  // Zone tints.
+  g.fillStyle = 'rgba(160,205,110,0.13)'; poly(GEO.pub); g.fill();
+  g.fillStyle = 'rgba(130,180,235,0.13)'; poly(GEO.priv); g.fill();
+
+  // The track that runs the length of the property, worn into two ruts.
+  const trackPts = [ap(PRIV_C, -200, 15), ap(PRIV_C, 280, 10), [110, -300], [175, -140], [240, 20], [300, 190], ap(PUB_C, -250, 70), ap(PUB_C, -100, 30), ap(PUB_C, 20, 0), HUB];
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  g.strokeStyle = 'rgba(170,90,52,0.95)'; g.lineWidth = 4.2; path(trackPts); g.stroke();
+  g.strokeStyle = 'rgba(120,128,66,0.9)'; g.lineWidth = 1.1; path(trackPts); g.stroke();
+  // Paths from the track to each cabin.
+  g.strokeStyle = 'rgba(176,96,58,0.8)'; g.lineWidth = 1.8;
+  CABINS.forEach(([x, z]) => { const f = [x + PX[0] * 30, z + PX[1] * 30]; path([[x + PX[0] * 7, z + PX[1] * 7], f]); g.stroke(); });
+  // Bare earth around the hub, court and parking.
+  g.fillStyle = 'rgba(176,100,62,0.7)';
+  for (const [[x, z], r] of [[HUB, 22], [PARK, 18], [SOLAR, 16]]) { g.beginPath(); g.ellipse(x, z, r, r * 0.8, 0.3, 0, Math.PI * 2); g.fill(); }
+  g.fillStyle = 'rgba(70,82,42,0.85)'; g.beginPath(); g.ellipse(POND[0], POND[1], 30, 20, Math.atan2(AX[1], AX[0]), 0, Math.PI * 2); g.fill();
+
+  // Vegetable beds along the corridor.
+  g.fillStyle = 'rgba(110,70,40,0.9)';
+  for (let i = 0; i < 6; i++) {
+    const [x, z] = [ORCHARD[0] + 60 + i * 4 * AX[0] + 30 * PX[0], ORCHARD[1] + 60 + i * 4 * AX[1] + 30 * PX[1]];
+    g.save(); g.translate(x, z); g.rotate(Math.atan2(PX[1], PX[0])); g.fillRect(-9, -1, 18, 2.2); g.restore();
+  }
+
+  // Homesite lines, clipped to the private side.
+  g.save(); poly(GEO.priv); g.clip();
+  g.strokeStyle = 'rgba(176,96,58,0.9)'; g.lineWidth = 4; path([ap(PRIV_C, -230, 15), ap(PRIV_C, 290, 15)]); g.stroke();
+  g.setLineDash([3, 3]); g.strokeStyle = 'rgba(241,233,219,0.6)'; g.lineWidth = 0.9;
+  for (const pc of PARCELS) {
+    poly([ap(PRIV_C, pc.a[0], pc.p[0]), ap(PRIV_C, pc.a[1], pc.p[0]), ap(PRIV_C, pc.a[1], pc.p[1]), ap(PRIV_C, pc.a[0], pc.p[1])]); g.stroke();
+  }
+  g.setLineDash([]);
+  g.fillStyle = 'rgba(233,191,90,0.22)';
+  poly([ap(PRIV_C, BETAN.a[0], BETAN.p[0]), ap(PRIV_C, BETAN.a[1], BETAN.p[0]), ap(PRIV_C, BETAN.a[1], BETAN.p[1]), ap(PRIV_C, BETAN.a[0], BETAN.p[1])]); g.fill();
+  g.restore();
+
+  // Zone edges and the property line.
+  g.setLineDash([5, 4]); g.lineWidth = 1.4;
+  g.strokeStyle = 'rgba(160,215,130,0.9)'; poly(GEO.pub); g.stroke();
+  g.strokeStyle = 'rgba(140,190,240,0.9)'; poly(GEO.priv); g.stroke();
+  g.setLineDash([]);
+  g.strokeStyle = 'rgba(233,191,90,0.95)'; g.lineWidth = 2.6; poly(GEO.outline); g.stroke();
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO;
+  return t;
+}
+
+function curtain(poly, height, color, strength) {
+  const pos = [], uv = [];
+  const pts = [];
+  for (let i = 0; i < poly.length; i++) {
+    const [x0, z0] = poly[i], [x1, z1] = poly[(i + 1) % poly.length];
+    const n = Math.max(2, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 8));
+    for (let s = 0; s < n; s++) pts.push([lerp(x0, x1, s / n), lerp(z0, z1, s / n)]);
+  }
+  pts.push(pts[0]);
+  let acc = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [x, z] = pts[i], y = yAt(x, z);
+    if (i) acc += Math.hypot(x - pts[i - 1][0], z - pts[i - 1][1]);
+    pos.push(x, y + 0.4, z, x, y + height, z);
+    uv.push(acc / 40, 0, acc / 40, 1);
+  }
+  const idx = [];
+  for (let i = 0; i < pts.length - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(color) }, uK: { value: strength }, uTime: { value: 0 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: `uniform vec3 uColor; uniform float uK; uniform float uTime; varying vec2 vUv;
+      void main(){ float a = pow(1.0 - vUv.y, 1.6) * uK; a *= 0.75 + 0.25 * sin(vUv.x * 6.2831 - uTime * 1.5);
+      gl_FragColor = vec4(uColor * a, a); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
+  });
+  return new THREE.Mesh(geo, mat);
+}
+
+const map = { scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 2, 14000), hits: [], curtains: [] };
+
+function buildMap() {
+  const scene = map.scene;
+  const HAZE = new THREE.Color(0xc9c3ad);
+  scene.background = HAZE.clone();
+  scene.fog = new THREE.FogExp2(HAZE, 0.00026);
+  scene.environment = ENV; scene.environmentIntensity = 0.25;
+
+  const sunDir = new THREE.Vector3(0.8, 0.33, -0.42).normalize();
+  const sky = skyDome(0x86aed3, 0xe9d7b5, sunDir); sky.scale.setScalar(9000); scene.add(sky);
+
+  scene.add(new THREE.HemisphereLight(0xcfe0f0, 0x4a4231, 1.15));
+  const sun = new THREE.DirectionalLight(0xffdcb0, 3.0);
+  const focus = new THREE.Vector3(170, yAt(170, -100), -100);
+  sun.position.copy(focus).addScaledVector(sunDir, 1800);
+  sun.target.position.copy(focus);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
+  const sc = sun.shadow.camera; sc.left = -950; sc.right = 950; sc.top = 950; sc.bottom = -950; sc.near = 600; sc.far = 3200;
+  sun.shadow.bias = -0.0006; sun.shadow.normalBias = 1.2;
+  scene.add(sun, sun.target);
+
+  // Terrain.
+  const pos = new Float32Array(G * G * 3), uv = new Float32Array(G * G * 2);
+  for (let r = 0; r < G; r++) for (let c = 0; c < G; c++) {
+    const i = r * G + c;
+    pos[i * 3] = -S / 2 + c * CELL; pos[i * 3 + 1] = (H[i] - BASE) * EX; pos[i * 3 + 2] = -S / 2 + r * CELL;
+    uv[i * 2] = c / (G - 1); uv[i * 2 + 1] = 1 - r / (G - 1);
+  }
+  const idx = new Uint32Array((G - 1) * (G - 1) * 6);
+  let k = 0;
+  for (let r = 0; r < G - 1; r++) for (let c = 0; c < G - 1; c++) {
+    const a = r * G + c, b = a + 1, d = a + G, e = d + 1;
+    idx[k++] = a; idx[k++] = d; idx[k++] = b; idx[k++] = b; idx[k++] = d; idx[k++] = e;
+  }
+  const tg = new THREE.BufferGeometry();
+  tg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  tg.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  tg.setIndex(new THREE.BufferAttribute(idx, 1));
+  tg.computeVertexNormals();
+  const terrain = new THREE.Mesh(tg, new THREE.MeshStandardMaterial({ map: paintTerrain(small ? 2048 : 3072), roughness: 0.97, metalness: 0 }));
+  terrain.receiveShadow = true;
+  scene.add(terrain);
+  const skirt = new THREE.Mesh(new THREE.CircleGeometry(12000, 48), new THREE.MeshStandardMaterial({ color: 0x3b4a2c, roughness: 1 }));
+  skirt.rotation.x = -Math.PI / 2; skirt.position.y = (Math.min(...H.slice(0, G)) - BASE) * EX - 7;
+  scene.add(skirt);
+
+  // Forest.
+  const avoid = [...CABINS.map((p) => [p, 16]), [POND, 34], [COURT, 28], [HUB, 22], [SOLAR, 18], [PARK, 18], ...PARCELS.map((p) => [p.center, 22])];
+  const blocked = (x, z) => avoid.some(([[ax, az], r]) => Math.hypot(x - ax, z - az) < r);
+  const SP = small ? 24 : 17, R = rng(7);
+  const trees = [], palms = [];
+  for (let gz = -S / 2 + 20; gz < S / 2 - 20; gz += SP) for (let gx = -S / 2 + 20; gx < S / 2 - 20; gx += SP) {
+    const x = gx + (R() - 0.5) * SP * 0.95, z = gz + (R() - 0.5) * SP * 0.95;
+    const e = elevAt(x, z), n = fbm(x * 0.0045 + 3.1, z * 0.0045 - 1.7);
+    const inside = inPoly(x, z, GEO.outline);
+    if (isForest(x, z, e, n)) {
+      if (R() < 0.05) palms.push([x, z, 0.9 + R() * 0.45]);
+      else trees.push([x, z, R()]);
+    } else if (!blocked(x, z)) {
+      const u = R();
+      if (inside) { if (u < 0.012) palms.push([x, z, 0.8 + R() * 0.4]); else if (u < 0.02) trees.push([x, z, R()]); }
+      else if (u < 0.05) palms.push([x, z, 0.8 + R() * 0.4]);
+      else if (u < 0.1) trees.push([x, z, R()]);
+    }
+  }
+  // Orchard rows on the corridor.
+  const orchard = [];
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 9; j++) {
+    const [x, z] = [ORCHARD[0] + (j - 4) * 9 * AX[0] + (i - 2.5) * 9 * PX[0], ORCHARD[1] + (j - 4) * 9 * AX[1] + (i - 2.5) * 9 * PX[1]];
+    if (inPoly(x, z, GEO.outline)) orchard.push([x, z]);
+  }
+
+  const canopyGeo = new THREE.IcosahedronGeometry(1, 0);
+  const tmat = new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.9 });
+  const forest = new THREE.InstancedMesh(canopyGeo, tmat, trees.length + orchard.length);
+  const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), SC = new THREE.Vector3(), col = new THREE.Color();
+  let ti = 0;
+  for (const [x, z, u] of trees) {
+    const r = 4.2 + u * 4.5;
+    V.set(x, yAt(x, z) + 3 + r * 0.6, z);
+    Q.setFromAxisAngle(UP, u * 6.28);
+    SC.set(r, r * (0.75 + R() * 0.3), r);
+    forest.setMatrixAt(ti, M4.compose(V, Q, SC));
+    const pick = R();
+    if (pick < 0.018) col.setHSL(0.92, 0.5, 0.62);
+    else if (pick < 0.03) col.setHSL(0.13, 0.75, 0.52);
+    else col.setHSL(0.23 + R() * 0.08, 0.3 + R() * 0.18, 0.11 + R() * 0.1);
+    forest.setColorAt(ti++, col);
+  }
+  for (const [x, z] of orchard) {
+    V.set(x, yAt(x, z) + 2.4, z); Q.identity(); SC.set(2.6, 2.2, 2.6);
+    forest.setMatrixAt(ti, M4.compose(V, Q, SC));
+    col.setHSL(0.25, 0.42, 0.3); forest.setColorAt(ti++, col);
+  }
+  forest.castShadow = true; forest.receiveShadow = true;
+  scene.add(forest);
+
+  const palmMesh = new THREE.InstancedMesh(palmGeometry(15), palmMat, palms.length);
+  palms.forEach(([x, z, s], i) => {
+    V.set(x, yAt(x, z) - 0.5, z); Q.setFromAxisAngle(UP, R() * 6.28); SC.set(s, s, s);
+    palmMesh.setMatrixAt(i, M4.compose(V, Q, SC));
+  });
+  palmMesh.castShadow = true;
+  scene.add(palmMesh);
+
+  // Town houses: small terracotta roofs on the east.
+  const houses = [];
+  const Rh = rng(31);
+  for (let i = 0; i < (small ? 120 : 220); i++) {
+    const x = 640 + Rh() * 1100, z = 200 + Rh() * 1350;
+    if (inPoly(x, z, GEO.outline)) continue;
+    houses.push([x, z, Rh()]);
+  }
+  const houseBody = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0xe8ddc8, roughness: 0.9 }), houses.length);
+  const roofGeo = new THREE.CylinderGeometry(0.577, 0.577, 1, 3); roofGeo.rotateZ(Math.PI / 2); roofGeo.rotateX(-Math.PI / 2);
+  const houseRoof = new THREE.InstancedMesh(roofGeo, new THREE.MeshStandardMaterial({ color: 0xbf6a40, roughness: 0.8 }), houses.length);
+  houses.forEach(([x, z, u], i) => {
+    const w = 8 + u * 6, d = 6 + u * 4, y = yAt(x, z);
+    Q.setFromAxisAngle(UP, -0.36 + (u > 0.5 ? Math.PI / 2 : 0));
+    houseBody.setMatrixAt(i, M4.compose(V.set(x, y + 1.6, z), Q, SC.set(w, 3.2, d)));
+    houseRoof.setMatrixAt(i, M4.compose(V.set(x, y + 3.9, z), Q, SC.set(w + 0.6, 2.4, d + 0.6)));
+  });
+  houseBody.castShadow = houseRoof.castShadow = true;
+  scene.add(houseBody, houseRoof);
+
+  // The property line as a soft curtain of light.
+  const line = curtain(GEO.outline, 16, 0xe9bf5a, 0.75);
+  scene.add(line); map.curtains.push(line);
+  const bc = BETAN;
+  const bet = curtain([ap(PRIV_C, bc.a[0], Math.max(bc.p[0], -200)), ap(PRIV_C, bc.a[1], bc.p[0]), ap(PRIV_C, bc.a[1], spanAt(PRIV_AP, bc.a[1])[1] - 4), ap(PRIV_C, bc.a[0], spanAt(PRIV_AP, bc.a[0])[1] - 4)], 7, 0x9cc8f0, 0.7);
+  scene.add(bet); map.curtains.push(bet);
+
+  // Buildings on the public side.
+  const M = mapMaterials();
+  CABINS.forEach(([x, z]) => scene.add(mapCabin(M, x, z)));
+  scene.add(mapPond(M));
+  scene.add(mapCourt(M));
+  scene.add(mapHub(M));
+  scene.add(mapSolar(M));
+  scene.add(mapCarports(M));
+  PARCELS.filter((p) => p.house).forEach((p, i) => scene.add(mapHouse(M, p.center[0], p.center[1], i)));
+  // Corner stakes on the Betancourt hectare.
+  {
+    const stakes = new THREE.Group();
+    const [lo, hi] = spanAt(PRIV_AP, (bc.a[0] + bc.a[1]) / 2);
+    const corners = [ap(PRIV_C, bc.a[0] + 4, bc.p[0] + 4), ap(PRIV_C, bc.a[1] - 4, bc.p[0] + 4), ap(PRIV_C, bc.a[1] - 4, hi - 6), ap(PRIV_C, bc.a[0] + 4, hi - 6)];
+    corners.forEach(([x, z]) => box(0.5, 4, 0.5, x, yAt(x, z) + 2, z, M.stake, stakes));
+    scene.add(stakes);
+  }
+
+  // Invisible pick volumes for tapping places in the 3D view.
+  for (const pl of PLACES) {
+    const [x, z] = pl.at;
+    const s = new THREE.Mesh(new THREE.SphereGeometry(pl.id === 'hill' ? 160 : pl.id === 'private' ? 140 : pl.id === 'cabins' ? 110 : 40, 12, 8), new THREE.MeshBasicMaterial({ visible: false }));
+    s.position.set(x, yAt(x, z) + 10, z);
+    s.userData.place = pl;
+    scene.add(s); map.hits.push(s);
+    pl.anchor = new THREE.Vector3(x, yAt(x, z) + pl.h, z);
+  }
+  map.sun = sun;
+}
+
+function mapMaterials() {
+  return {
+    earth: new THREE.MeshStandardMaterial({ color: 0xc19370, roughness: 0.95 }),
+    slab: new THREE.MeshStandardMaterial({ color: 0x2c2b27, roughness: 0.7 }),
+    roof: new THREE.MeshStandardMaterial({ color: 0x6f8c3f, roughness: 1 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0x1d2c33, roughness: 0.08, metalness: 0.6, emissive: 0x2a2015, emissiveIntensity: 0.4 }),
+    deck: new THREE.MeshStandardMaterial({ color: 0x8a6040, roughness: 0.8 }),
+    water: new THREE.MeshStandardMaterial({ color: 0x2f5c5e, roughness: 0.05, metalness: 0.35 }),
+    pool: new THREE.MeshStandardMaterial({ color: 0x3f8f9a, roughness: 0.05, metalness: 0.2 }),
+    reed: new THREE.MeshStandardMaterial({ color: 0x5c7b34, roughness: 0.9 }),
+    white: new THREE.MeshStandardMaterial({ color: 0xe9e0cf, roughness: 0.85 }),
+    tile: new THREE.MeshStandardMaterial({ color: 0xbd6b42, roughness: 0.75 }),
+    panel: new THREE.MeshStandardMaterial({ map: T.solar, roughness: 0.25, metalness: 0.5 }),
+    steel: new THREE.MeshStandardMaterial({ color: 0x3b3d3e, roughness: 0.5, metalness: 0.6 }),
+    court: new THREE.MeshStandardMaterial({ map: T.court, roughness: 0.95 }),
+    fence: new THREE.MeshStandardMaterial({ color: 0x1f2522, roughness: 0.6, transparent: true, opacity: 0.45 }),
+    stake: new THREE.MeshBasicMaterial({ color: new THREE.Color(0x9cc8f0).multiplyScalar(1.4) }),
+  };
+}
+function mapCabin(M, x, z) {
+  const g = new THREE.Group();
+  box(11.4, 3.0, 6.5, 0, 1.5, 0, M.earth, g);
+  box(8, 2.4, 0.1, -1.4, 1.3, 3.27, M.glass, g, { cast: false });
+  box(14, 0.35, 9, 0, 3.17, 1.0, M.slab, g);
+  box(13.6, 0.22, 8.6, 0, 3.45, 1.0, M.roof, g);
+  box(12, 0.3, 2.6, 0, 0.15, 4.6, M.deck, g);
+  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST;
+  return g;
+}
+function mapHouse(M, x, z, i) {
+  const g = new THREE.Group();
+  box(15.9, 3.0, 7.9, -4.2, 1.5, 0, M.earth, g);
+  box(9.9, 3.3, 7.9, 8.7, 1.65, -2.5, M.earth, g);
+  box(10, 2.4, 0.1, -4.5, 1.3, 3.97, M.glass, g, { cast: false });
+  box(19, 0.35, 11, -4.2, 3.17, 1.0, M.slab, g);
+  box(18.6, 0.22, 10.6, -4.2, 3.45, 1.0, M.roof, g);
+  box(12.5, 0.35, 10.5, 8.7, 3.47, -1.8, M.slab, g);
+  box(12.1, 0.22, 10.1, 8.7, 3.75, -1.8, M.roof, g);
+  box(12, 0.2, 3.5, -4, 0.05, 8.8, M.pool, g, { cast: false });
+  box(16, 0.25, 3, -4.2, 0.12, 5.4, M.deck, g);
+  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST + (i % 2 ? 0.08 : -0.06);
+  return g;
+}
+function mapPond(M) {
+  const g = new THREE.Group(), R = rng(17);
+  const shape = new THREE.Shape(), N = 40, ra = 24, rb = 15;
+  for (let i = 0; i <= N; i++) {
+    const t = (i / N) * Math.PI * 2, w = 1 + (vnoise(Math.cos(t) * 2 + 4, Math.sin(t) * 2 + 4) - 0.5) * 0.35;
+    const px = Math.cos(t) * ra * w, pz = Math.sin(t) * rb * w;
+    i ? shape.lineTo(px, pz) : shape.moveTo(px, pz);
+  }
+  const water = new THREE.Mesh(new THREE.ShapeGeometry(shape, 2), M.water);
+  water.rotation.x = -Math.PI / 2;
+  water.position.y = 0.35; water.receiveShadow = true;
+  g.add(water);
+  const reeds = new THREE.InstancedMesh(new THREE.ConeGeometry(0.6, 2.4, 5), M.reed, 90);
+  const m = new THREE.Matrix4();
+  for (let i = 0; i < 90; i++) {
+    const t = Math.PI * 0.15 + R() * Math.PI * 0.8, w = 0.85 + R() * 0.12;
+    m.makeTranslation(Math.cos(t) * ra * w, 1.2, Math.sin(t) * rb * w);
+    reeds.setMatrixAt(i, m);
+  }
+  reeds.castShadow = true;
+  g.add(reeds);
+  const [x, z] = POND;
+  g.position.set(x, yAt(x, z), z); g.rotation.y = Math.atan2(AX[0], AX[1]) - Math.PI / 2;
+  return g;
+}
+function mapCourt(M) {
+  const g = new THREE.Group();
+  const court = box(36.6, 0.2, 18.3, 0, 0.1, 0, M.court, g, { cast: false });
+  court.material = M.court;
+  [[0, 9.15, 36.6, 0.08], [0, -9.15, 36.6, 0.08]].forEach(([cx, cz, w, d]) => box(w, 3.4, d, cx, 1.8, cz, M.fence, g, { cast: false }));
+  [[18.3, 0], [-18.3, 0]].forEach(([cx, cz]) => box(0.08, 3.4, 18.3, cx, 1.8, cz, M.fence, g, { cast: false }));
+  const [x, z] = COURT;
+  g.position.set(x, yAt(x, z), z); g.rotation.y = Math.atan2(AX[0], AX[1]) - Math.PI / 2;
+  return g;
+}
+function mapHub(M) {
+  const g = new THREE.Group();
+  box(14, 3.6, 9, 0, 1.8, 0, M.white, g);
+  const shape = new THREE.Shape(); shape.moveTo(-5.4, 0); shape.lineTo(5.4, 0); shape.lineTo(0, 3.2); shape.closePath();
+  const roofGeo = new THREE.ExtrudeGeometry(shape, { depth: 15.4, bevelEnabled: false });
+  roofGeo.translate(0, 3.6, -7.7);
+  const roof = new THREE.Mesh(roofGeo, M.tile); roof.rotation.y = Math.PI / 2; roof.castShadow = true;
+  g.add(roof);
+  box(4, 2.6, 3, 10, 1.3, 2, M.white, g);
+  const [x, z] = HUB;
+  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST;
+  return g;
+}
+function mapSolar(M) {
+  const g = new THREE.Group(), parts = [];
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 8; c++) {
+    const geo = new THREE.BoxGeometry(1.1, 0.05, 2.1);
+    geo.rotateX(-0.35); geo.translate(-4.2 + c * 1.18, 1.1, -4 + r * 4);
+    parts.push(geo);
+  }
+  const panels = new THREE.Mesh(mergeGeometries(parts), M.panel); panels.castShadow = true;
+  g.add(panels);
+  box(3, 2.4, 2.4, 7.5, 1.2, 0, M.white, g);
+  const [x, z] = SOLAR;
+  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST + Math.PI;
+  return g;
+}
+function mapCarports(M) {
+  const g = new THREE.Group();
+  for (let i = 0; i < 2; i++) {
+    const cg = new THREE.Group();
+    [[-3.2, -2.4], [3.2, -2.4], [-3.2, 2.4], [3.2, 2.4]].forEach(([px, pz]) => box(0.15, 2.8, 0.15, px, 1.4, pz, M.steel, cg));
+    const p = box(7.2, 0.12, 5.6, 0, 2.95, 0, M.panel, cg); p.rotation.x = 0.1;
+    cg.position.x = (i - 0.5) * 8.5;
+    g.add(cg);
+  }
+  const [x, z] = PARK;
+  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST;
+  return g;
+}
+
+/* ================================================================ */
+/*                   THE CABIN and THE RESIDENCE                     */
+/* ================================================================ */
+function sceneMaterials() {
+  return {
+    earth: new THREE.MeshStandardMaterial({ map: T.earth, bumpMap: T.earth, bumpScale: 1.2, roughness: 0.95 }),
+    slab: new THREE.MeshStandardMaterial({ color: 0x2a2826, roughness: 0.6, metalness: 0.15 }),
+    soil: new THREE.MeshStandardMaterial({ color: 0x4b3b2c, roughness: 1 }),
+    roofGrass: new THREE.MeshStandardMaterial({ map: T.roofGrass, roughness: 1 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0x9fb8bf, roughness: 0.04, metalness: 0.9, transparent: true, opacity: 0.22, envMapIntensity: 1.4 }),
+    frame: new THREE.MeshStandardMaterial({ color: 0x2b2722, roughness: 0.45, metalness: 0.6 }),
+    timber: new THREE.MeshStandardMaterial({ map: T.wood, roughness: 0.7 }),
+    deck: new THREE.MeshStandardMaterial({ map: T.deck, roughness: 0.8 }),
+    floor: new THREE.MeshStandardMaterial({ color: 0x9a8f82, roughness: 0.5 }),
+    ceiling: new THREE.MeshStandardMaterial({ color: 0xf2eee6, roughness: 0.9 }),
+    linen: new THREE.MeshStandardMaterial({ color: 0xf1ede4, roughness: 0.95 }),
+    dark: new THREE.MeshStandardMaterial({ color: 0x1e1c1a, roughness: 0.55 }),
+    counter: new THREE.MeshStandardMaterial({ color: 0x3a3836, roughness: 0.35 }),
+    sofa: new THREE.MeshStandardMaterial({ color: 0xc8b9a2, roughness: 0.95 }),
+    steel: new THREE.MeshStandardMaterial({ color: 0x2d2f30, roughness: 0.45, metalness: 0.7 }),
+    panel: new THREE.MeshStandardMaterial({ map: T.solar, roughness: 0.2, metalness: 0.55 }),
+    stone: new THREE.MeshStandardMaterial({ color: 0x9a8a78, roughness: 0.92 }),
+    tank: new THREE.MeshStandardMaterial({ color: 0x3e4a3c, roughness: 0.6, metalness: 0.3 }),
+    pool: new THREE.MeshStandardMaterial({ color: 0x4aa3ad, roughness: 0.04, metalness: 0.15, transparent: true, opacity: 0.9 }),
+    coping: new THREE.MeshStandardMaterial({ color: 0xcfc3ae, roughness: 0.85 }),
+    lamp: new THREE.MeshStandardMaterial({ color: 0x2a2622, emissive: 0xffc988, emissiveIntensity: 0 }),
+    window: new THREE.MeshStandardMaterial({ color: 0x1b2326, roughness: 0.1, metalness: 0.6, emissive: 0xffbe7a, emissiveIntensity: 0 }),
+    fire: new THREE.MeshBasicMaterial({ color: 0xff9a4a, transparent: true, opacity: 0 }),
+  };
+}
+
+/* One rammed-earth volume: earth back and sides, a front of glass, door and earth. */
+function buildVolume(SM, o, lights) {
+  const g = new THREE.Group();
+  const t = 0.45, h = o.h, W = o.w + t * 2, D = o.d + t * 2;
+  box(W, h, t, 0, h / 2, -D / 2 + t / 2, SM.earth, g, { uv: 4 });
+  box(t, h, D, -W / 2 + t / 2, h / 2, 0, SM.earth, g, { uv: 4 });
+  box(t, h, D, W / 2 - t / 2, h / 2, 0, SM.earth, g, { uv: 4 });
+  let x = -W / 2;
+  const fz = D / 2 - t / 2;
+  for (const seg of o.front) {
+    const cx = x + seg.w / 2;
+    if (seg.k === 'earth' || seg.k === 'slit') {
+      box(seg.w, h, t, cx, h / 2, fz, SM.earth, g, { uv: 4 });
+      if (seg.k === 'slit') {
+        box(0.62, 2.3, 0.06, cx, 1.35, D / 2 + 0.02, SM.window, g, { cast: false });
+        box(0.74, 2.42, 0.04, cx, 1.35, D / 2 + 0.005, SM.frame, g, { cast: false });
+      }
+    } else if (seg.k === 'glass') {
+      box(seg.w, 0.12, 0.16, cx, h - 0.06, fz + 0.1, SM.frame, g);
+      box(seg.w, 0.06, 0.16, cx, 0.03, fz + 0.1, SM.frame, g);
+      const n = Math.max(1, Math.round(seg.w / 1.3));
+      for (let i = 0; i <= n; i++) box(0.06, h, 0.14, x + (seg.w * i) / n, h / 2, fz + 0.1, SM.frame, g);
+      box(seg.w, h - 0.12, 0.03, cx, (h - 0.12) / 2, fz + 0.1, SM.glass, g, { cast: false });
+    } else if (seg.k === 'door') {
+      box(seg.w, h - 0.4, 0.08, cx, (h - 0.4) / 2, fz + 0.12, SM.timber, g);
+      box(seg.w, 0.4, t, cx, h - 0.2, fz, SM.earth, g, { uv: 4 });
+      box(0.05, 0.6, 0.05, cx + seg.w * 0.36, 1.1, fz + 0.2, SM.frame, g);
+    }
+    x += seg.w;
+  }
+  // Floor, ceiling, plinth.
+  box(W, 0.3, D, 0, -0.15, 0, SM.stone, g, { cast: false });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(o.w, o.d), SM.floor);
+  floor.rotation.x = -Math.PI / 2; floor.position.y = 0.01; floor.receiveShadow = true; g.add(floor);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(o.w, o.d), SM.ceiling);
+  ceil.rotation.x = Math.PI / 2; ceil.position.y = h - 0.02; g.add(ceil);
+  // Roof: dark slab, soil, grass, with tufts on top for a living silhouette.
+  const of = o.overFront ?? 2.0, ob = o.overBack ?? 0.6, os = o.overSide ?? 1.0;
+  const RW = W + os * 2, RD = D + of + ob, rz = (of - ob) / 2;
+  box(RW, 0.34, RD, 0, h + 0.17, rz, SM.slab, g);
+  box(RW - 0.3, 0.2, RD - 0.3, 0, h + 0.44, rz, SM.soil, g);
+  const grass = box(RW - 0.36, 0.04, RD - 0.36, 0, h + 0.56, rz, SM.roofGrass, g, { cast: false });
+  grass.geometry = worldUV(new THREE.BoxGeometry(RW - 0.36, 0.04, RD - 0.36), 6);
+  o.roofTop = h + 0.58;
+  o.roofRect = [RW - 0.6, RD - 0.6, rz];
+  // Posts under the front eave.
+  const pz = D / 2 + of - 0.35, n = Math.max(2, Math.round(RW / 3.3));
+  for (let i = 0; i <= n; i++) {
+    const px = -RW / 2 + 0.45 + ((RW - 0.9) * i) / n;
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, h, 10), SM.timber);
+    post.position.set(px, h / 2, pz); post.castShadow = true; g.add(post);
+  }
+  // Deck.
+  const deck = box(o.deckW ?? W + 0.6, 0.3, of + 0.5, o.deckX ?? 0, 0.15, D / 2 + (of + 0.5) / 2, SM.deck, g);
+  deck.geometry = worldUV(new THREE.BoxGeometry(o.deckW ?? W + 0.6, 0.3, of + 0.5), 3);
+  box(o.deckW ?? W + 0.6, 0.15, 0.35, o.deckX ?? 0, 0.075, D / 2 + of + 0.65, SM.deck, g);
+  // Night lights inside.
+  for (const [lx, lz] of o.lights || []) {
+    const pl = new THREE.PointLight(0xffc27e, 0, 10, 1.5);
+    pl.position.set(lx, h - 0.5, lz); g.add(pl); lights.push(pl);
+  }
+  g.userData.W = W; g.userData.D = D;
+  return g;
+}
+
+function cabinInterior(SM, g) {
+  // Bedroom on the left, kitchen in the middle, bathroom behind an earth wall on the right.
+  box(2.0, 0.45, 2.15, -3.4, 0.3, -1.6, SM.linen, g);
+  box(2.2, 0.12, 2.3, -3.4, 0.1, -1.6, SM.timber, g);
+  box(2.3, 1.1, 0.12, -3.4, 0.7, -2.72, SM.timber, g);
+  box(0.5, 0.12, 0.35, -2.85, 0.6, -2.2, SM.linen, g); box(0.5, 0.12, 0.35, -3.95, 0.6, -2.2, SM.linen, g);
+  box(1.0, 0.03, 1.4, -3.4, 0.525, -0.9, new THREE.MeshStandardMaterial({ color: 0x8a6a4a, roughness: 1 }), g);
+  box(2.6, 0.92, 1.0, 0.6, 0.46, 0.1, SM.dark, g);
+  box(2.75, 0.06, 1.12, 0.6, 0.95, 0.1, SM.counter, g);
+  box(3.4, 2.3, 0.6, 0.9, 1.15, -2.5, SM.dark, g);
+  for (let i = 0; i < 3; i++) {
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.22, 16), SM.lamp);
+    p.position.set(-0.2 + i * 0.8, 2.2, 0.1); g.add(p);
+    box(0.01, 0.55, 0.01, -0.2 + i * 0.8, 2.6, 0.1, SM.dark, g, { cast: false });
+  }
+  box(2.1, 0.42, 0.9, -1.0, 0.25, 2.0, SM.sofa, g); box(2.1, 0.45, 0.2, -1.0, 0.6, 1.62, SM.sofa, g);
+  box(0.45, 2.95, 3.6, 3.1, 1.48, -1.0, SM.earth, g, { uv: 4 });
+  // Tulips on the island, a small nod to the reference kitchen.
+  const vase = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.25, 12), SM.glass);
+  vase.position.set(1.2, 1.1, 0.1); g.add(vase);
+}
+function livingInterior(SM, g) {
+  box(2.8, 0.42, 1.0, -5.0, 0.25, -1.4, SM.sofa, g); box(2.8, 0.45, 0.22, -5.0, 0.62, -1.85, SM.sofa, g);
+  box(1.2, 0.35, 0.7, -5.0, 0.2, 0.0, SM.timber, g);
+  box(2.6, 0.06, 1.0, 0.5, 0.76, -0.6, SM.timber, g);
+  for (const [dx, dz] of [[-1.2, -0.4], [1.2, -0.4], [-1.2, 0.4], [1.2, 0.4]]) box(0.06, 0.74, 0.06, 0.5 + dx, 0.37, -0.6 + dz, SM.dark, g);
+  box(3.6, 0.92, 0.9, 4.6, 0.46, -2.9, SM.dark, g); box(3.7, 0.06, 0.95, 4.6, 0.95, -2.9, SM.counter, g);
+  box(3.6, 2.2, 0.5, 4.6, 1.1, -3.25, SM.dark, g);
+  for (let i = 0; i < 3; i++) {
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.22, 16), SM.lamp);
+    p.position.set(-0.4 + i * 0.9, 2.3, -0.6); g.add(p);
+  }
+}
+
+function groundMesh(heightFn, w, d, segW, segD, mat) {
+  const geo = new THREE.PlaneGeometry(w, d, segW, segD);
+  geo.rotateX(-Math.PI / 2);
+  const p = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), z = p.getZ(i);
+    p.setY(i, heightFn(x, z));
+    uv.setXY(i, x / 6, z / 6);
+  }
+  geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, mat);
+  m.receiveShadow = true;
+  return m;
+}
+
+function buildHouseScene(kind) {
+  const scene = new THREE.Scene();
+  const SM = sceneMaterials();
+  const lights = [], glows = [];
+  const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 3000);
+  scene.environment = ENV; scene.environmentIntensity = 0.45;
+
+  const isCabin = kind === 'cabin';
+  // Ground: flat in front, rising into the hill behind the house, with earth berms at the ends.
+  const rearZ = (x) => (isCabin ? -3.3 : (x > 3.6 ? -6.5 : -4.0));
+  const halfW = isCabin ? 5.75 : 13.7, roofH = isCabin ? 3.5 : 3.8;
+  const hf = (x, z) => {
+    const rz = rearZ(x);
+    let y = 0;
+    const back = rz - z;
+    if (back > 0) y = Math.min(back / 1.7, 1) * roofH + Math.max(0, back - 1.7) * 0.3 + (fbm(x * 0.08, z * 0.08) - 0.5) * 1.6 * smooth(4, 20, back);
+    const ax = Math.abs(x - (isCabin ? 0 : 0.6)) - halfW;
+    if (ax > 0 && z < 1.5) {
+      const berm = roofH * smooth(1.5, rz, z) * (1 - smooth(0.2, 4.5, ax));
+      y = Math.max(y, berm);
+    }
+    if (back <= 0 && ax > 0) y += (fbm(x * 0.05 + 9, z * 0.05) - 0.5) * 0.8 * smooth(3, 25, Math.hypot(ax, z));
+    if (!isCabin && z > 4 && z < 14 && x > -12 && x < 4) y = Math.min(y, -0.08);
+    if (Math.abs(x - (isCabin ? 0 : 0.6)) < halfW + 0.3 && z > rz + 0.1 && z < (isCabin ? 6.2 : 7.0)) y = -0.08;
+    return y;
+  };
+  const ground = groundMesh(hf, 260, 220, small ? 130 : 200, small ? 110 : 170, new THREE.MeshStandardMaterial({ map: T.grass, roughness: 1 }));
+  scene.add(ground);
+
+  // The house itself.
+  const house = new THREE.Group();
+  if (isCabin) {
+    const v = buildVolume(SM, {
+      w: 10.5, d: 5.6, h: 3.0,
+      front: [{ k: 'glass', w: 4.2 }, { k: 'glass', w: 2.5 }, { k: 'door', w: 1.2 }, { k: 'earth', w: 0.9 }, { k: 'slit', w: 2.6 }],
+      lights: [[-3.2, -1.2], [0.6, 0.2], [4.2, -1.0]],
+    }, lights);
+    cabinInterior(SM, v);
+    house.add(v);
+    // Two lounge chairs on the deck.
+    for (const cx of [-4.6, -2.0]) { box(0.7, 0.35, 1.6, cx, 0.5, 4.6, SM.timber, house); box(0.7, 0.5, 0.12, cx, 0.75, 3.85, SM.timber, house); }
+  } else {
+    const main = buildVolume(SM, {
+      w: 15, d: 7, h: 3.0, overFront: 2.2, overSide: 1.2,
+      front: [{ k: 'earth', w: 1.5 }, { k: 'glass', w: 10.0 }, { k: 'door', w: 1.4 }, { k: 'earth', w: 3.0 }],
+      lights: [[-5, -1], [-1, 0], [3, -1]],
+    }, lights);
+    main.position.set(-4.2, 0, 0);
+    livingInterior(SM, main);
+    const wing = buildVolume(SM, {
+      w: 9, d: 7, h: 3.3, overFront: 1.8, overSide: 0.8,
+      front: [{ k: 'glass', w: 6.0 }, { k: 'slit', w: 3.9 }],
+      lights: [[-1.5, 0], [2.5, -1]],
+    }, lights);
+    wing.position.set(8.75, 0, -2.5);
+    house.add(main, wing);
+    // Pool with stone coping.
+    box(13, 0.3, 4.5, -4.2, 0.15, 9.2, SM.coping, house, { cast: false });
+    const water = box(12, 0.06, 3.5, -4.2, 0.31, 9.2, SM.pool, house, { cast: false });
+    water.receiveShadow = true;
+    for (const cx of [-8, -6.4]) { box(0.7, 0.35, 1.7, cx, 0.5, 5.2, SM.timber, house); }
+  }
+  scene.add(house);
+
+  // Grass tufts on the living roof(s), so the roof line reads as meadow.
+  {
+    const tuft = tuftGeometry(0.55);
+    const mat = new THREE.MeshStandardMaterial({ color: 0x7f9347, roughness: 1, side: THREE.DoubleSide });
+    const R = rng(isCabin ? 3 : 4);
+    const vols = isCabin ? [house.children[0]] : [house.children[0], house.children[1]];
+    const count = isCabin ? 1600 : 3400;
+    const tufts = new THREE.InstancedMesh(tuft, mat, count);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v3 = new THREE.Vector3(), s3 = new THREE.Vector3();
+    for (let i = 0; i < count; i++) {
+      const vol = vols[i % vols.length];
+      const W = vol.userData.W + (isCabin ? 1.4 : 1.8), D = vol.userData.D + 2.2;
+      const top = isCabin ? 3.58 : (vol === vols[1] ? 3.88 : 3.58);
+      const edge = R() < 0.55;
+      let lx = (R() - 0.5) * W, lz = 0.7 + (R() - 0.5) * D;
+      if (edge) { if (R() < 0.5) lz = 0.7 + (R() < 0.5 ? -1 : 1) * (D / 2 - 0.25); else lx = (R() < 0.5 ? -1 : 1) * (W / 2 - 0.25); }
+      v3.set(vol.position.x + lx, top, vol.position.z + lz);
+      q.setFromAxisAngle(UP, R() * 6.28);
+      const s = 0.7 + R() * 0.9; s3.set(s, s * (0.8 + R() * 0.8), s);
+      tufts.setMatrixAt(i, m4.compose(v3, q, s3));
+    }
+    scene.add(tufts);
+  }
+
+  // Solar carport and rain tank.
+  const cpX = isCabin ? -14 : -22, cpW = isCabin ? 7 : 11;
+  {
+    const cp = new THREE.Group();
+    [[-cpW / 2 + 0.3, -2.4], [cpW / 2 - 0.3, -2.4], [-cpW / 2 + 0.3, 2.4], [cpW / 2 - 0.3, 2.4]].forEach(([px, pz]) => box(0.14, pz < 0 ? 3.1 : 2.6, 0.14, px, (pz < 0 ? 3.1 : 2.6) / 2, pz, SM.steel, cp));
+    const top = new THREE.Group();
+    box(cpW + 0.4, 0.08, 5.8, 0, 0, 0, SM.panel, top);
+    box(cpW + 0.5, 0.18, 0.12, 0, -0.08, 2.92, SM.steel, top); box(cpW + 0.5, 0.18, 0.12, 0, -0.08, -2.92, SM.steel, top);
+    top.position.set(0, 2.9, 0); top.rotation.x = 0.09;
+    cp.add(top);
+    box(cpW - 0.6, 0.06, 5.2, 0, 0.03, 0, new THREE.MeshStandardMaterial({ color: 0x8c8172, roughness: 1 }), cp, { cast: false });
+    cp.position.set(cpX, 0, isCabin ? 6 : 7);
+    scene.add(cp);
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 2.5, 28), SM.tank);
+    tank.position.set(cpX - cpW / 2 - 1.9, 1.25, isCabin ? 2.2 : 3); tank.castShadow = tank.receiveShadow = true;
+    scene.add(tank);
+  }
+
+  // Stepping stones from the carport to the deck, and path lights.
+  {
+    const R = rng(isCabin ? 12 : 13);
+    const stoneGeo = new THREE.CylinderGeometry(1, 1, 0.12, 7);
+    const pts = isCabin ? [[-11, 9.5], [-8.8, 9.2], [-6.6, 8.6], [-4.6, 8.0], [-2.8, 7.4], [-1.4, 6.6]] : [[-17.6, 10.6], [-16.0, 9.4], [-14.6, 8.0], [-13.6, 6.4], [-13.2, 4.6]];
+    const stones = new THREE.InstancedMesh(stoneGeo, SM.stone, pts.length);
+    const m4 = new THREE.Matrix4();
+    pts.forEach(([x, z], i) => {
+      m4.compose(new THREE.Vector3(x, 0.05, z), new THREE.Quaternion().setFromAxisAngle(UP, R() * 3), new THREE.Vector3(0.75 + R() * 0.25, 1, 0.55 + R() * 0.2));
+      stones.setMatrixAt(i, m4);
+    });
+    stones.receiveShadow = true; scene.add(stones);
+    pts.filter((_, i) => i % 2 === 0).forEach(([x, z]) => {
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.7, 10), SM.lamp);
+      b.position.set(x + 0.2, 0.35, z + 1.1); scene.add(b);
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xffc788, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+      glow.scale.set(1.6, 1.6, 1); glow.position.set(x + 0.2, 0.68, z + 1.1); scene.add(glow); glows.push(glow);
+    });
+  }
+
+  // Fire pit with log benches (cabin) on a gravel circle.
+  if (isCabin) {
+    const pit = new THREE.Group();
+    const gravel = new THREE.Mesh(new THREE.CircleGeometry(2.6, 28), new THREE.MeshStandardMaterial({ color: 0x9c8a74, roughness: 1 }));
+    gravel.rotation.x = -Math.PI / 2; gravel.position.y = 0.03; gravel.receiveShadow = true; pit.add(gravel);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.16, 8, 20), SM.stone); ring.rotation.x = Math.PI / 2; ring.position.y = 0.15; pit.add(ring);
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2 + 0.4;
+      const log = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.6, 10), SM.timber);
+      log.rotation.z = Math.PI / 2; log.rotation.y = a + Math.PI / 2; log.position.set(Math.cos(a) * 1.75, 0.22, Math.sin(a) * 1.75); log.castShadow = true;
+      pit.add(log);
+    }
+    const fire = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xff9a4a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+    fire.scale.set(2.2, 2.2, 1); fire.position.y = 0.6; pit.add(fire); glows.push(fire);
+    const fl = new THREE.PointLight(0xff8a3a, 0, 10, 1.5); fl.position.y = 0.8; pit.add(fl); lights.push(fl);
+    pit.position.set(9.5, 0, 9.5);
+    scene.add(pit);
+  }
+
+  // Trees on the slope behind, palms in the field like the ones on site, grass tufts in front.
+  {
+    const R = rng(isCabin ? 41 : 42);
+    const canopy = new THREE.IcosahedronGeometry(1, 1);
+    const tmat = new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.9 });
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3c, roughness: 1 });
+    const trees = [];
+    for (let i = 0; i < 260; i++) {
+      const x = (R() - 0.5) * 220, z = -12 - R() * 90;
+      const near = Math.abs(x) < halfW + 8 && z > (isCabin ? -18 : -22);
+      if (near) continue;
+      trees.push([x, z]);
+    }
+    for (let i = 0; i < 40; i++) {
+      const s = R() < 0.5 ? -1 : 1, x = s * (halfW + 22 + R() * 70), z = -10 + R() * 40;
+      trees.push([x, z]);
+    }
+    const tm = new THREE.InstancedMesh(canopy, tmat, trees.length);
+    const tk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.22, 0.32, 1, 6), trunkMat, trees.length);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v3 = new THREE.Vector3(), s3 = new THREE.Vector3(), col = new THREE.Color();
+    trees.forEach(([x, z], i) => {
+      const y = hf(x, z), r = 2.4 + R() * 3.2, th = 2.5 + R() * 4;
+      tm.setMatrixAt(i, m4.compose(v3.set(x, y + th + r * 0.7, z), q.setFromAxisAngle(UP, R() * 6), s3.set(r, r * (0.8 + R() * 0.3), r)));
+      const pick = R();
+      if (pick < 0.03) col.setHSL(0.92, 0.5, 0.62); else col.setHSL(0.24 + R() * 0.07, 0.3 + R() * 0.15, 0.16 + R() * 0.12);
+      tm.setColorAt(i, col);
+      tk.setMatrixAt(i, m4.compose(v3.set(x, y + th / 2 + 0.3, z), q.identity(), s3.set(1, th + 1, 1)));
+    });
+    tm.castShadow = tk.castShadow = true; tm.receiveShadow = true;
+    scene.add(tm, tk);
+
+    const palmSpots = isCabin
+      ? [[-9.5, -9, 1.0], [-6, -14, 1.15], [9, -11, 1.1], [14, -7, 1.0], [-24, 3, 1.05], [22, 2, 0.95], [-34, -16, 1.1], [30, -18, 1.0]]
+      : [[-16, -12, 1.1], [-10, -16, 1.0], [14, -14, 1.1], [24, -10, 1.0], [-32, 2, 1.05], [30, 4, 0.95], [-40, -18, 1.1]];
+    const pm = new THREE.InstancedMesh(palmGeometry(15), palmMat, palmSpots.length);
+    palmSpots.forEach(([x, z, s], i) => pm.setMatrixAt(i, m4.compose(v3.set(x, hf(x, z) - 0.2, z), q.setFromAxisAngle(UP, R() * 6), s3.set(s, s, s))));
+    pm.castShadow = true; scene.add(pm);
+
+    const tuft = tuftGeometry(0.5);
+    const gm = new THREE.MeshStandardMaterial({ roughness: 1, side: THREE.DoubleSide });
+    const N = small ? 4000 : 9000;
+    const tf = new THREE.InstancedMesh(tuft, gm, N);
+    let n = 0;
+    for (let i = 0; i < N * 3 && n < N; i++) {
+      const x = (R() - 0.5) * 100, z = -16 + R() * 64;
+      const onHouse = Math.abs(x - (isCabin ? 0 : 0.6)) < halfW + 1.2 && z > -7 && z < (isCabin ? 7.2 : 8.2);
+      const onPool = !isCabin && x > -11.5 && x < 3 && z > 5.5 && z < 12;
+      const onCar = Math.abs(x - cpX) < cpW / 2 + 0.6 && Math.abs(z - (isCabin ? 6 : 7)) < 3.4;
+      const onPit = isCabin && Math.hypot(x - 9.5, z - 9.5) < 2.8;
+      if (onHouse || onPool || onCar || onPit) continue;
+      const s = 0.7 + R() * 0.9;
+      tf.setMatrixAt(n, m4.compose(v3.set(x, hf(x, z) - 0.03, z), q.setFromAxisAngle(UP, R() * 6), s3.set(s, s * (0.7 + R() * 0.8), s)));
+      tf.setColorAt(n, col.setHSL(0.16 + R() * 0.08, 0.3 + R() * 0.2, 0.16 + R() * 0.12));
+      n++;
+    }
+    tf.count = n; scene.add(tf);
+  }
+
+  // Sky, sun, night.
+  const sunDir = new THREE.Vector3(0.55, 0.42, 0.72).normalize();
+  const sky = skyDome(0x7ea6cf, 0xf0d7ad, sunDir); sky.scale.setScalar(1500); scene.add(sky);
+  const starField = stars(1400, 1200); starField.visible = false; scene.add(starField);
+  const hemi = new THREE.HemisphereLight(0xd6e4f2, 0x5a4a36, 1.0); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffd8a8, 3.2);
+  sun.position.copy(sunDir).multiplyScalar(60);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
+  const sc = sun.shadow.camera; const ext = isCabin ? 26 : 34; sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 10; sc.far = 160;
+  sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+  scene.add(sun, sun.target);
+  scene.fog = new THREE.Fog(0xe7d6b6, 90, 420);
+  scene.background = new THREE.Color(0xe7d6b6);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.07;
+  controls.maxPolarAngle = 1.5; controls.minDistance = 0.4; controls.maxDistance = 80;
+  controls.enabled = false;
+  const v = VIEWS[kind][0];
+  camera.position.set(...v[1]); controls.target.set(...v[2]); controls.update();
+
+  let night = false;
+  function setNight(on) {
+    night = on;
+    sky.material.uniforms.top.value.set(on ? 0x050913 : 0x7ea6cf);
+    sky.material.uniforms.horizon.value.set(on ? 0x1b2536 : 0xf0d7ad);
+    sky.material.uniforms.sunAmt.value = on ? 0 : 1;
+    starField.visible = on;
+    scene.fog.color.set(on ? 0x111a26 : 0xe7d6b6);
+    scene.background.set(on ? 0x111a26 : 0xe7d6b6);
+    hemi.intensity = on ? 0.18 : 1.0;
+    hemi.color.set(on ? 0x6f86b0 : 0xd6e4f2);
+    sun.intensity = on ? 0.35 : 3.2;
+    sun.color.set(on ? 0x9db5e0 : 0xffd8a8);
+    sun.position.copy(on ? new THREE.Vector3(-0.4, 0.8, 0.5).normalize() : sunDir).multiplyScalar(60);
+    scene.environmentIntensity = on ? 0.08 : 0.45;
+    lights.forEach((l) => (l.intensity = on ? 14 : 0));
+    SM.window.emissiveIntensity = on ? 0.8 : 0;
+    SM.lamp.emissiveIntensity = on ? 3 : 0;
+    SM.glass.color.set(on ? 0xffc890 : 0x9fb8bf);
+    SM.glass.opacity = on ? 0.12 : 0.22;
+    glows.forEach((gl) => (gl.material.opacity = on ? 0.95 : 0));
+  }
+
+  const anchors = SPOTS[kind].map((s) => ({ ...s, anchor: new THREE.Vector3(...s.at) }));
+  return { scene, camera, controls, setNight, isNight: () => night, anchors, tick(t) { if (night) glows.forEach((gl, i) => { gl.material.opacity = 0.75 + 0.2 * Math.sin(t * (i === glows.length - 1 && isCabin ? 9 : 2) + i); }); } };
+}
+
+let _glow;
+function glowTexture() {
+  if (_glow) return _glow;
+  const [c, g] = canvas(128, 128);
+  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, 'rgba(255,240,210,1)'); grd.addColorStop(0.25, 'rgba(255,200,130,0.5)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+  _glow = new THREE.CanvasTexture(c);
+  return _glow;
+}
+
+/* ================================================================ */
+/*                               UI                                 */
+/* ================================================================ */
+const labelsEl = $('labels'), bar = $('bar'), drawer = $('drawer'), specs = $('specs'), hint = $('hint');
+const planEl = $('plan'), compass = $('compass'), needle = $('needle');
+let mode = 'cerro', active = null, scenes = {}, selected = null, tween = null;
+
+map.controls = new OrbitControls(map.camera, renderer.domElement);
+const mc = map.controls;
+mc.enableDamping = true; mc.dampingFactor = 0.06;
+mc.minDistance = 90; mc.maxDistance = 3200;
+mc.maxPolarAngle = 1.32; mc.minPolarAngle = 0.15;
+mc.screenSpacePanning = false;
+mc.enabled = false;
+
+function fitCamera(cam) {
+  const aspect = innerWidth / innerHeight;
+  cam.aspect = aspect;
+  cam.fov = cam === map.camera ? (aspect < 1 ? 58 : 40) : (aspect < 1 ? 60 : 42);
+  cam.updateProjectionMatrix();
+}
+
+function makeChip(item, cls, onClick) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'chip ' + cls;
+  if (item.c) b.style.setProperty('--c', item.c);
+  b.innerHTML = `<span class="dot"></span><span>${item.name}${item.sub ? `<small>${item.sub}</small>` : ''}</span>`;
+  b.addEventListener('click', onClick);
+  labelsEl.appendChild(b);
+  return b;
+}
+
+function openDrawer(kick, title, body, facts, actions, color, note = '') {
+  drawer.style.setProperty('--c', color || 'var(--gold)');
+  $('d-kick').textContent = kick;
+  $('d-title').textContent = title;
+  $('d-body').textContent = body;
+  $('d-facts').innerHTML = (facts || []).map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('');
+  $('d-facts').hidden = !(facts && facts.length);
+  const box = $('d-actions'); box.innerHTML = '';
+  (actions || []).forEach(([label, go], i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn' + (i ? ' ghost' : ''); b.textContent = label;
+    b.addEventListener('click', () => {
+      if (go.startsWith('plan:')) openPlan(go.slice(5)); else setMode(go);
+    });
+    box.appendChild(b);
+  });
+  box.hidden = !(actions && actions.length);
+  $('d-note').textContent = note;
+  drawer.hidden = false;
+}
+function closeDrawer() {
+  drawer.hidden = true;
+  selected = null;
+  document.querySelectorAll('.chip.is-on, .pill[aria-pressed="true"]').forEach((el) => { el.classList.remove('is-on'); if (el.classList.contains('pill')) el.setAttribute('aria-pressed', 'false'); });
+}
+$('drawer-close').addEventListener('click', closeDrawer);
+
+function flyTo(pos, tgt, ms = 1700, lift = 0) {
+  const ctl = active.controls;
+  if (reduced) { active.camera.position.copy(pos); ctl.target.copy(tgt); ctl.update(); return; }
+  tween = { t0: performance.now(), ms, p0: active.camera.position.clone(), q0: ctl.target.clone(), p1: pos.clone(), q1: tgt.clone(), lift };
+  ctl.enabled = false;
+}
+
+function selectPlace(pl) {
+  selected = pl;
+  pl.chip && document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('is-on', c === pl.chip));
+  bar.querySelectorAll('.pill').forEach((p) => p.setAttribute('aria-pressed', String(p.dataset.id === pl.id)));
+  const tgt = pl.anchor.clone(); tgt.y -= pl.h * 0.7;
+  const offset = new THREE.Vector3().setFromSphericalCoords(pl.r, pl.phi || 1.08, pl.th);
+  // On phones the drawer covers the lower screen: aim past the place so it sits in the top third.
+  if (innerWidth <= 760) tgt.add(new THREE.Vector3(offset.x, 0, offset.z).multiplyScalar(0.42));
+  const pos = tgt.clone().add(offset);
+  flyTo(pos, tgt, 1800, pl.r * 0.15);
+  openDrawer(pl.kick, pl.title, pl.body, pl.facts, pl.actions, pl.c, pl.id === 'hill' ? '' : 'Positions are illustrative until the boundary survey.');
+}
+
+function selectSpot(sc, s) {
+  document.querySelectorAll('.chip.spot').forEach((c) => c.classList.toggle('is-on', c === s.chip));
+  bar.querySelectorAll('.pill').forEach((p) => p.setAttribute('aria-pressed', 'false'));
+  flyTo(new THREE.Vector3(...s.cam), new THREE.Vector3(...s.tgt), 1400);
+  openDrawer(mode === 'cabin' ? 'The cabin' : 'The residence', s.name, s.text, null, null, mode === 'cabin' ? 'var(--public)' : 'var(--private)');
+}
+
+function buildBar() {
+  bar.innerHTML = '';
+  if (mode === 'cerro') {
+    for (const pl of PLACES) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'pill'; b.dataset.id = pl.id; b.style.setProperty('--c', pl.c);
+      b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = `<span class="dot"></span>${pl.name}`;
+      b.addEventListener('click', () => selectPlace(pl));
+      bar.appendChild(b);
+    }
+    const ov = document.createElement('button');
+    ov.type = 'button'; ov.className = 'pill'; ov.textContent = 'Overview';
+    ov.addEventListener('click', () => { closeDrawer(); flyTo(HOME.pos, HOME.tgt, 1800); });
+    bar.prepend(ov);
+  } else {
+    const sc = scenes[mode];
+    VIEWS[mode].forEach(([label, p, t]) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'pill'; b.textContent = label;
+      b.addEventListener('click', () => { closeDrawer(); flyTo(new THREE.Vector3(...p), new THREE.Vector3(...t), 1400); });
+      bar.appendChild(b);
+    });
+    const nb = document.createElement('button');
+    nb.type = 'button'; nb.className = 'pill'; nb.setAttribute('aria-pressed', String(sc.isNight()));
+    nb.textContent = sc.isNight() ? 'Night' : 'Day';
+    nb.addEventListener('click', () => { sc.setNight(!sc.isNight()); nb.textContent = sc.isNight() ? 'Night' : 'Day'; nb.setAttribute('aria-pressed', String(sc.isNight())); });
+    bar.appendChild(nb);
+  }
+}
+
+function buildChips() {
+  labelsEl.innerHTML = '';
+  if (mode === 'cerro') {
+    for (const pl of PLACES) pl.chip = makeChip(pl, '', () => selectPlace(pl));
+  } else {
+    for (const s of scenes[mode].anchors) s.chip = makeChip({ name: s.name, c: mode === 'cabin' ? 'var(--public)' : 'var(--private)' }, 'spot', () => selectSpot(scenes[mode], s));
+  }
+}
+
+const tabs = document.querySelectorAll('.tab');
+function markTab(id) { tabs.forEach((t) => t.setAttribute('aria-current', String(t.dataset.go === id))); }
+tabs.forEach((t) => t.addEventListener('click', () => (t.dataset.go === 'plan' ? openPlan() : setMode(t.dataset.go))));
+
+function openPlan(section) {
+  planEl.hidden = false;
+  markTab('plan');
+  try { history.replaceState(null, '', '#plan'); } catch (e) {}
+  if (section) { const el = $(section); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start' })); }
+  else planEl.scrollTop = 0;
+  $('plan-close').focus({ preventScroll: true });
+}
+function closePlan() {
+  planEl.hidden = true;
+  markTab(mode);
+  try { history.replaceState(null, '', '#' + mode); } catch (e) {}
+}
+$('plan-close').addEventListener('click', closePlan);
+planEl.querySelectorAll('.plan-nav a').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); const el = $(a.getAttribute('href').slice(1)); el && el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }));
+
+const LEDES = {
+  cerro: 'Glamping cabins and a private community on about 29 hectares at the foot of a protected forest hill, 65 km from Asunción. Built to run on its own sun and rain.',
+  cabin: 'A rammed-earth cabin set into the bank, with a living roof, deep eaves and a wall of glass to the valley. Tap a label or switch to night.',
+  residence: 'A home on the private side: two earth volumes stepped with the slope, living roofs, a pool, about a hectare of its own.',
+};
+const EYEBROWS = { cerro: 'Cerro Kavaju · Cordillera, Paraguay', cabin: 'Public side · The cabin', residence: 'Private side · The residence' };
+
+let HOME;
+function setMode(m) {
+  if (!planEl.hidden) closePlan();
+  if (m !== 'cerro' && !scenes[m]) {
+    try { scenes[m] = buildHouseScene(m); fitCamera(scenes[m].camera); }
+    catch (err) { console.error(err); return; }
+  }
+  if (active) active.controls.enabled = false;
+  tween = null;
+  mode = m;
+  active = m === 'cerro' ? map : scenes[m];
+  active.controls.enabled = true;
+  closeDrawer();
+  markTab(m);
+  $('eyebrow').textContent = EYEBROWS[m];
+  $('lede').textContent = LEDES[m];
+  specs.hidden = m === 'cerro';
+  if (m !== 'cerro') specs.innerHTML = SPECS[m];
+  hint.textContent = m === 'cerro' ? (small ? 'Drag to orbit · Tap a place' : 'Drag to orbit · Pinch or scroll to zoom · Tap a place') : 'Drag to look around · Tap a label';
+  compass.hidden = m !== 'cerro';
+  buildChips();
+  buildBar();
+  try { history.replaceState(null, '', '#' + m); } catch (e) {}
+}
+
+/* ----------------------------------------------------------- picking -- */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let down = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!down || mode !== 'cerro') return;
+  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), quick = performance.now() - down.t < 450;
+  down = null;
+  if (moved > 6 || !quick) return;
+  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, map.camera);
+  const hits = ray.intersectObjects(map.hits, false);
+  if (hits.length) {
+    hits.sort((a, b) => (a.object.geometry.parameters.radius - b.object.geometry.parameters.radius));
+    selectPlace(hits[0].object.userData.place);
+  }
+});
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!planEl.hidden) closePlan(); else if (!drawer.hidden) closeDrawer();
+});
+
+addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  fitCamera(map.camera);
+  Object.values(scenes).forEach((s) => fitCamera(s.camera));
+});
+
+/* -------------------------------------------------------------- loop -- */
+const clock = new THREE.Clock();
+const v3 = new THREE.Vector3();
+let elapsed = 0, first = true;
+function tick() {
+  requestAnimationFrame(tick);
+  if (!active || (!first && (!planEl.hidden || document.hidden))) return;
+  const dt = Math.min(clock.getDelta(), 0.05);
+  elapsed += dt;
+  const cam = active.camera, ctl = active.controls;
+  if (tween) {
+    const k = Math.min((performance.now() - tween.t0) / tween.ms, 1), e = ease(k);
+    cam.position.lerpVectors(tween.p0, tween.p1, e);
+    cam.position.y += Math.sin(Math.PI * e) * tween.lift;
+    ctl.target.lerpVectors(tween.q0, tween.q1, e);
+    cam.lookAt(ctl.target);
+    if (k >= 1) { tween = null; ctl.enabled = true; ctl.update(); }
+  } else {
+    if (mode === 'cerro') {
+      ctl.target.x = clamp(ctl.target.x, -1300, 1300);
+      ctl.target.z = clamp(ctl.target.z, -1300, 1300);
+    }
+    ctl.update(dt);
+  }
+  if (mode === 'cerro') {
+    map.curtains.forEach((c) => (c.material.uniforms.uTime.value = elapsed));
+    const az = ctl.getAzimuthalAngle();
+    needle.setAttribute('transform', `rotate(${(az * 180) / Math.PI} 15 15)`);
+    const dist = cam.position.distanceTo(ctl.target);
+    for (const pl of PLACES) place(pl.chip, pl.anchor, cam, dist > pl.far * 0.55 && pl.far < 2000);
+  } else {
+    active.tick(elapsed);
+    for (const s of active.anchors) place(s.chip, s.anchor, cam, false);
+  }
+  renderer.render(active.scene, cam);
+  if (first) {
+    first = false;
+    window.__ohReady = true;
+    $('loader').classList.remove('is-on');
+  }
+}
+function place(chip, anchor, cam, hide) {
+  if (!chip) return;
+  v3.copy(anchor).project(cam);
+  const off = hide || v3.z > 1 || Math.abs(v3.x) > 1.05 || Math.abs(v3.y) > 1.05;
+  chip.dataset.hidden = off ? 'true' : 'false';
+  if (!off) {
+    const x = ((v3.x + 1) / 2) * innerWidth, y = ((1 - v3.y) / 2) * innerHeight;
+    chip.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, calc(-100% - 18px))`;
+  }
+}
+
+/* ------------------------------------------------------------- boot -- */
+async function boot() {
+  let buf;
+  try {
+    const res = await fetch('terrain.json');
+    if (!res.ok) throw new Error(res.status);
+    const bin = atob((await res.json()).data);
+    buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    buf = buf.buffer;
+  } catch (err) {
+    fail('The terrain data did not load. Reload the page, or read the plan.');
+    return;
+  }
+  loaderText.textContent = 'Planting the forest';
+  await new Promise((r) => setTimeout(r, 30));
+  textures();
+  prepareHeights(new Uint16Array(buf));
+  buildMap();
+  fitCamera(map.camera);
+  const portrait = innerWidth / innerHeight < 1;
+  const centre = portrait ? new THREE.Vector3(40, 0, -300) : new THREE.Vector3(120, 0, -60); centre.y = yAt(centre.x, centre.z) + 20;
+  const r0 = portrait ? 2200 : 1650;
+  HOME = { tgt: centre, pos: centre.clone().add(new THREE.Vector3().setFromSphericalCoords(r0, 1.08, 0.95)) };
+  map.camera.position.copy(HOME.pos); mc.target.copy(HOME.tgt); mc.update();
+  const want = (location.hash || '').slice(1);
+  setMode(want === 'cabin' || want === 'residence' ? want : 'cerro');
+  if (want === 'plan') openPlan();
+  requestAnimationFrame(tick);
+}
+boot().catch((err) => { console.error(err); fail('Something went wrong building the 3D view. The plan still works.'); });
+</script>
+<!-- artifact:end -->
+</body>
+</html>
