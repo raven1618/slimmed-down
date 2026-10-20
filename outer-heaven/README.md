@@ -45,10 +45,28 @@ cd outer-heaven/data/build
 python3 build.py            # or one step: dem chm s2 trees overture export
 ```
 
-### Adding title-plan boundaries
+### Setting the property limits
 
-- **In the browser:** open Boundaries, then paste the corner coordinates from the plan. UTM 21S, latitude/longitude and Paraguayan number formats all work. The area and perimeter are shown as you type. "Copy GeoJSON" exports the boundary.
-- **For everyone:** add the feature to `data/layers.geojson` with a `name` property (and an optional `color`) and redeploy. Features in that file show as "Survey" boundaries.
+Open **Property limits** in the hill view. There are two ways to add a boundary:
+
+- **Draw on the map:** tap each corner in order and tap the first corner again (or press Finish) to close the shape.
+- **Paste coordinates from a title plan:** UTM 21S, latitude/longitude and Paraguayan number formats all work.
+
+To adjust a boundary afterwards, use **Edit corners**:
+
+- Drag a corner to move it.
+- Tap the small dot between two corners to add a corner there.
+- Select a corner and press Remove corner to delete it.
+- Undo reverses the last change.
+
+Every boundary has a name and a type (Whole property, Public side, Private side, Homesite or Other), and its area and perimeter update live.
+
+Where the limits are saved:
+
+- **Inside the Claude viewer:** in the artifact's shared database (collection `boundaries`, corners as a flat list of UTM 21S easting/northing pairs). Everyone with access sees the same limits. Only the owner and editors can change them.
+- **Anywhere else** (a static host, a signed-out visitor): in that browser only.
+
+Signed-out visitors can't read the shared database. To show final limits to everyone, copy each boundary's GeoJSON into `data/layers.geojson` with a `name` property (and an optional `color`) and redeploy. Features in that file show as "Survey" boundaries.
 
 If a plan uses an older datum rather than WGS84/SIRGAS, it has to be converted first.
 

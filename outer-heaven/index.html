@@ -230,6 +230,15 @@ a { color: var(--gold); text-underline-offset: 3px; }
 .mini:hover { border-color: var(--gold); }
 .pill.accent { color: var(--gold); }
 #d-extra ul.plain { font-size: 0.875rem; }
+.tool select { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: var(--night); color: var(--sand); padding: 9px 11px; font: inherit; font-size: 0.875rem; }
+.tool details { border-top: 1px solid var(--line); padding-top: 10px; }
+.tool summary { cursor: pointer; font-weight: 600; font-size: 0.875rem; }
+.tool details .tool { margin-top: 10px; }
+.lead-num { margin: 0; font-family: var(--mono); font-size: 0.875rem; color: var(--sand) !important; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+.facts small { color: var(--faint); }
+.btn:disabled { opacity: 0.45; cursor: default; filter: none; }
+p.warn { color: var(--earth) !important; }
 
 /* ---------- veil / loader ---------- */
 .veil {
@@ -1345,21 +1354,18 @@ function drawOverlay() {
       g.fillText(`${N} N`, -HHALF + 12, z - 8);
     }
   }
-  for (const b of [...OFFICIAL, ...boundaries.list]) {
-    const pts = b.utm.map(([E, N]) => fromUTM(E, N));
-    if (pts.length < 2) continue;
+  const ring = (utm, color, fill, width, closed, dash) => {
+    const pts = utm.map(([E, N]) => fromUTM(E, N));
+    if (!pts.length) return;
     g.beginPath(); pts.forEach(([x, z], i) => (i ? g.lineTo(x, z) : g.moveTo(x, z)));
-    if (b.closed !== false && pts.length > 2) { g.closePath(); g.fillStyle = b.fill || 'rgba(233,191,90,0.16)'; g.fill(); }
-    g.lineWidth = 3.2; g.strokeStyle = b.color || 'rgba(233,191,90,0.98)'; g.stroke();
-    g.fillStyle = b.color || '#e9bf5a';
-    pts.forEach(([x, z]) => { g.beginPath(); g.arc(x, z, 3.2, 0, Math.PI * 2); g.fill(); });
-  }
-  if (boundaries.draft.length) {
-    const pts = boundaries.draft.map(([E, N]) => fromUTM(E, N));
-    g.setLineDash([8, 6]); g.lineWidth = 2.4; g.strokeStyle = 'rgba(127,179,227,0.95)';
-    g.beginPath(); pts.forEach(([x, z], i) => (i ? g.lineTo(x, z) : g.moveTo(x, z))); g.stroke(); g.setLineDash([]);
-    g.fillStyle = '#7fb3e3'; pts.forEach(([x, z]) => { g.beginPath(); g.arc(x, z, 4, 0, Math.PI * 2); g.fill(); });
-  }
+    if (closed && pts.length > 2) { g.closePath(); g.fillStyle = fill; g.fill(); }
+    g.setLineDash(dash || []); g.lineWidth = width; g.strokeStyle = color; g.stroke(); g.setLineDash([]);
+    g.fillStyle = color; pts.forEach(([x, z]) => { g.beginPath(); g.arc(x, z, width, 0, Math.PI * 2); g.fill(); });
+  };
+  for (const o of OFFICIAL) ring(o.utm, o.color || '#e9bf5a', 'rgba(233,191,90,0.12)', 3.6, o.closed !== false);
+  for (const b of limits.list) { const k = kindOf(b), ed = b.id === limits.editing; ring(b.utm, k.color, k.fill, ed ? 4 : 3.2, true, ed ? [10, 6] : null); }
+  if (limits.drawing && limits.drawing.utm.length) { const k = kindOf(limits.drawing); ring(limits.drawing.utm, k.color, k.fill, 3, limits.drawing.utm.length > 2, [9, 6]); }
+  if (limits.textDraft.length) ring(limits.textDraft, '#7fb3e3', 'rgba(127,179,227,0.12)', 2.6, limits.textDraft.length > 2, [9, 6]);
   tex.needsUpdate = true;
 }
 
@@ -1396,19 +1402,83 @@ function curtain(pts, height, color, strength) {
 function refreshCurtains() {
   hill.curtains.forEach((m) => { hill.scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
   hill.curtains = [];
-  for (const b of [...OFFICIAL, ...boundaries.list]) {
-    if (b.closed === false || b.utm.length < 3) continue;
-    const m = curtain(b.utm.map(([E, N]) => fromUTM(E, N)), 14, b.glow || 0xe9bf5a, 0.7);
-    hill.scene.add(m); hill.curtains.push(m);
-  }
+  const add = (utm, h, glow, k) => { const m = curtain(utm.map(([E, N]) => fromUTM(E, N)), h, glow, k); hill.scene.add(m); hill.curtains.push(m); };
+  for (const o of OFFICIAL) if (o.closed !== false && o.utm.length > 2) add(o.utm, 14, 0xe9bf5a, 0.7);
+  for (const b of limits.list) if (b.utm.length > 2) add(b.utm, b.kind === 'property' ? 14 : 9, kindOf(b).glow, b.id === limits.editing ? 0.35 : 0.65);
 }
 
-/* ---------------------------------------------------- boundaries -- */
-const boundaries = {
-  list: [], draft: [],
-  load() { try { this.list = JSON.parse(localStorage.getItem('oh-boundaries-v1') || '[]'); } catch (e) { this.list = []; } },
-  save() { try { localStorage.setItem('oh-boundaries-v1', JSON.stringify(this.list)); } catch (e) {} },
+/* ------------------------------------------------- property limits -- */
+/* Limits are drawn in the model and stored in UTM 21S. In the Claude viewer they live in the
+   artifact's shared database, so everyone with access sees the same lines; elsewhere they
+   fall back to this browser. */
+const KINDS = {
+  property: { label: 'Whole property', color: '#e9bf5a', glow: 0xe9bf5a, fill: 'rgba(233,191,90,0.14)' },
+  public: { label: 'Public side', color: '#93c97c', glow: 0x93c97c, fill: 'rgba(147,201,124,0.16)' },
+  private: { label: 'Private side', color: '#7fb3e3', glow: 0x7fb3e3, fill: 'rgba(127,179,227,0.16)' },
+  homesite: { label: 'Homesite', color: '#cfa8ec', glow: 0xcfa8ec, fill: 'rgba(207,168,236,0.14)' },
+  other: { label: 'Other', color: '#f1e9db', glow: 0xf1e9db, fill: 'rgba(241,233,219,0.10)' },
 };
+const limits = { list: [], local: [], shared: false, canEdit: true, db: null, editing: null, drawing: null, textDraft: [], selected: -1, dragging: false, undo: [], writing: {}, dirty: {}, onChange: () => {} };
+const kindOf = (b) => KINDS[b.kind] || KINDS.property;
+const flatten = (utm) => utm.flatMap(([E, N]) => [+E.toFixed(2), +N.toFixed(2)]);
+function unflatten(a) { const o = []; for (let i = 0; i + 1 < (a || []).length; i += 2) o.push([+a[i], +a[i + 1]]); return o; }
+const newLimitId = () => 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const LOCAL_KEY = 'oh-limits-v2';
+function localLoad() {
+  try {
+    const v2 = JSON.parse(localStorage.getItem(LOCAL_KEY) || 'null');
+    if (Array.isArray(v2)) return v2;
+    const v1 = JSON.parse(localStorage.getItem('oh-boundaries-v1') || '[]');
+    return v1.map((b) => ({ id: newLimitId(), name: b.name, kind: 'property', utm: b.utm }));
+  } catch (e) { return []; }
+}
+function localSave() { if (!limits.shared) { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(limits.list)); } catch (e) {} } }
+const limitById = (id) => limits.list.find((b) => b.id === id);
+
+async function initLimits() {
+  limits.list = localLoad();
+  limits.onChange();
+  const c = window.claude;
+  if (!c || typeof c.use !== 'function') return;
+  const [db, user] = await Promise.all([c.use('db').catch(() => null), c.use('user').catch(() => null)]);
+  if (!db) return;
+  if (user) { try { limits.canEdit = await user.canEdit(); } catch (e) {} }
+  limits.db = db; limits.shared = true;
+  limits.local = limits.list; limits.list = [];
+  db.collection('boundaries').onSnapshot((snap) => {
+    const held = limits.dragging && limitById(limits.editing);
+    limits.list = snap.docs.map((d) => {
+      const v = d.data() || {};
+      return { id: d.id, name: String(v.name || 'Boundary').slice(0, 80), kind: KINDS[v.kind] ? v.kind : 'property', utm: unflatten(v.pts) };
+    }).filter((b) => b.utm.length >= 3).map((b) => (held && b.id === held.id ? held : b));
+    limits.onChange();
+  }, () => {});
+  limits.onChange();
+}
+async function persistLimit(id) {
+  if (!limits.shared) { localSave(); return; }
+  if (limits.writing[id]) { limits.dirty[id] = true; return; }
+  limits.writing[id] = true;
+  try {
+    do {
+      limits.dirty[id] = false;
+      const b = limitById(id); if (!b) break;
+      await limits.db.collection('boundaries').doc(id).set({ name: b.name, kind: b.kind, pts: flatten(b.utm), updated: Date.now() });
+    } while (limits.dirty[id]);
+  } catch (e) {
+    if (e && e.code === 'invalid_argument') limits.canEdit = false;
+    limits.error = e && e.code === 'quota_exceeded' ? 'The shared model is full; remove a boundary first.' : 'That change was not saved. Check the connection and try again.';
+    limits.onChange();
+  } finally { limits.writing[id] = false; }
+}
+async function deleteLimit(id) {
+  limits.list = limits.list.filter((b) => b.id !== id);
+  if (limits.editing === id) { limits.editing = null; limits.selected = -1; }
+  if (limits.shared) { try { await limits.db.collection('boundaries').doc(id).delete(); } catch (e) { limits.error = 'That boundary was not removed. Try again.'; } }
+  else localSave();
+  limits.onChange();
+}
+
 function ringArea(utm) {
   let a = 0, p = 0;
   for (let i = 0; i < utm.length; i++) {
@@ -1516,7 +1586,6 @@ async function buildHill() {
     g.drawImage(img, 0, 0); imgPx = g.getImageData(0, 0, img.width, img.height).data; imgW = img.width;
   }
   loadOfficial(layers);
-  boundaries.load();
 
   const scene = hill.scene;
   const HAZE = new THREE.Color(0xc8d3dc);
@@ -2018,7 +2087,7 @@ function glowTexture() {
 /* ================================================================ */
 const labelsEl = $('labels'), bar = $('bar'), drawer = $('drawer'), specs = $('specs'), hint = $('hint');
 const planEl = $('plan'), compass = $('compass'), needle = $('needle');
-let mode = 'cerro', active = null, scenes = {}, tween = null, picking = false;
+let mode = 'cerro', active = null, scenes = {}, tween = null, limitLabels = [];
 
 hill.controls = new OrbitControls(hill.camera, renderer.domElement);
 const mc = hill.controls;
@@ -2037,7 +2106,7 @@ function fitCamera(cam) {
 
 function makeChip(item, cls, onClick) {
   const b = document.createElement('button');
-  b.type = 'button'; b.className = 'chip ' + cls;
+  b.type = 'button'; b.className = 'chip ' + cls; b.dataset.hidden = 'true';
   if (item.c) b.style.setProperty('--c', item.c);
   b.innerHTML = `<span class="dot"></span><span>${item.name}${item.sub ? `<small>${item.sub}</small>` : ''}</span>`;
   b.addEventListener('click', onClick);
@@ -2046,6 +2115,7 @@ function makeChip(item, cls, onClick) {
 }
 
 function openDrawer(kick, title, body, facts, actions, color, note = '', extra = null) {
+  drawer.dataset.panel = '';
   drawer.style.setProperty('--c', color || 'var(--gold)');
   $('d-kick').textContent = kick;
   $('d-title').textContent = title;
@@ -2073,7 +2143,12 @@ function openDrawer(kick, title, body, facts, actions, color, note = '', extra =
 }
 function closeDrawer() {
   drawer.hidden = true;
-  setPicking(false);
+  drawer.dataset.panel = '';
+  if (limits.drawing || limits.editing || limits.textDraft.length) {
+    limits.drawing = null; limits.editing = null; limits.selected = -1; limits.textDraft = [];
+    if (hill.terrain) limitsChanged();
+  }
+  setHint();
   if (hill.pin) hill.pin.visible = false;
   document.querySelectorAll('.chip.is-on').forEach((el) => el.classList.remove('is-on'));
 }
@@ -2126,89 +2201,278 @@ function bounds(utm) {
   for (const [E, N] of utm) { const [x, z] = fromUTM(E, N); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
   return { x: (x0 + x1) / 2, z: (z0 + z1) / 2, r: Math.max(x1 - x0, z1 - z0) };
 }
-function setPicking(on) {
-  picking = on;
-  const b = $('b-pick'); if (b) { b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Stop picking' : 'Pick on map'; }
-  hint.textContent = on ? 'Tap the ground to add a corner' : (mode === 'cerro' ? (small ? 'Drag to orbit · Tap for coordinates' : 'Drag to orbit · Right-drag to pan · Tap the ground for coordinates') : 'Drag to look around · Tap a label');
+const DEFAULT_HINT = () => (mode === 'cerro' ? (small ? 'Drag to orbit · Tap for coordinates' : 'Drag to orbit · Right-drag to pan · Tap the ground for coordinates') : 'Drag to look around · Tap a label');
+function setHint() {
+  hint.textContent = limits.drawing ? 'Tap each corner in order · Tap the first corner to close'
+    : limits.editing ? 'Drag a corner to move it · Tap a small dot to add a corner'
+    : DEFAULT_HINT();
 }
-function updateDraft() {
+
+/* Corner handles: drawn in 3D, picked in screen space so they are easy to grab on a phone. */
+const handleGroup = new THREE.Group();
+const handleMat = { corner: new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false }), mid: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthTest: false }), sel: new THREE.MeshBasicMaterial({ color: 0xdd7a4b, depthTest: false }) };
+const handleGeo = new THREE.SphereGeometry(1, 14, 10);
+function rebuildHandles() {
+  if (!handleGroup.parent) hill.scene.add(handleGroup);
+  handleGroup.clear();
+  const b = limitById(limits.editing);
+  if (!b) return;
+  const n = b.utm.length;
+  b.utm.forEach(([E, N], i) => {
+    const [x, z] = fromUTM(E, N);
+    const m = new THREE.Mesh(handleGeo, i === limits.selected ? handleMat.sel : handleMat.corner);
+    m.position.set(x, yAt(x, z) + 1.5, z); m.renderOrder = 10; m.userData = { type: 'corner', i, s: 1 };
+    handleGroup.add(m);
+    const [E2, N2] = b.utm[(i + 1) % n], [x2, z2] = fromUTM(E2, N2);
+    const mx = (x + x2) / 2, mz = (z + z2) / 2;
+    const h = new THREE.Mesh(handleGeo, handleMat.mid);
+    h.position.set(mx, yAt(mx, mz) + 1.5, mz); h.renderOrder = 10; h.userData = { type: 'mid', i, s: 0.6 };
+    handleGroup.add(h);
+  });
+}
+function pickHandle(cx, cy) {
+  hill.camera.updateMatrixWorld();
+  let best = null, bestD = 26;
+  for (const m of handleGroup.children) {
+    v3.copy(m.position).project(hill.camera);
+    if (v3.z > 1) continue;
+    const d = Math.hypot(((v3.x + 1) / 2) * innerWidth - cx, ((1 - v3.y) / 2) * innerHeight - cy) - (m.userData.type === 'corner' ? 6 : 0);
+    if (d < bestD) { bestD = d; best = m.userData; }
+  }
+  return best;
+}
+function groundPoint(cx, cy) {
+  hill.camera.updateMatrixWorld();
+  ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, hill.camera);
+  const hit = ray.intersectObject(hill.terrain, false)[0];
+  return hit ? hit.point : null;
+}
+function pushUndo(b) { limits.undo.push({ id: b.id, utm: b.utm.map((p) => p.slice()) }); if (limits.undo.length > 60) limits.undo.shift(); }
+let redrawQueued = false;
+function queueRedraw() {
+  if (redrawQueued) return;
+  redrawQueued = true;
+  requestAnimationFrame(() => { redrawQueued = false; drawOverlay(); rebuildHandles(); });
+}
+function limitsChanged() {
+  if (!hill.terrain) return;
+  drawOverlay(); refreshCurtains(); rebuildHandles();
+  if (mode === 'cerro') buildChips();
+  const typing = document.activeElement && drawer.contains(document.activeElement) && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (!drawer.hidden && drawer.dataset.panel === 'limits' && !typing) renderLimits();
+}
+limits.onChange = limitsChanged;
+
+/* ------------------------------------------------- the limits panel -- */
+function kindSelect(id, value) {
+  return `<select id="${id}">${Object.entries(KINDS).map(([k, v]) => `<option value="${k}"${k === value ? ' selected' : ''}>${v.label}</option>`).join('')}</select>`;
+}
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function storageNote() {
+  if (limits.shared) return limits.canEdit ? 'Saved to the shared model: everyone with access to this page sees these limits.' : 'You can view these limits. The owner or an editor can change them.';
+  return 'Saved in this browser only. Open the page inside Claude to save limits to the shared model.';
+}
+function renderLimits() {
+  drawer.dataset.panel = 'limits';
+  setHint();
+  const el = document.createElement('div');
+  el.className = 'tool';
+  const err = limits.error ? `<p class="note warn">${esc(limits.error)}</p>` : '';
+  limits.error = '';
+
+  if (limits.drawing) {
+    const d = limits.drawing, a = d.utm.length > 2 ? ringArea(d.utm) : null;
+    el.innerHTML = `${err}
+      <p class="lead-num">${d.utm.length} corner${d.utm.length === 1 ? '' : 's'}${a ? ` · ${fmt(a.ha, 2)} ha · ${fmt(a.m, 0)} m around` : ''}</p>
+      <label for="l-name">Name</label><input id="l-name" type="text" value="${esc(d.name)}" autocomplete="off">
+      <label for="l-kind">Type</label>${kindSelect('l-kind', d.kind)}
+      <div class="actions"><button class="btn" type="button" id="l-finish"${d.utm.length < 3 ? ' disabled' : ''}>Finish</button><button class="btn ghost" type="button" id="l-undo"${d.utm.length ? '' : ' disabled'}>Undo corner</button><button class="btn ghost" type="button" id="l-cancel">Cancel</button></div>`;
+    openDrawer('Property limits', 'Tap each corner', 'Walk the edge of the land and tap every corner in order. Zoom in for accuracy; tap the first corner again, or Finish, to close the shape.', null, null, kindOf(d).color, storageNote(), el);
+    drawer.dataset.panel = 'limits';
+    $('l-name').addEventListener('input', (e) => { d.name = e.target.value; });
+    $('l-kind').addEventListener('change', (e) => { d.kind = e.target.value; drawOverlay(); renderLimits(); });
+    $('l-finish').addEventListener('click', finishDrawing);
+    $('l-undo').addEventListener('click', () => { d.utm.pop(); drawOverlay(); renderLimits(); });
+    $('l-cancel').addEventListener('click', () => { limits.drawing = null; drawOverlay(); renderLimits(); });
+    return;
+  }
+
+  const b = limitById(limits.editing);
+  if (b) {
+    const a = ringArea(b.utm), sel = limits.selected;
+    const selTxt = sel >= 0 && b.utm[sel] ? `Corner ${sel + 1}: ${fmt(b.utm[sel][0], 2)} E, ${fmt(b.utm[sel][1], 2)} N` : 'Tap a corner to select it.';
+    el.innerHTML = `${err}
+      <label for="l-name">Name</label><input id="l-name" type="text" value="${esc(b.name)}" autocomplete="off">
+      <label for="l-kind">Type</label>${kindSelect('l-kind', b.kind)}
+      <ul class="facts"><li><span>Area</span><span>${fmt(a.ha, 3)} ha</span></li><li><span>Perimeter</span><span>${fmt(a.m, 1)} m</span></li><li><span>Corners</span><span>${b.utm.length}</span></li></ul>
+      <p class="note">${esc(selTxt)}</p>
+      <div class="actions">
+        <button class="btn" type="button" id="l-done">Done</button>
+        <button class="btn ghost" type="button" id="l-delcorner"${sel >= 0 && b.utm.length > 3 ? '' : ' disabled'}>Remove corner</button>
+        <button class="btn ghost" type="button" id="l-undo"${limits.undo.some((u) => u.id === b.id) ? '' : ' disabled'}>Undo</button>
+      </div>
+      <div class="rowbtns"><button class="mini" type="button" id="l-copy">Copy GeoJSON</button><button class="mini" type="button" id="l-delete">Delete this boundary</button></div>`;
+    openDrawer('Property limits', 'Adjust the corners', 'Drag a white corner to move it. Tap a small dot between two corners to add one there. Every change saves on release.', null, null, kindOf(b).color, storageNote(), el);
+    drawer.dataset.panel = 'limits';
+    let t = 0;
+    $('l-name').addEventListener('input', (e) => { b.name = e.target.value.slice(0, 80) || 'Boundary'; clearTimeout(t); t = setTimeout(() => { persistLimit(b.id); buildChips(); }, 500); });
+    $('l-kind').addEventListener('change', (e) => { b.kind = e.target.value; persistLimit(b.id); limitsChanged(); });
+    $('l-done').addEventListener('click', () => { limits.editing = null; limits.selected = -1; limitsChanged(); });
+    $('l-delcorner').addEventListener('click', () => { if (sel < 0 || b.utm.length <= 3) return; pushUndo(b); b.utm.splice(sel, 1); limits.selected = -1; persistLimit(b.id); limitsChanged(); });
+    $('l-undo').addEventListener('click', () => {
+      for (let i = limits.undo.length - 1; i >= 0; i--) if (limits.undo[i].id === b.id) { b.utm = limits.undo.splice(i, 1)[0].utm; break; }
+      limits.selected = -1; persistLimit(b.id); limitsChanged();
+    });
+    $('l-copy').addEventListener('click', (e) => copyText(JSON.stringify(geojsonOf(b)), e.currentTarget));
+    $('l-delete').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      if (btn.dataset.armed) deleteLimit(b.id); else { btn.dataset.armed = '1'; btn.textContent = 'Tap again to delete'; }
+    });
+    return;
+  }
+
+  // Overview: the list, a draw button and the paste-from-title-plan form.
+  const all = [...OFFICIAL.map((o) => ({ ...o, official: true })), ...limits.list];
+  const rows = all.map((x, i) => {
+    const a = ringArea(x.utm), k = kindOf(x);
+    return `<li><span><i class="sw" style="background:${k.color}"></i>${x.official ? '<b>Survey</b> · ' : ''}${esc(x.name)}<small> · ${k.label}</small></span><span>${fmt(a.ha, 2)} ha</span>
+      <div class="rowbtns"><button class="mini" type="button" data-go="${i}">Go</button>${!x.official && limits.canEdit ? `<button class="mini" type="button" data-edit="${x.id}">Edit corners</button>` : ''}<button class="mini" type="button" data-copy="${i}">Copy GeoJSON</button></div></li>`;
+  }).join('');
+  el.innerHTML = `${err}
+    ${limits.canEdit ? '<div class="actions"><button class="btn" type="button" id="l-draw">Draw on the map</button></div>' : ''}
+    ${limits.shared && limits.canEdit && limits.local.length ? `<button class="mini" type="button" id="l-import">Add ${limits.local.length} boundar${limits.local.length > 1 ? 'ies' : 'y'} saved earlier in this browser</button>` : ''}
+    <h3>On the map</h3>
+    <ul class="facts">${rows || '<li><span>No limits yet.</span><span></span></li>'}</ul>
+    ${limits.canEdit ? `<details id="l-paste"${limits.textDraft.length ? ' open' : ''}><summary>Paste coordinates from a title plan</summary>
+      <div class="tool">
+        <label for="b-name">Name</label><input id="b-name" type="text" value="Lote ${limits.list.length + 1}" autocomplete="off">
+        <label for="b-kind">Type</label>${kindSelect('b-kind', 'property')}
+        <label for="b-text">Corner coordinates, one per line</label>
+        <textarea id="b-text" rows="6" spellcheck="false" placeholder="487 520,35   7 200 110,20&#10;487 734,10   7 200 096,55&#10;…"></textarea>
+        <p class="note">UTM zone 21S (easting, northing) as printed on the plan, or latitude/longitude. Vertex numbers and distances in the table are ignored.</p>
+        <p class="note" id="b-msg" aria-live="polite"></p>
+        <div class="actions"><button class="btn" type="button" id="b-draw">Draw from coordinates</button></div>
+      </div></details>` : ''}`;
+  openDrawer('Property limits', all.length ? 'Your boundaries' : 'Set the property limits', limits.canEdit ? 'Draw the real limits on the map by tapping the corners, or paste the coordinates from a title plan. You can drag corners afterwards.' : '', null, null, 'var(--gold)', storageNote(), el);
+  drawer.dataset.panel = 'limits';
+  el.querySelectorAll('[data-go]').forEach((btn) => btn.addEventListener('click', () => { const bb = bounds(all[+btn.dataset.go].utm); flyAround(bb.x, bb.z, bb.r * 1.4 + 160); }));
+  el.querySelectorAll('[data-copy]').forEach((btn) => btn.addEventListener('click', () => copyText(JSON.stringify(geojsonOf(all[+btn.dataset.copy])), btn)));
+  el.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => startEditing(btn.dataset.edit)));
+  if ($('l-draw')) $('l-draw').addEventListener('click', startDrawing);
+  if ($('l-import')) $('l-import').addEventListener('click', async () => {
+    const items = limits.local; limits.local = [];
+    for (const it of items) { const b = { id: newLimitId(), name: it.name || 'Boundary', kind: KINDS[it.kind] ? it.kind : 'property', utm: it.utm }; limits.list.push(b); await persistLimit(b.id); }
+    limitsChanged();
+  });
+  const ta = $('b-text');
+  if (ta) {
+    let t = 0;
+    ta.addEventListener('input', () => { clearTimeout(t); t = setTimeout(updateTextDraft, 150); });
+    $('b-draw').addEventListener('click', () => {
+      const r = parseCoords(ta.value);
+      if (r.pts.length < 3) { $('b-msg').textContent = 'A boundary needs at least three corners.'; return; }
+      const b = { id: newLimitId(), name: ($('b-name').value.trim() || `Lote ${limits.list.length + 1}`).slice(0, 80), kind: $('b-kind').value, utm: r.pts.map(([E, N]) => [+E.toFixed(2), +N.toFixed(2)]) };
+      limits.list.push(b); limits.textDraft = [];
+      persistLimit(b.id); limitsChanged();
+      const bb = bounds(b.utm); flyAround(bb.x, bb.z, bb.r * 1.4 + 160);
+    });
+  }
+}
+function updateTextDraft() {
   const ta = $('b-text'); if (!ta) return;
   const r = parseCoords(ta.value);
-  boundaries.draft = r.pts;
+  limits.textDraft = r.pts;
   const msg = $('b-msg');
   if (msg) {
-    if (!ta.value.trim()) msg.textContent = '';
-    else if (!r.pts.length) msg.textContent = 'No coordinates recognised yet.';
-    else {
-      const a = r.pts.length > 2 ? ringArea(r.pts) : null;
-      const outside = r.pts.filter(([E, N]) => !inSquare(...fromUTM(E, N))).length;
-      msg.textContent = `${r.pts.length} corner${r.pts.length > 1 ? 's' : ''} read as ${r.kind === 'utm' ? 'UTM 21S' : 'latitude/longitude'}` +
-        (r.skipped ? `, ${r.skipped} line${r.skipped > 1 ? 's' : ''} skipped` : '') +
-        (a ? ` · ${fmt(a.ha, 2)} ha, perimeter ${fmt(a.m, 0)} m` : '') +
+    const a = r.pts.length > 2 ? ringArea(r.pts) : null;
+    const outside = r.pts.filter(([E, N]) => !inSquare(...fromUTM(E, N))).length;
+    msg.textContent = !ta.value.trim() ? '' : !r.pts.length ? 'No coordinates recognised yet.'
+      : `${r.pts.length} corner${r.pts.length > 1 ? 's' : ''} read as ${r.kind === 'utm' ? 'UTM 21S' : 'latitude/longitude'}` +
+        (r.skipped ? `, ${r.skipped} line${r.skipped > 1 ? 's' : ''} skipped` : '') + (a ? ` · ${fmt(a.ha, 2)} ha, perimeter ${fmt(a.m, 0)} m` : '') +
         (outside ? ` · ${outside} outside the 4 km model` : '') + '.';
-    }
   }
   drawOverlay();
 }
-function boundaryList() {
-  const ul = $('b-list'); if (!ul) return;
-  const all = [...OFFICIAL, ...boundaries.list];
-  ul.innerHTML = all.length ? '' : '<li><span>None yet.</span><span></span></li>';
-  all.forEach((b) => {
-    const li = document.createElement('li');
-    const a = b.utm.length > 2 ? ringArea(b.utm) : null;
-    li.innerHTML = `<span>${b.official ? '<b>Survey</b> · ' : ''}${b.name.replace(/</g, '&lt;')}</span><span>${a ? fmt(a.ha, 2) + ' ha' : ''}</span>`;
-    const row = document.createElement('div'); row.className = 'rowbtns';
-    const fly = document.createElement('button'); fly.type = 'button'; fly.className = 'mini'; fly.textContent = 'Go';
-    fly.addEventListener('click', () => { const bb = bounds(b.utm); flyAround(bb.x, bb.z, bb.r * 1.5 + 160); });
-    const cp = document.createElement('button'); cp.type = 'button'; cp.className = 'mini'; cp.textContent = 'Copy GeoJSON';
-    cp.addEventListener('click', () => copyText(JSON.stringify(geojsonOf(b)), cp));
-    row.append(fly, cp);
-    if (!b.official) {
-      const del = document.createElement('button'); del.type = 'button'; del.className = 'mini'; del.textContent = 'Remove';
-      del.addEventListener('click', () => {
-        if (del.dataset.armed) { boundaries.list = boundaries.list.filter((x) => x !== b); boundaries.save(); refreshCurtains(); drawOverlay(); boundaryList(); }
-        else { del.dataset.armed = '1'; del.textContent = 'Tap again to remove'; }
-      });
-      row.append(del);
+function openLimits() { closeDrawer(); renderLimits(); }
+function startDrawing() {
+  limits.editing = null; limits.selected = -1; limits.textDraft = [];
+  limits.drawing = { name: limits.list.some((b) => b.kind === 'property') ? `Lote ${limits.list.length + 1}` : 'Property', kind: 'property', utm: [] };
+  rebuildHandles(); drawOverlay(); renderLimits();
+}
+function finishDrawing() {
+  const d = limits.drawing;
+  if (!d || d.utm.length < 3) return;
+  const b = { id: newLimitId(), name: (d.name || 'Property').trim().slice(0, 80) || 'Property', kind: d.kind, utm: d.utm.map(([E, N]) => [+E.toFixed(2), +N.toFixed(2)]) };
+  limits.drawing = null;
+  limits.list.push(b);
+  persistLimit(b.id);
+  limits.editing = b.id; limits.selected = -1;
+  limitsChanged(); renderLimits();
+}
+function startEditing(id) {
+  limits.drawing = null; limits.editing = id; limits.selected = -1;
+  const b = limitById(id); if (!b) return;
+  const bb = bounds(b.utm); flyAround(bb.x, bb.z, bb.r * 1.3 + 140);
+  limitsChanged(); renderLimits();
+}
+
+/* Dragging corners. Capture-phase listeners run before the orbit controls, so a grab on a
+   handle never starts an orbit. */
+let drag = null;
+{
+  const el = renderer.domElement;
+  el.addEventListener('pointerdown', (e) => {
+    if (mode !== 'cerro' || !limits.editing || !limits.canEdit || e.button > 0) return;
+    const h = pickHandle(e.clientX, e.clientY);
+    if (!h) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    drag = { h, x: e.clientX, y: e.clientY, moved: false };
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    mc.enabled = false; limits.dragging = true;
+  }, true);
+  el.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    e.stopImmediatePropagation();
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 4) return;
+    const b = limitById(limits.editing); if (!b) return;
+    if (!drag.moved) {
+      pushUndo(b);
+      if (drag.h.type === 'mid') {
+        const i = drag.h.i, [E1, N1] = b.utm[i], [E2, N2] = b.utm[(i + 1) % b.utm.length];
+        b.utm.splice(i + 1, 0, [(E1 + E2) / 2, (N1 + N2) / 2]);
+        drag.h = { type: 'corner', i: i + 1 };
+      }
+      drag.moved = true;
     }
-    li.appendChild(row);
-    ul.appendChild(li);
-  });
+    const p = groundPoint(e.clientX, e.clientY);
+    if (!p || !inSquare(p.x, p.z)) return;
+    b.utm[drag.h.i] = toUTM(p.x, p.z);
+    limits.selected = drag.h.i;
+    queueRedraw();
+  }, true);
+  const end = (e) => {
+    if (!drag) return;
+    e.stopImmediatePropagation();
+    const d = drag, b = limitById(limits.editing);
+    drag = null; mc.enabled = true; limits.dragging = false;
+    if (!b) return;
+    if (!d.moved) {
+      if (d.h.type === 'corner') limits.selected = d.h.i;
+      else {
+        pushUndo(b);
+        const i = d.h.i, [E1, N1] = b.utm[i], [E2, N2] = b.utm[(i + 1) % b.utm.length];
+        b.utm.splice(i + 1, 0, [(E1 + E2) / 2, (N1 + N2) / 2]);
+        limits.selected = i + 1;
+        persistLimit(b.id);
+      }
+    } else persistLimit(b.id);
+    limitsChanged();
+  };
+  el.addEventListener('pointerup', end, true);
+  el.addEventListener('pointercancel', end, true);
 }
-function openBoundaryTool() {
-  const el = document.createElement('div');
-  el.className = 'tool';
-  el.innerHTML = `
-    <label for="b-name">Name</label>
-    <input id="b-name" type="text" value="Lote ${boundaries.list.length + 1}" autocomplete="off">
-    <label for="b-text">Corner coordinates, one per line</label>
-    <textarea id="b-text" rows="7" spellcheck="false" placeholder="487 520,35   7 200 110,20&#10;487 734,10   7 200 096,55&#10;…"></textarea>
-    <p class="note">UTM zone 21S (easting, northing) as printed on the title plan, or latitude/longitude. Paraguayan number formats work. Paste the coordinate table as is: vertex numbers and distances are ignored.</p>
-    <div class="actions"><button class="btn" type="button" id="b-draw">Draw boundary</button><button class="btn ghost" type="button" id="b-pick" aria-pressed="false">Pick on map</button></div>
-    <p class="note" id="b-msg" aria-live="polite"></p>
-    <h3>On the map</h3>
-    <ul class="facts" id="b-list"></ul>`;
-  openDrawer('Boundaries', 'Add a boundary', 'Type or paste the corner coordinates from a title plan. The outline appears as you type.', null, null, 'var(--gold)',
-    'Boundaries you add are saved in this browser only. Use Copy GeoJSON to send one, and it can be built into the shared model.', el);
-  const ta = $('b-text');
-  let t = 0;
-  ta.addEventListener('input', () => { clearTimeout(t); t = setTimeout(updateDraft, 150); });
-  $('b-pick').addEventListener('click', () => setPicking(!picking));
-  $('b-draw').addEventListener('click', () => {
-    const r = parseCoords(ta.value);
-    if (r.pts.length < 3) { $('b-msg').textContent = 'A boundary needs at least three corners.'; return; }
-    const name = $('b-name').value.trim() || `Lote ${boundaries.list.length + 1}`;
-    boundaries.list.push({ name, utm: r.pts.map(([E, N]) => [+E.toFixed(2), +N.toFixed(2)]) });
-    boundaries.save(); boundaries.draft = []; ta.value = ''; setPicking(false);
-    $('b-name').value = `Lote ${boundaries.list.length + 1}`;
-    refreshCurtains(); drawOverlay(); boundaryList();
-    const a = ringArea(r.pts);
-    $('b-msg').textContent = `Drew ${name}: ${fmt(a.ha, 2)} ha.`;
-    const bb = bounds(r.pts); flyAround(bb.x, bb.z, bb.r * 1.5 + 160);
-  });
-  boundaryList();
-}
+
 function openSources() {
   const el = document.createElement('div');
   const m = META.sources;
@@ -2240,7 +2504,7 @@ function buildBar() {
     }
     pill('UTM grid', hill.on.grid, (b) => { hill.on.grid = !hill.on.grid; b.setAttribute('aria-pressed', String(hill.on.grid)); drawOverlay(); });
     pill('Relief ×2', hill.vs > 1, (b) => { hill.vs = hill.vs > 1 ? 1 : 2; b.setAttribute('aria-pressed', String(hill.vs > 1)); relayout(); });
-    pill('Boundaries', null, () => openBoundaryTool(), 'accent');
+    pill('Property limits', null, () => openLimits(), 'accent');
     pill('Data sources', null, () => openSources());
   } else {
     const sc = scenes[mode];
@@ -2251,6 +2515,15 @@ function buildBar() {
 function buildChips() {
   labelsEl.innerHTML = '';
   if (mode === 'cerro') {
+    limitLabels = [...OFFICIAL.map((o) => ({ ...o, official: true })), ...limits.list].filter((b) => b.utm.length > 2).map((b) => {
+      const bb = bounds(b.utm), a = ringArea(b.utm), k = kindOf(b);
+      const l = { name: b.name, sub: `${k.label} · ${fmt(a.ha, 2)} ha`, c: k.color, anchor: new THREE.Vector3(bb.x, yAt(bb.x, bb.z) + 30, bb.z) };
+      l.chip = makeChip(l, '', () => {
+        if (!b.official && limits.canEdit) startEditing(b.id);
+        else { flyAround(bb.x, bb.z, bb.r * 1.4 + 160); }
+      });
+      return l;
+    });
     for (const l of hill.labels) l.chip = makeChip(l, '', () => {
       document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('is-on', c === l.chip));
       flyAround(l.x, l.z, l.far > 6000 ? 900 : 420);
@@ -2282,7 +2555,7 @@ $('plan-close').addEventListener('click', closePlan);
 planEl.querySelectorAll('.plan-nav a').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); const el = $(a.getAttribute('href').slice(1)); el && el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }));
 
 const LEDES = {
-  cerro: 'A 4 × 4 km model of the hill built from satellite elevation, imagery and tree-height data. Tap the ground for coordinates; add boundaries from the title plans.',
+  cerro: 'A 4 × 4 km model of the hill built from satellite elevation, imagery and tree-height data. Tap the ground for coordinates. Use Property limits to draw the real boundary.',
   cabin: 'A concept cabin: rammed-earth walls set into the bank, a living roof, deep eaves and glass to the view. Design not final.',
   residence: 'A concept home for the private side: two earth volumes stepped with the slope, living roofs and a pool. Design not final.',
 };
@@ -2306,7 +2579,7 @@ function setMode(m) {
   $('lede').textContent = LEDES[m];
   specs.hidden = m === 'cerro';
   if (m !== 'cerro') specs.innerHTML = SPECS[m];
-  setPicking(false);
+  setHint();
   compass.hidden = m !== 'cerro';
   buildChips();
   buildBar();
@@ -2322,21 +2595,29 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), quick = performance.now() - down.t < 450;
   down = null;
   if (moved > 6 || !quick) return;
-  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-  ray.setFromCamera(ndc, hill.camera);
-  const hit = ray.intersectObject(hill.terrain, false)[0];
+  const hit = groundPoint(e.clientX, e.clientY);
   if (!hit) return;
-  const { x, z } = hit.point;
-  if (picking) {
-    const [E, N] = toUTM(x, z), ta = $('b-text');
-    if (ta) { ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + `${E.toFixed(2)}  ${N.toFixed(2)}`; updateDraft(); }
+  const { x, z } = hit;
+  if (limits.drawing) {
+    const d = limits.drawing;
+    if (d.utm.length >= 3) {
+      const [fx, fz] = fromUTM(...d.utm[0]);
+      v3.set(fx, yAt(fx, fz), fz).project(hill.camera);
+      if (Math.hypot(((v3.x + 1) / 2) * innerWidth - e.clientX, ((1 - v3.y) / 2) * innerHeight - e.clientY) < 24) { finishDrawing(); return; }
+    }
+    if (!inSquare(x, z)) return;
+    d.utm.push(toUTM(x, z)); drawOverlay(); renderLimits();
     return;
   }
+  if (limits.editing) { if (limits.selected >= 0) { limits.selected = -1; limitsChanged(); } return; }
   showPoint(x, z);
 });
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  if (!planEl.hidden) closePlan(); else if (!drawer.hidden) closeDrawer();
+  if (!planEl.hidden) closePlan();
+  else if (limits.drawing) { limits.drawing = null; drawOverlay(); renderLimits(); }
+  else if (limits.editing) { limits.editing = null; limits.selected = -1; limitsChanged(); renderLimits(); }
+  else if (!drawer.hidden) closeDrawer();
 });
 addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
@@ -2371,7 +2652,9 @@ function tick() {
   if (mode === 'cerro') {
     hill.curtains.forEach((c) => (c.material.uniforms.uTime.value = elapsed));
     needle.setAttribute('transform', `rotate(${(ctl.getAzimuthalAngle() * 180) / Math.PI} 15 15)`);
-    for (const l of hill.labels) place(l.chip, l.anchor, cam, cam.position.distanceTo(l.anchor) > l.far);
+    for (const l of hill.labels) place(l.chip, l.anchor, cam, cam.position.distanceTo(l.anchor) > l.far || !!limits.drawing || !!limits.editing);
+    for (const l of limitLabels) place(l.chip, l.anchor, cam, !!limits.editing || !!limits.drawing);
+    for (const h of handleGroup.children) h.scale.setScalar(Math.max(0.6, cam.position.distanceTo(h.position) * 0.011 * h.userData.s));
   } else {
     active.tick(elapsed);
     for (const s of active.anchors) place(s.chip, s.anchor, cam, false);
@@ -2410,6 +2693,7 @@ async function boot() {
   setMode(want === 'cabin' || want === 'residence' ? want : 'cerro');
   if (want === 'plan') openPlan();
   requestAnimationFrame(tick);
+  initLimits().catch((err) => console.error(err));
 }
 boot().catch((err) => { console.error(err); fail('Something went wrong building the 3D view. The plan still works.'); });
 </script>
