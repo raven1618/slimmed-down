@@ -2,7 +2,7 @@
 
 A static site that pitches the Cerro Kavaju project. It has four views:
 
-- **The hill:** a 4 × 4 km 3D model of Cerro Kavaju built from satellite elevation, imagery, tree heights and map data. Tap the ground to get coordinates, or draw boundaries from the title plans.
+- **The hill:** a 4 × 4 km 3D model of Cerro Kavaju built from satellite elevation, imagery, tree heights and map data. Tap the ground to get coordinates, slope and land cover, or draw boundaries from the title plans. **Display** switches the base map (satellite, topographic, shaded relief, slope, land cover, tree height, vegetation index, infrared) and what else the map shows.
 - **The cabin:** a glamping cabin you can walk around, with a day/night switch.
 - **The residence:** a home on the private side.
 - **The plan:** the investor brief, with an interactive return calculator.
@@ -32,6 +32,10 @@ Add `#cabin`, `#residence` or `#plan` to the URL to open that view directly.
 | `terrain.json` | Ground heights on a 10 m grid, 4 × 4 km | Copernicus DEM GLO-30, with forest canopy subtracted |
 | `imagery.jpg` | Ground colour, 2048 px | Sentinel-2 L2A, cloud-masked median of 7 passes from Mar–Apr 2026, sharpened with the canopy model |
 | `trees.json` | About 38k tree tops with height and crown size | Meta & WRI 1 m global canopy height map |
+| `canopy.jpg` | Tree height base map | Same canopy height map, coloured 0–20+ m |
+| `landcover.png` | Land cover base map | ESA WorldCover 2021, 10 m |
+| `ndvi.jpg`, `falsecolor.jpg` | Vegetation index and infrared base maps | Same Sentinel-2 passes, near-infrared band |
+| `basemaps.json` | Legend data for those maps (colour ramps, class shares) | |
 | `context.json` | Roads, building footprints, named places | Overture Maps 2026-09-23.1 |
 | `layers.geojson` | **Surveyed boundaries (title plans)**, WGS84 lon/lat | Added by hand, empty for now |
 | `meta.json` | Origin, extent, sources | |
@@ -42,7 +46,7 @@ To rebuild (needs Python with rasterio, pyproj, scipy, pyarrow, requests and Pil
 
 ```sh
 cd outer-heaven/data/build
-python3 build.py            # or one step: dem chm s2 trees overture export
+python3 build.py            # or one step: dem chm s2 trees layers overture export
 ```
 
 ### Setting the property limits
@@ -77,6 +81,10 @@ If a plan uses an older datum rather than WGS84/SIRGAS, it has to be converted f
 - **Trees:** positions and heights come from the 1 m canopy model (imagery from 2009–2020).
 
 A drone mapping flight over the property (an orthophoto plus a surface model at a few cm) can replace the terrain and imagery inside the boundary.
+
+### Base maps
+
+Topographic, shaded relief and slope are drawn in the browser from `terrain.json`. The topographic map numbers the 50 m contours and turns the contour lines on. Each base map comes with the layers that suit it: trees are on for satellite and off for the others, because the crowns would cover the data. Any layer can be switched back on in **Display**.
 
 ## Concept pages notes
 

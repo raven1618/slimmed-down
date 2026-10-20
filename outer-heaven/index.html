@@ -234,6 +234,32 @@ a { color: var(--gold); text-underline-offset: 3px; }
 .toggle input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .toggle .sw { margin-right: 8px; }
 .display .row-end { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.bases { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 2px 0 4px; }
+.base {
+  display: flex; align-items: center; gap: 8px; padding: 5px 8px 5px 5px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--raised); color: var(--sand);
+  font-size: 0.8125rem; font-weight: 600; line-height: 1.2; text-align: left; cursor: pointer;
+}
+.base i { flex: none; width: 26px; height: 26px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12); }
+.base:hover { border-color: var(--gold); }
+.base[aria-pressed="true"] { border-color: var(--earth); box-shadow: inset 0 0 0 1px var(--earth); }
+.maplegend {
+  display: grid; gap: 6px; width: min(300px, calc(100vw - 96px));
+  padding: 10px 12px; border-radius: 12px;
+  background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(8px);
+  font-size: 0.75rem; color: var(--muted);
+}
+.maplegend .lg-head { margin: 0; font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+.maplegend .ramp { height: 10px; border-radius: 3px; }
+.maplegend .ticks { position: relative; height: 15px; margin-top: -2px; font-family: var(--mono); font-size: 0.6875rem; font-variant-numeric: tabular-nums; color: var(--sand); }
+.maplegend .ticks span { position: absolute; top: 0; white-space: nowrap; }
+.maplegend .ends { display: flex; justify-content: space-between; margin-top: -4px; }
+.maplegend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.maplegend li { display: flex; align-items: center; gap: 6px; color: var(--sand); }
+.maplegend li .sw { margin: 0; flex: none; }
+.maplegend li em { font-style: normal; color: var(--muted); }
+.maplegend li .pct { margin-left: auto; font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.maplegend .lg-note { margin: 0; font-size: 0.6875rem; line-height: 1.4; color: var(--faint); }
 body.hide-title .brand { display: none; }
 body.hide-hint .hint { visibility: hidden; }
 .rename { display: flex; gap: 6px; width: 100%; }
@@ -401,6 +427,8 @@ ul.plain b { color: var(--sand); font-weight: 600; }
   .chip { padding: 5px 8px 5px 7px; font-size: 0.75rem; }
   .chip small { display: none; }
   .compass { bottom: calc(env(safe-area-inset-bottom, 0px) + 104px); }
+  .maplegend { padding: 8px 10px; gap: 5px; }
+  .maplegend .lg-note { display: none; }
   .plan-nav { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -429,6 +457,7 @@ ul.plain b { color: var(--sand); font-weight: 600; }
 
 <div class="dock" id="dock">
   <p class="hint" id="hint">Drag to orbit · Pinch or scroll to zoom · Tap a place</p>
+  <div class="maplegend" id="legend" hidden></div>
   <div class="specs" id="specs" hidden></div>
   <div class="bar" id="bar" role="group" aria-label="Places"></div>
 </div>
@@ -932,13 +961,12 @@ const SPECS = {
 /* ---------------------------------------------------------- renderer -- */
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ antialias: !small, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 } catch (err) {
   fail('This browser cannot show the 3D view. The plan still works.');
   throw err;
 }
-const PR = Math.min(devicePixelRatio, small ? 1.6 : 2);
-renderer.setPixelRatio(PR);
+renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.75 : 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -1199,10 +1227,36 @@ const UTM = (() => {
 
 const hill = { scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 1, 40000), vs: 1, on: { trees: true, buildings: true, roads: true, contours: false, grid: false }, curtains: [] };
 let META, HG, HRES, HHALF, HBASE, HE, CTX, OFFICIAL = [];
+/* The mesh is finer than the 10 m data: heights in between come from a smooth (Catmull-Rom) fit. */
+let HF, HFN, HFRES, HLO, HHI;
+function refineTerrain() {
+  HFN = small ? 601 : 801; HFRES = (2 * HHALF) / (HFN - 1);
+  HF = new Float32Array(HFN * HFN);
+  const taps = new Int32Array(HFN * 4), wts = new Float32Array(HFN * 4);
+  for (let i = 0; i < HFN; i++) {
+    const g = (i * HFRES) / HRES, i0 = Math.min(g | 0, HG - 2), t = g - i0;
+    const w = [((-t + 2) * t - 1) * t / 2, ((3 * t - 5) * t * t + 2) / 2, ((-3 * t + 4) * t + 1) * t / 2, (t - 1) * t * t / 2];
+    for (let k = 0; k < 4; k++) { taps[i * 4 + k] = clamp(i0 - 1 + k, 0, HG - 1); wts[i * 4 + k] = w[k]; }
+  }
+  HLO = Infinity; HHI = -Infinity;
+  for (let r = 0; r < HFN; r++) for (let c = 0; c < HFN; c++) {
+    let h = 0;
+    for (let a = 0; a < 4; a++) {
+      const row = taps[r * 4 + a] * HG, wr = wts[r * 4 + a];
+      for (let b = 0; b < 4; b++) h += wr * wts[c * 4 + b] * HE[row + taps[c * 4 + b]];
+    }
+    HF[r * HFN + c] = h; if (h < HLO) HLO = h; if (h > HHI) HHI = h;
+  }
+}
 function groundAt(x, z) {
-  const gx = clamp((x + HHALF) / HRES, 0, HG - 1.001), gz = clamp((z + HHALF) / HRES, 0, HG - 1.001);
-  const x0 = gx | 0, z0 = gz | 0, fx = gx - x0, fz = gz - z0, i = z0 * HG + x0;
-  return HE[i] * (1 - fx) * (1 - fz) + HE[i + 1] * fx * (1 - fz) + HE[i + HG] * (1 - fx) * fz + HE[i + HG + 1] * fx * fz;
+  const gx = clamp((x + HHALF) / HFRES, 0, HFN - 1.001), gz = clamp((z + HHALF) / HFRES, 0, HFN - 1.001);
+  const x0 = gx | 0, z0 = gz | 0, fx = gx - x0, fz = gz - z0, i = z0 * HFN + x0;
+  return HF[i] * (1 - fx) * (1 - fz) + HF[i + 1] * fx * (1 - fz) + HF[i + HFN] * (1 - fx) * fz + HF[i + HFN + 1] * fx * fz;
+}
+/* Ground slope in degrees at true scale, from the fine grid. */
+function slopeAt(x, z) {
+  const d = HFRES, gx = (groundAt(x + d, z) - groundAt(x - d, z)) / (2 * d), gz = (groundAt(x, z + d) - groundAt(x, z - d)) / (2 * d);
+  return (Math.atan(Math.hypot(gx, gz)) * 180) / Math.PI;
 }
 const yAt = (x, z) => (groundAt(x, z) - HBASE) * hill.vs;
 const toUTM = (x, z) => [META.origin.easting + x, META.origin.northing - z];
@@ -1220,12 +1274,12 @@ function imageryColor(x, z, out) {
   return out.setRGB(imgPx[k] / 255, imgPx[k + 1] / 255, imgPx[k + 2] / 255, THREE.SRGBColorSpace);
 }
 
-/* Terrain: one vertex per 10 m, heights in metres above sea level. */
+/* Terrain: one vertex per 5 m (6.7 m on phones), heights in metres above sea level. */
 function terrainGeometry() {
-  const n = HG, pos = new Float32Array(n * n * 3), uv = new Float32Array(n * n * 2);
+  const n = HFN, pos = new Float32Array(n * n * 3), uv = new Float32Array(n * n * 2);
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
     const i = r * n + c;
-    pos[i * 3] = -HHALF + c * HRES; pos[i * 3 + 2] = -HHALF + r * HRES;
+    pos[i * 3] = -HHALF + c * HFRES; pos[i * 3 + 2] = -HHALF + r * HFRES;
     uv[i * 2] = c / (n - 1); uv[i * 2 + 1] = 1 - r / (n - 1);
   }
   const idx = new Uint32Array((n - 1) * (n - 1) * 6);
@@ -1242,34 +1296,37 @@ function terrainGeometry() {
 }
 function setTerrainY(g) {
   const p = g.attributes.position;
-  for (let i = 0; i < p.count; i++) p.setY(i, (HE[i] - HBASE) * hill.vs);
+  for (let i = 0; i < p.count; i++) p.setY(i, (HF[i] - HBASE) * hill.vs);
   p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
 }
-/* Contour lines drawn in the terrain shader: thin every 10 m, stronger every 50 m. */
-function contourMaterial(map) {
+/* Contour lines drawn in the terrain shader: thin every 10 m, stronger every 50 m. The annotation
+   canvas (boundaries, grid) is laid on top unlit, like a sheet of tracing paper. */
+function contourMaterial(map, ov) {
   const mat = new THREE.MeshStandardMaterial({ map, roughness: 1, metalness: 0 });
-  mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 } };
+  mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 }, uLine: { value: new THREE.Color(1, 0.93, 0.72) }, uLineK: { value: 0.8 }, uOv: { value: ov } };
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, mat.userData.u);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uVS; uniform float uBase;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvElev = position.y / uVS + uBase;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv;')
+      .replace('#include <tonemapping_fragment>', 'vec4 ov = texture2D(uOv, vMapUv);\ngl_FragColor.rgb = gl_FragColor.rgb * (1.0 - ov.a) + ov.rgb;\n#include <tonemapping_fragment>')
       .replace('#include <map_fragment>', `#include <map_fragment>
         if (uOn > 0.5) {
           float w = max(fwidth(vElev), 1e-4);
           float d10 = abs(fract(vElev / 10.0 + 0.5) - 0.5) * 10.0 / w;
           float d50 = abs(fract(vElev / 50.0 + 0.5) - 0.5) * 50.0 / w;
           float l = max(1.0 - smoothstep(0.4, 1.3, d10), (1.0 - smoothstep(0.8, 2.2, d50)) * 1.0);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.93, 0.72), l * 0.8);
-        }`);
+          l *= smoothstep(0.975, 0.995, diffuseColor.a); // maps knock lines out under their labels
+          diffuseColor.rgb = mix(diffuseColor.rgb, uLine, l * uLineK);
+        }
+        diffuseColor.a = 1.0;`);
   };
   return mat;
 }
 /* Skirts make the 4 km square read as a model block instead of a floating sheet. */
 function skirtGeometry() {
-  const n = HG, pos = [], idx = [];
-  let lo = Infinity; for (let i = 0; i < HE.length; i++) lo = Math.min(lo, HE[i]);
-  const bottom = (lo - HBASE) * hill.vs - 60;
+  const n = HFN, pos = [], idx = [];
+  const bottom = (HLO - HBASE) * hill.vs - 60;
   const edges = [
     (i) => i, (i) => i * n + (n - 1), (i) => (n - 1) * n + (n - 1 - i), (i) => (n - 1 - i) * n,
   ];
@@ -1277,7 +1334,7 @@ function skirtGeometry() {
     const base = pos.length / 3;
     for (let i = 0; i < n; i++) {
       const v = e(i), r = Math.floor(v / n), c = v % n;
-      const x = -HHALF + c * HRES, z = -HHALF + r * HRES, y = (HE[v] - HBASE) * hill.vs;
+      const x = -HHALF + c * HFRES, z = -HHALF + r * HFRES, y = (HF[v] - HBASE) * hill.vs;
       pos.push(x, y, z, x, bottom, z);
     }
     for (let i = 0; i < n - 1; i++) { const a = base + i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
@@ -1291,13 +1348,25 @@ function skirtGeometry() {
 /* Trees: one per canopy top in the 1 m height model. Colour comes from the imagery under it. */
 let treeData = null;
 function treeGeometry() {
-  const crown = new THREE.IcosahedronGeometry(1, 0); crown.scale(1, 0.29, 1); crown.translate(0, 0.71, 0);
+  // A lumpy, smooth-shaded crown that is darker underneath. The lumps depend only on position, so shared corners stay joined.
+  const crown = new THREE.IcosahedronGeometry(1, small ? 0 : 1), p = crown.attributes.position, nrm = crown.attributes.normal;
+  const col = new Float32Array(p.count * 3), v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i).normalize();
+    nrm.setXYZ(i, v.x, v.y, v.z);
+    const k = 0.92 + 0.16 * hash2(Math.round(v.x * 50) + Math.round(v.z * 50) * 7, Math.round(v.y * 50));
+    p.setXYZ(i, v.x * k, v.y * k, v.z * k);
+    const ao = 0.58 + 0.42 * smooth(-0.9, 0.8, v.y);
+    col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = ao;
+  }
+  crown.setAttribute('color', new THREE.BufferAttribute(col, 3)); crown.deleteAttribute('uv');
+  crown.scale(1, 0.29, 1); crown.translate(0, 0.71, 0);
   const trunk = new THREE.CylinderGeometry(0.06, 0.09, 0.5, 5, 1, true); trunk.translate(0, 0.25, 0);
-  return mergeGeometries([colorize(crown, 0xffffff), colorize(trunk, 0x7a6450)]);
+  return mergeGeometries([crown, colorize(trunk, 0x7a6450)]);
 }
 function buildTrees() {
   const raw = treeData, n = small ? Math.min(raw.count, 32000) : raw.count;
-  const mesh = new THREE.InstancedMesh(treeGeometry(), new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95 }), n);
+  const mesh = new THREE.InstancedMesh(treeGeometry(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }), n);
   const col = new THREE.Color(), leaf = new THREE.Color(), R = rng(3);
   for (let i = 0; i < n; i++) {
     imageryColor(raw.x[i], raw.z[i], col);
@@ -1637,15 +1706,18 @@ function loadOfficial(fc) {
 
 /* ------------------------------------------------------------ build -- */
 async function buildHill() {
-  const [meta, ter, trees, ctx, layers, img] = await Promise.all([
+  const [meta, ter, trees, ctx, layers, img, legends] = await Promise.all([
     getJSON('data/meta.json'), getJSON('data/terrain.json'), getJSON('data/trees.json'), getJSON('data/context.json'),
     getJSON('data/layers.geojson').catch(() => ({ features: [] })), loadImage('data/imagery.jpg'),
+    getJSON('data/basemaps.json').catch(() => ({})),
   ]);
+  LEGENDS = legends;
   META = meta; CTX = ctx;
   HG = ter.grid; HRES = ter.res; HHALF = meta.half; HBASE = ter.base;
   const raw = new Uint16Array(b64bytes(ter.data).buffer);
   HE = new Float32Array(raw.length);
   for (let i = 0; i < raw.length; i++) HE[i] = HBASE + raw[i] / ter.scale;
+  refineTerrain();
   {
     const u = b64bytes(trees.data), dv = new DataView(u.buffer), n = trees.count;
     treeData = { count: n, x: new Float32Array(n), z: new Float32Array(n), h: new Float32Array(n), r: new Float32Array(n) };
@@ -1679,20 +1751,16 @@ async function buildHill() {
 
   const t = new THREE.Texture(img);
   t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO; t.needsUpdate = true;
-  const tg = terrainGeometry();
-  hill.terrainMat = contourMaterial(t);
-  hill.terrain = new THREE.Mesh(tg, hill.terrainMat);
+  baseTex.satellite = t; hill.base = 'satellite';
+  const [oc, og] = canvas(small ? 2048 : 4096, small ? 2048 : 4096);
+  const otex = new THREE.CanvasTexture(oc); otex.colorSpace = THREE.SRGBColorSpace; otex.anisotropy = ANISO; otex.premultiplyAlpha = true;
+  overlay = { c: oc, g: og, tex: otex };
+  hill.terrainMat = contourMaterial(t, otex);
+  hill.terrain = new THREE.Mesh(terrainGeometry(), hill.terrainMat);
   hill.terrain.receiveShadow = true;
   scene.add(hill.terrain);
   hill.skirt = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x4a3b2e, roughness: 1, side: THREE.DoubleSide }));
   scene.add(hill.skirt);
-
-  const [oc, og] = canvas(small ? 2048 : 4096, small ? 2048 : 4096);
-  const otex = new THREE.CanvasTexture(oc); otex.colorSpace = THREE.SRGBColorSpace; otex.anisotropy = ANISO;
-  overlay = { c: oc, g: og, tex: otex };
-  hill.overlay = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ map: otex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6, fog: false }));
-  hill.overlay.renderOrder = 2;
-  scene.add(hill.overlay);
 
   hill.trees = buildTrees(); scene.add(hill.trees);
   hill.pin = new THREE.Group();
@@ -1704,10 +1772,16 @@ async function buildHill() {
     hill.pin.add(stem, head); hill.pin.visible = false; scene.add(hill.pin);
   }
   relayout();
+  loadImage('data/landcover.png').then((im) => {
+    const [c, g] = canvas(im.width, im.height);
+    g.drawImage(im, 0, 0); lcPx = g.getImageData(0, 0, im.width, im.height).data; lcW = im.width;
+  }).catch(() => {});
+  if (display.base !== 'satellite') setBase(display.base);
 }
 
 /* Everything that sits on the ground, recomputed when the relief scale changes. */
 function relayout() {
+  renderer.shadowMap.needsUpdate = true;
   setTerrainY(hill.terrain.geometry);
   hill.terrainMat.userData.u.uVS.value = hill.vs;
   hill.skirt.geometry.dispose(); hill.skirt.geometry = skirtGeometry();
@@ -1723,10 +1797,151 @@ function relayout() {
   if (hill.pin.visible) hill.pin.position.y = yAt(hill.pin.position.x, hill.pin.position.z);
 }
 function applyLayers() {
+  renderer.shadowMap.needsUpdate = true;
   hill.trees.visible = hill.on.trees;
   hill.buildings.visible = hill.on.buildings;
   hill.roads.visible = hill.on.roads;
   hill.terrainMat.userData.u.uOn.value = hill.on.contours ? 1 : 0;
+}
+
+/* ------------------------------------------------------- base maps -- */
+/* What the ground shows. Image layers are made by data/build/build.py; the ones that come from
+   elevation alone (topographic, relief, slope) are drawn here from the terrain grid. */
+let LEGENDS = {}, lcPx = null, lcW = 0;
+const CREAM = new THREE.Color(1, 0.93, 0.72), BROWN = new THREE.Color(0x4a3220);
+const TOPO = [[110, '#8fb68c'], [140, '#bcd197'], [170, '#e4e2a8'], [200, '#e9cd95'], [230, '#d6a974'], [260, '#b9875c'], [290, '#efe6da']];
+const SLOPE = [[5, '#eef0dc', '0–5°', 'flat to gentle'], [10, '#e9d27a', '5–10°', 'moderate'], [20, '#e19a45', '10–20°', 'steep'], [30, '#c45a32', '20–30°', 'very steep'], [91, '#7f2a24', 'over 30°', 'extreme']];
+const gradientCSS = (stops, colors) => { const a = stops[0], b = stops[stops.length - 1]; return `linear-gradient(90deg, ${colors.map((c, i) => `${c} ${(((stops[i] - a) / (b - a)) * 100).toFixed(1)}%`).join(', ')})`; };
+const BASES = {
+  satellite: { label: 'Satellite', file: 'data/imagery.jpg', trees: true, line: CREAM, swatch: 'linear-gradient(135deg, #29432a, #56743f 55%, #a2865f)' },
+  topo: { label: 'Topographic', make: topoMap, contours: true, line: BROWN, swatch: gradientCSS(TOPO.map((t) => t[0]), TOPO.map((t) => t[1])) },
+  relief: { label: 'Shaded relief', make: reliefMap, line: BROWN, swatch: 'linear-gradient(135deg, #f4f0e8, #b9b2a6 50%, #5d5850)' },
+  slope: { label: 'Slope', make: slopeMap, line: BROWN, swatch: `linear-gradient(90deg, ${SLOPE.map((c) => c[1]).join(', ')})` },
+  landcover: { label: 'Land cover', file: 'data/landcover.png', line: CREAM, swatch: 'linear-gradient(90deg, #2f6e40 0 62%, #d3dc8f 62% 86%, #c8553d 86%)' },
+  canopy: { label: 'Tree height', file: 'data/canopy.jpg', line: BROWN, swatch: 'linear-gradient(90deg, #ece6d4, #bfd886 30%, #4c9a4b 60%, #0b3a31)' },
+  ndvi: { label: 'Vegetation index', file: 'data/ndvi.jpg', line: BROWN, swatch: 'linear-gradient(90deg, #7d6a57, #ddd08f 35%, #72ab54 70%, #1a5531)' },
+  infrared: { label: 'Infrared', file: 'data/falsecolor.jpg', line: CREAM, swatch: 'linear-gradient(135deg, #c8164a, #8a4f78 55%, #7fd0d4)' },
+};
+const baseTex = {};
+let baseWant = 'satellite';
+const hexRGB = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+function rampRGB(v, stops) {
+  if (v <= stops[0][0]) return hexRGB(stops[0][1]);
+  for (let i = 1; i < stops.length; i++) if (v <= stops[i][0]) {
+    const [a, ca] = stops[i - 1], [b, cb] = stops[i], t = (v - a) / (b - a), A = hexRGB(ca), B = hexRGB(cb);
+    return [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t];
+  }
+  return hexRGB(stops[stops.length - 1][1]);
+}
+/* Light on the bare ground, per fine-grid vertex. lights: [x, y, z, weight], pointing at the light. zf exaggerates relief. */
+function hillshade(zf, lights) {
+  const n = HFN, d = 2 * HFRES, out = new Float32Array(n * n);
+  const L = lights.map(([x, y, z, w]) => { const k = Math.hypot(x, y, z); return [x / k, y / k, z / k, w]; });
+  const flat = L.reduce((a, l) => a + l[3] * l[1], 0);
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    const gx = ((HF[r * n + Math.min(c + 1, n - 1)] - HF[r * n + Math.max(c - 1, 0)]) / d) * zf;
+    const gz = ((HF[Math.min(r + 1, n - 1) * n + c] - HF[Math.max(r - 1, 0) * n + c]) / d) * zf;
+    const k = 1 / Math.hypot(gx, 1, gz);
+    let sum = 0;
+    for (const [lx, ly, lz, w] of L) sum += w * Math.max(0, (-gx * lx + ly - gz * lz) * k);
+    out[r * n + c] = sum / flat;                    // 1 on flat ground
+  }
+  return out;
+}
+function gridCanvas(paint) {
+  const n = HFN, [c, g] = canvas(n, n), im = g.createImageData(n, n), px = im.data, rgb = [0, 0, 0];
+  for (let i = 0; i < n * n; i++) { paint(i, rgb); px[i * 4] = rgb[0]; px[i * 4 + 1] = rgb[1]; px[i * 4 + 2] = rgb[2]; px[i * 4 + 3] = 255; }
+  g.putImageData(im, 0, 0);
+  return c;
+}
+const NW = [[-1, 1.4, -1, 1]];
+function topoMap() {
+  const sh = hillshade(2, NW);
+  const small1 = gridCanvas((i, o) => { const c = rampRGB(HF[i], TOPO), k = clamp(0.4 + 0.6 * sh[i], 0.5, 1.15); o[0] = c[0] * k; o[1] = c[1] * k; o[2] = c[2] * k; });
+  const W = small ? 1536 : 2048, [c, g] = canvas(W, W);
+  g.imageSmoothingQuality = 'high'; g.drawImage(small1, 0, 0, W, W);
+  contourLabels(c, g);
+  return c;
+}
+function reliefMap() {
+  const sh = hillshade(2.5, [[-1, 1.2, -1, 0.5], [-1, 1.2, 0.3, 0.25], [0.3, 1.2, -1, 0.25]]);
+  const A = hexRGB('#4f4a43'), B = hexRGB('#f7f3eb');
+  return gridCanvas((i, o) => { const t = clamp(0.66 * sh[i] + 0.04, 0, 1); for (let k = 0; k < 3; k++) o[k] = A[k] + (B[k] - A[k]) * t; });
+}
+function slopeMap() {
+  const sh = hillshade(1.5, NW), n = HFN, d = 2 * HFRES, cols = SLOPE.map((c) => hexRGB(c[1]));
+  return gridCanvas((i, o) => {
+    const r = (i / n) | 0, c = i % n;
+    const gx = (HF[r * n + Math.min(c + 1, n - 1)] - HF[r * n + Math.max(c - 1, 0)]) / d, gz = (HF[Math.min(r + 1, n - 1) * n + c] - HF[Math.max(r - 1, 0) * n + c]) / d;
+    const deg = (Math.atan(Math.hypot(gx, gz)) * 180) / Math.PI, col = cols[SLOPE.findIndex((s) => deg < s[0])], k = clamp(0.8 + 0.2 * sh[i], 0.7, 1.08);
+    o[0] = col[0] * k; o[1] = col[1] * k; o[2] = col[2] * k;
+  });
+}
+/* Elevation numbers on the 50 m contours, reading uphill. The map's alpha marks where they sit,
+   so the contour shader leaves a gap for them. */
+function contourLabels(c, g) {
+  const W = c.width, k = W / (2 * HHALF), fs = Math.round(W / 92), cand = [];
+  for (let L = Math.ceil(HLO / 50) * 50; L < HHI; L += 50) {
+    for (let r = 6; r < HG - 6; r += 10) for (let q = 6; q < HG - 7; q++) {
+      const a = HE[r * HG + q] - L, b = HE[r * HG + q + 1] - L, a2 = HE[q * HG + r] - L, b2 = HE[(q + 1) * HG + r] - L;
+      if (a * b < 0) cand.push([L, -HHALF + (q + a / (a - b)) * HRES, -HHALF + r * HRES]);
+      if (a2 * b2 < 0) cand.push([L, -HHALF + r * HRES, -HHALF + (q + a2 / (a2 - b2)) * HRES]);
+    }
+  }
+  cand.sort((p, q) => hash2(p[1] | 0, p[2] | 0) - hash2(q[1] | 0, q[2] | 0));
+  const picks = [];
+  for (let [L, x, z] of cand) {
+    let gx = 0, gz = 0, m = 0;
+    for (let it = 0; it < 3; it++) {                  // settle onto the smooth surface the shader draws
+      gx = (groundAt(x + 12, z) - groundAt(x - 12, z)) / 24; gz = (groundAt(x, z + 12) - groundAt(x, z - 12)) / 24; m = gx * gx + gz * gz;
+      if (m < 1e-6) break;
+      const e = groundAt(x, z) - L; x -= (e * gx) / m; z -= (e * gz) / m;
+    }
+    if (Math.sqrt(m) < 0.04 || Math.abs(x) > HHALF - 150 || Math.abs(z) > HHALF - 150) continue;
+    if (picks.some((p) => Math.hypot(p.x - x, p.z - z) < (p.L === L ? 850 : 260))) continue;
+    picks.push({ L, x, z, gx, gz });
+  }
+  const [mc2, mg] = canvas(W, W);
+  g.font = `600 ${fs}px "IBM Plex Mono", ui-monospace, monospace`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#5b3f26';
+  for (const p of picks) {
+    let ang = Math.atan2(p.gx, -p.gz);
+    if (Math.sin(ang) * p.gx - Math.cos(ang) * p.gz < 0) ang += Math.PI;   // the tops of the numbers face uphill
+    const w = g.measureText(String(p.L)).width + fs * 0.7, h = fs * 1.25;
+    for (const [ctx, draw] of [[g, () => g.fillText(String(p.L), 0, 0)], [mg, () => { mg.fillStyle = '#fff'; mg.fillRect(-w / 2, -h / 2, w, h); }]]) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.translate(W / 2 + p.x * k, W / 2 + p.z * k); ctx.rotate(ang); draw();
+    }
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  const im = g.getImageData(0, 0, W, W), mk = mg.getImageData(0, 0, W, W).data;
+  for (let i = 3; i < mk.length; i += 4) if (mk[i] > 40) im.data[i] = 245;
+  g.putImageData(im, 0, 0);
+}
+async function baseTexture(id) {
+  if (baseTex[id]) return baseTex[id];
+  const b = BASES[id];
+  let t;
+  if (b.file) { t = new THREE.Texture(await loadImage(b.file)); t.needsUpdate = true; }
+  else t = new THREE.CanvasTexture(b.make());
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO;
+  return (baseTex[id] = t);
+}
+async function setBase(id) {
+  if (!BASES[id]) id = 'satellite';
+  baseWant = id;
+  let t;
+  try { t = await baseTexture(id); }
+  catch (err) { console.error(err); if (baseWant === id) { display.base = hill.base; applyDisplay(); if (!displayEl.hidden) renderDisplay(); } return; }
+  if (baseWant !== id) return;
+  const b = BASES[id], u = hill.terrainMat.userData.u;
+  hill.terrainMat.map = t;
+  u.uLine.value.copy(b.line); u.uLineK.value = b.line === CREAM ? 0.8 : 0.6;
+  hill.base = id;
+}
+/* ESA WorldCover class under a point, read from the land cover map. */
+function landcoverAt(x, z) {
+  if (!lcPx || !LEGENDS.landcover) return null;
+  const u = clamp(Math.floor(((x + HHALF) / (2 * HHALF)) * lcW), 0, lcW - 1), v = clamp(Math.floor(((z + HHALF) / (2 * HHALF)) * lcW), 0, lcW - 1), k = (v * lcW + u) * 4;
+  return LEGENDS.landcover.find((c) => { const [r, g, b] = hexRGB(c.color); return r === lcPx[k] && g === lcPx[k + 1] && b === lcPx[k + 2]; }) || null;
 }
 
 /* Named places from Overture. Points stacked on one spot are geocoding guesses, so they are left out. */
@@ -2169,6 +2384,7 @@ mc.enableDamping = true; mc.dampingFactor = 0.07;
 mc.minDistance = 25; mc.maxDistance = 7500;
 mc.maxPolarAngle = 1.45; mc.minPolarAngle = 0.02;
 mc.screenSpacePanning = false;
+mc.zoomToCursor = true;
 mc.enabled = false;
 
 function fitCamera(cam) {
@@ -2293,11 +2509,13 @@ function showPoint(x, z, title) {
   hill.pin.position.set(x, yAt(x, z), z); hill.pin.visible = true;
   const s = META.summit, dist = Math.hypot(x - s.x, z - s.z);
   const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}\nUTM 21S: ${E.toFixed(1)} E, ${N.toFixed(1)} N\nGround ≈ ${g.toFixed(0)} m`;
+  const lc = landcoverAt(x, z);
   openDrawer('Point', title || `${lat.toFixed(5)}, ${lon.toFixed(5)}`, null, [
     ['Latitude', lat.toFixed(6)], ['Longitude', lon.toFixed(6)],
     ['UTM 21S easting', fmt(E, 1) + ' m'], ['UTM 21S northing', fmt(N, 1) + ' m'],
-    ['Ground elevation', `≈ ${g.toFixed(0)} m`], ['To the summit', `${fmt(dist, 0)} m`],
-  ], [['Copy coordinates', (b) => copyText(text, b)]], 'var(--gold)', 'Ground elevation under forest is estimated from radar data minus canopy height; expect a few metres of error.');
+    ['Ground elevation', `≈ ${g.toFixed(0)} m`], ['Slope', `≈ ${slopeAt(x, z).toFixed(0)}°`],
+    ...(lc ? [['Land cover', lc.name]] : []), ['To the summit', `${fmt(dist, 0)} m`],
+  ], [['Copy coordinates', (b) => copyText(text, b)]], 'var(--gold)', 'Ground elevation under forest is estimated from radar data minus canopy height; expect a few metres of error. Slope is averaged over about 30 m.');
 }
 
 function bounds(utm) {
@@ -2349,8 +2567,30 @@ function groundPoint(cx, cy) {
   hill.camera.updateMatrixWorld();
   ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
   ray.setFromCamera(ndc, hill.camera);
-  const hit = ray.intersectObject(hill.terrain, false)[0];
-  return hit ? hit.point : null;
+  return rayGround(ray.ray.origin, ray.ray.direction);
+}
+/* First point where a ray meets the ground: clip it to the terrain's box, step 2.5 m at a time, then bisect. */
+function rayGround(o, d) {
+  let t0 = 0, t1 = 1e5;
+  for (const [oc, dc, lo, hi] of [[o.x, d.x, -HHALF, HHALF], [o.z, d.z, -HHALF, HHALF], [o.y, d.y, (HLO - HBASE) * hill.vs - 1, (HHI - HBASE) * hill.vs + 1]]) {
+    if (Math.abs(dc) < 1e-9) { if (oc < lo || oc > hi) return null; continue; }
+    const a = (lo - oc) / dc, b = (hi - oc) / dc;
+    t0 = Math.max(t0, Math.min(a, b)); t1 = Math.min(t1, Math.max(a, b));
+  }
+  if (t0 > t1) return null;
+  const above = (t) => o.y + d.y * t - yAt(o.x + d.x * t, o.z + d.z * t);
+  let a = t0;
+  if (above(a) <= 0) return null;
+  for (let t = t0 + HFRES / 2; a < t1; t += HFRES / 2) {
+    const b = Math.min(t, t1);
+    if (above(b) <= 0) {
+      let lo = a, hi = b;
+      for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (above(m) > 0) lo = m; else hi = m; }
+      return new THREE.Vector3(o.x + d.x * hi, o.y + d.y * hi, o.z + d.z * hi);
+    }
+    a = b;
+  }
+  return null;
 }
 function pushUndo(b) { limits.undo.push({ id: b.id, utm: b.utm.map((p) => p.slice()) }); if (limits.undo.length > 60) limits.undo.shift(); }
 let redrawQueued = false;
@@ -2662,6 +2902,7 @@ function openSources() {
     <li><b>Ground shape.</b> ${m.elevation}.</li>
     <li><b>Trees.</b> ${m.canopy}. ${fmt(treeData.count, 0)} tree tops taller than 4 m are drawn at their measured height.</li>
     <li><b>Ground colour.</b> ${m.imagery}. 10 m pixels, sharpened with the 1 m canopy model.</li>
+    <li><b>Other base maps.</b> Land cover from ${m.landcover}. Vegetation index and infrared from the same Sentinel-2 passes (near-infrared band). Tree height from the canopy model. Topographic, shaded relief and slope are drawn from the elevation model.</li>
     <li><b>Roads, buildings, names.</b> ${m.context}.</li>
     <li><b>Coordinates.</b> WGS84 / UTM zone 21S (EPSG:32721). Model origin ${fmt(META.origin.easting, 0)} E, ${fmt(META.origin.northing, 0)} N; the model covers 4 × 4 km.</li>
   </ul>`;
@@ -2679,18 +2920,19 @@ function pill(label, pressed, onClick, cls = '') {
 }
 /* ------------------------------------------------- what the map shows -- */
 const DISPLAY_DEFAULT = {
+  base: 'satellite',
   propLabels: true, propArea: true, summit: false, lodging: false, places: false,
   trees: true, buildings: true, roads: true, contours: false, grid: false, relief: false,
-  title: true, compass: true, hint: true,
+  title: true, compass: true, hint: true, legend: true,
 };
 const display = { ...DISPLAY_DEFAULT };
 try { Object.assign(display, JSON.parse(localStorage.getItem('oh-display-v1') || '{}')); } catch (e) {}
 const DISPLAY_GROUPS = [
   ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
   ['Map', [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contour lines (10 m)'], ['grid', 'UTM grid (500 m)'], ['relief', 'Relief ×2']]],
-  ['Screen', [['title', 'Title and description'], ['compass', 'Compass'], ['hint', 'Hints']]],
+  ['Screen', [['title', 'Title and description'], ['compass', 'Compass'], ['hint', 'Hints'], ['legend', 'Map legend']]],
 ];
-const displayEl = $('display');
+const displayEl = $('display'), legendEl = $('legend');
 function applyDisplay() {
   try { localStorage.setItem('oh-display-v1', JSON.stringify(display)); } catch (e) {}
   document.body.classList.toggle('hide-title', !display.title);
@@ -2699,14 +2941,35 @@ function applyDisplay() {
   hill.on.trees = display.trees; hill.on.buildings = display.buildings; hill.on.roads = display.roads; hill.on.contours = display.contours;
   const gridChanged = hill.on.grid !== display.grid;
   hill.on.grid = display.grid;
+  if (!BASES[display.base]) display.base = 'satellite';
+  renderLegend();
   if (!hill.terrain) { hill.vs = display.relief ? 2 : 1; return; }
+  if (display.base !== baseWant) setBase(display.base);
   applyLayers();
   const vs = display.relief ? 2 : 1;
   if (vs !== hill.vs) { hill.vs = vs; relayout(); } else if (gridChanged) drawOverlay();
   if (mode === 'cerro') buildChips();
 }
+function chooseBase(id) {
+  const b = BASES[id];
+  display.base = id; display.trees = !!b.trees; display.contours = !!b.contours;   // each map comes with the layers that suit it
+  applyDisplay(); renderDisplay();
+  const tile = displayEl.querySelector(`[data-base="${id}"]`);
+  if (tile) tile.focus({ preventScroll: true });
+}
 function renderDisplay() {
   displayEl.innerHTML = '';
+  const h = document.createElement('h3'); h.textContent = 'Base map'; displayEl.appendChild(h);
+  const grid = document.createElement('div'); grid.className = 'bases'; grid.setAttribute('role', 'group'); grid.setAttribute('aria-label', 'Base map');
+  for (const [id, b] of Object.entries(BASES)) {
+    const t = document.createElement('button'); t.type = 'button'; t.className = 'base'; t.dataset.base = id;
+    t.setAttribute('aria-pressed', String(display.base === id));
+    const sw = document.createElement('i'); sw.style.background = b.swatch;
+    t.append(sw, document.createTextNode(b.label));
+    t.addEventListener('click', () => chooseBase(id));
+    grid.appendChild(t);
+  }
+  displayEl.appendChild(grid);
   for (const [group, items] of DISPLAY_GROUPS) {
     const h = document.createElement('h3'); h.textContent = group; displayEl.appendChild(h);
     for (const [key, label, color] of items) {
@@ -2732,12 +2995,63 @@ function toggleDisplay(on) {
   displayEl.hidden = !on;
   const pb = bar.querySelector('[data-display]');
   if (pb) pb.setAttribute('aria-expanded', String(on));
-  if (on) { renderDisplay(); const first = displayEl.querySelector('input'); if (first) first.focus({ preventScroll: true }); }
+  if (on) { renderDisplay(); const first = displayEl.querySelector('[aria-pressed="true"]'); if (first) first.focus({ preventScroll: true }); }
 }
 document.addEventListener('pointerdown', (e) => {
   if (displayEl.hidden || displayEl.contains(e.target) || e.target.closest('[data-display]')) return;
   toggleDisplay(false);
 }, true);
+
+/* The key for whichever base map is showing. Satellite needs none. */
+function renderLegend() {
+  const id = display.base, L = LEGENDS || {};
+  legendEl.hidden = mode !== 'cerro' || !display.legend || id === 'satellite';
+  if (legendEl.hidden) return;
+  legendEl.innerHTML = '';
+  const add = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; legendEl.appendChild(e); return e; };
+  const ramp = (stops, colors, ticks, unit, ends) => {
+    add('div', 'ramp').style.background = gradientCSS(stops, colors);
+    const a = stops[0], b = stops[stops.length - 1], tk = add('div', 'ticks');
+    ticks.forEach((v, i) => {
+      const sp = document.createElement('span'), f = (v - a) / (b - a);
+      sp.style.left = (f * 100).toFixed(1) + '%'; sp.style.transform = `translateX(${f < 0.03 ? 0 : f > 0.97 ? -100 : -50}%)`;
+      sp.textContent = v + (i === ticks.length - 1 ? unit : ''); tk.appendChild(sp);
+    });
+    if (ends) { const e = add('div', 'ends'); ends.forEach((t) => { const sp = document.createElement('span'); sp.textContent = t; e.appendChild(sp); }); }
+  };
+  const list = (rows) => {
+    const ul = add('ul');
+    for (const [color, name, sub, pct] of rows) {
+      const li = document.createElement('li'), sw = document.createElement('i'); sw.className = 'sw'; sw.style.background = color;
+      li.append(sw, document.createTextNode(name));
+      if (sub) { const em = document.createElement('em'); em.textContent = sub; li.appendChild(em); }
+      if (pct != null) { const p = document.createElement('span'); p.className = 'pct'; p.textContent = pct; li.appendChild(p); }
+      ul.appendChild(li);
+    }
+  };
+  add('p', 'lg-head', BASES[id].label);
+  if (id === 'topo') {
+    ramp(TOPO.map((t) => t[0]), TOPO.map((t) => t[1]), [110, 150, 200, 250, 290], ' m');
+    add('p', 'lg-note', 'Height above sea level. Contours every 10 m, numbered every 50 m. From the Copernicus 30 m elevation model with the forest canopy taken off.');
+  } else if (id === 'relief') {
+    add('p', 'lg-note', 'The bare ground, lit from the north-west, without trees or imagery. Copernicus 30 m elevation model with the forest canopy taken off.');
+  } else if (id === 'slope') {
+    list(SLOPE.map((c) => [c[1], c[2], c[3]]));
+    add('p', 'lg-note', 'Ground slope averaged over about 30 m. It shows the lie of the land, not small banks or terraces.');
+  } else if (id === 'landcover' && L.landcover) {
+    list(L.landcover.map((c) => [c.color, c.name, null, c.share >= 0.005 ? Math.round(c.share * 100) + '%' : '<1%']));
+    add('p', 'lg-note', 'ESA WorldCover 2021, 10 m. Shares are of the whole 4 × 4 km model.');
+  } else if (id === 'canopy' && L.canopy) {
+    ramp(L.canopy.stops, L.canopy.colors, [0, 5, 10, 15, 20], '+ m');
+    add('p', 'lg-note', `Tree height above the ground. ${Math.round(L.canopy.over5m * 100)}% of the model has trees taller than 5 m. Meta & WRI 1 m canopy height map (imagery 2009–2020).`);
+  } else if (id === 'ndvi' && L.ndvi) {
+    ramp(L.ndvi.stops, L.ndvi.colors, [0.2, 0.4, 0.6, 0.8], '', ['bare or dry', 'dense and green']);
+    add('p', 'lg-note', `NDVI from Sentinel-2: how much living green there is. Median of the green-season passes, ${META ? META.imagery.dates[0].slice(0, 7) : ''} to ${META ? META.imagery.dates.at(-1).slice(0, 7) : ''}.`);
+  } else if (id === 'infrared') {
+    list([['#d0204f', 'Forest and healthy plants'], ['#9a5a86', 'Pasture and lawns'], ['#7fd0d4', 'Bare soil, roads, roofs'], ['#1b2a4a', 'Water and deep shade']]);
+    add('p', 'lg-note', 'Sentinel-2 false colour: near-infrared shown as red. Plants reflect near-infrared strongly, so living vegetation glows red.');
+  }
+}
 
 function buildBar() {
   bar.innerHTML = '';
@@ -2823,6 +3137,11 @@ function setMode(m) {
   setHint();
   toggleDisplay(false);
   compass.hidden = m !== 'cerro' || !display.compass;
+  renderLegend();
+  // The hill keeps imagery colours true; the concept scenes keep their filmic look. The hill's shadows never move.
+  renderer.toneMapping = m === 'cerro' ? THREE.NeutralToneMapping : THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.autoUpdate = m !== 'cerro';
+  renderer.shadowMap.needsUpdate = true;
   buildChips();
   buildBar();
   try { history.replaceState(null, '', '#' + m); } catch (e) {}
@@ -2903,11 +3222,24 @@ function tick() {
     for (const s of active.anchors) place(s.chip, s.anchor, cam, false);
   }
   renderer.render(active.scene, cam);
+  adaptResolution();
   if (first) {
     first = false;
     window.__ohReady = true;
     $('loader').classList.remove('is-on');
   }
+}
+/* If frames stay slow for a couple of seconds, render fewer pixels. */
+const perf = { last: 0, n: 0, sum: 0, start: performance.now() };
+function adaptResolution() {
+  const now = performance.now(), dt = now - perf.last;
+  perf.last = now;
+  if (now - perf.start < 4000 || dt > 250) return;
+  perf.sum += dt; perf.n++;
+  if (perf.n < 90) return;
+  const avg = perf.sum / perf.n, pr = renderer.getPixelRatio();
+  perf.sum = 0; perf.n = 0;
+  if (avg > 30 && pr > 1) renderer.setPixelRatio(Math.max(1, pr - 0.25));
 }
 function place(chip, anchor, cam, hide) {
   if (!chip) return;

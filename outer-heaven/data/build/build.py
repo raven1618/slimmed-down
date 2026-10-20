@@ -9,10 +9,12 @@ Outputs (in outer-heaven/data/):
   terrain.json   ground heights on a 10 m grid (uint16, cm above BASE)
   imagery.jpg    Sentinel-2 colour composite with 1 m canopy detail
   trees.json     tree tops from the 1 m canopy height model
+  falsecolor.jpg, ndvi.jpg, canopy.jpg, landcover.png, basemaps.json
+                 other base maps and their legend data
   context.json   roads, buildings, protected areas and place names (Overture)
 
 Run from this folder:  python3 build.py [step ...]
-Steps: grid dem chm s2 trees overture  (default: all)
+Steps: dem chm s2 trees layers overture export  (default: all)
 """
 import base64, json, math, os, re, sys, time
 import numpy as np
@@ -171,15 +173,16 @@ def step_s2():
     t10, sh10 = grid(10)
     stack = []
     for prefix, cc, date in pick:
-        bands = [warp(f"{S2}/{prefix}{b}.tif", t10, sh10, Resampling.bilinear) for b in ("B04", "B03", "B02")]
+        bands = [warp(f"{S2}/{prefix}{b}.tif", t10, sh10, Resampling.bilinear) for b in ("B04", "B03", "B02", "B08")]
         scl = warp(f"{S2}/{prefix}SCL.tif", t10, sh10, Resampling.nearest, dtype=np.uint8)
         # These COGs are already harmonised to reflectance x 10000; the STAC offset does not apply.
-        rgb = np.stack(bands, -1) * 0.0001
-        rgb[~np.isin(scl, [4, 5, 6, 7, 11])] = np.nan
-        stack.append(rgb)
+        rgbn = np.stack(bands, -1) * 0.0001
+        rgbn[~np.isin(scl, [4, 5, 6, 7, 11])] = np.nan
+        stack.append(rgbn)
     comp = np.nanmedian(np.stack(stack), axis=0)
     comp = np.where(np.isnan(comp), np.nanmedian(comp, axis=(0, 1)), comp)
-    save_npy("s2rgb10", comp.astype(np.float32))
+    save_npy("s2rgb10", comp[..., :3].astype(np.float32))
+    save_npy("s2nir10", comp[..., 3].astype(np.float32))
     with open(os.path.join(CACHE, "s2_dates.json"), "w") as f:
         json.dump([it[2] for it in pick], f)
     print("reflectance p2/p98:", np.percentile(comp, 2, axis=(0, 1)).round(3), np.percentile(comp, 98, axis=(0, 1)).round(3))
@@ -251,25 +254,94 @@ def step_trees():
         json.dump({"count": int(len(rec)), "layout": "int16 x dm, int16 z dm, uint8 height dm, uint8 crown radius dm; tallest first",
                    "data": base64.b64encode(rec[order].tobytes()).decode()}, f)
 
-    # Ground texture: Sentinel-2 colour, upsampled, with crown detail from the 1 m canopy model.
+
+# ------------------------------------------------------------ base maps --
+def crown_detail(img, W=2048, k=0.55):
+    """Lay crown shading from the 1 m canopy model over a W x W colour image (floats 0-1)."""
+    from scipy import ndimage
+    from PIL import Image
+    chm = load_npy("chm1").astype(np.float32)
+    c2 = np.asarray(Image.fromarray(chm).resize((W, W), Image.BOX))
+    gyy, gxx = np.gradient(c2, chm.shape[0] / W)
+    shade = (-gxx + gyy) / np.sqrt(1 + gxx ** 2 + gyy ** 2)
+    hp = shade - ndimage.gaussian_filter(shade, 5)
+    gaps = ndimage.gaussian_filter(c2, 6) - c2
+    amt = np.clip(c2 / 6, 0, 1)
+    detail = 1 + amt * (k * np.clip(hp, -0.6, 0.6) - 0.02 * np.clip(gaps, 0, 8))
+    return np.clip(img * detail[..., None], 0, 1)
+
+
+def upsample(t, W):
+    from PIL import Image
+    return np.asarray(Image.fromarray((np.clip(t, 0, 1) * 255).astype(np.uint8)).resize((W, W), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def ramp(v, stops, colors):
+    """Map values onto a colour ramp given as stops and hex colours."""
+    rgb = np.array([[int(c[i:i + 2], 16) / 255 for i in (1, 3, 5)] for c in colors])
+    return np.stack([np.interp(v, stops, rgb[:, i]) for i in range(3)], -1)
+
+
+def save_jpg(name, img, q=84):
+    from PIL import Image
+    Image.fromarray((np.clip(img, 0, 1) * 255).round().astype(np.uint8)).save(os.path.join(OUT, name), quality=q, optimize=True, progressive=True)
+    print(name, img.shape[0], "px,", os.path.getsize(os.path.join(OUT, name)) // 1024, "KB")
+
+
+WORLDCOVER = {10: ("Tree cover", "#2f6e40"), 20: ("Shrubland", "#9aa04e"), 30: ("Grassland", "#d3dc8f"), 40: ("Cropland", "#e6b45c"),
+              50: ("Built-up", "#c8553d"), 60: ("Bare or sparse", "#cdc3b0"), 80: ("Open water", "#3f7fb8"), 90: ("Wetland", "#5fa9a3")}
+CANOPY = ([0, 1, 3, 6, 9, 12, 15, 20], ["#ece6d4", "#e3e2b3", "#bfd886", "#82bb5c", "#4c9a4b", "#2a7746", "#17583d", "#0b3a31"])
+NDVI = ([0.2, 0.45, 0.6, 0.7, 0.78, 0.84, 0.9], ["#7d6a57", "#b89d73", "#ddd08f", "#b5cf72", "#72ab54", "#388141", "#1a5531"])
+
+
+def step_layers():
+    """Images the viewer can lay over the terrain, plus their legend data (basemaps.json)."""
+    from scipy import ndimage
+    from PIL import Image
     rgb = load_npy("s2rgb10")
+    nir = load_npy("s2nir10")
+    legends = {}
+
+    # Natural colour: Sentinel-2, haze removed, upsampled, with crown detail from the canopy model.
     black = np.percentile(rgb, 0.5, axis=(0, 1)) * 0.85      # haze offset (dark-object subtraction)
     white = np.array([0.17, 0.15, 0.13])
     t = np.clip((rgb - black) / (white - black), 0, 1) ** (1 / 1.5)
     lum = t.mean(-1, keepdims=True)
     t = np.clip(lum + (t - lum) * 1.05, 0, 1)
-    W = 2048
-    base = np.asarray(Image.fromarray((t * 255).astype(np.uint8)).resize((W, W), Image.LANCZOS)).astype(np.float32) / 255
-    c2 = np.asarray(Image.fromarray(chm).resize((W, W), Image.BOX))
-    gyy, gxx = np.gradient(c2, 4000 / W)
-    shade = (-gxx + gyy) / np.sqrt(1 + gxx ** 2 + gyy ** 2)
-    hp = shade - ndimage.gaussian_filter(shade, 5)
-    gaps = ndimage.gaussian_filter(c2, 6) - c2
-    amt = np.clip(c2 / 6, 0, 1)
-    detail = 1 + amt * (0.55 * np.clip(hp, -0.6, 0.6) - 0.02 * np.clip(gaps, 0, 8))
-    out = np.clip(base * detail[..., None], 0, 1)
-    Image.fromarray((out * 255).astype(np.uint8)).save(os.path.join(OUT, "imagery.jpg"), quality=84, optimize=True, progressive=True)
-    print("imagery.jpg", W, "px over", 2 * HALF, "m")
+    save_jpg("imagery.jpg", crown_detail(upsample(t, 2048), 2048))
+
+    # False-colour infrared (NIR, red, green): living vegetation shows red.
+    fc = np.stack([nir, rgb[..., 0], rgb[..., 1]], -1)
+    lo, hi = np.percentile(fc, 1, axis=(0, 1)), np.percentile(fc, 99.5, axis=(0, 1))
+    fc = np.clip((fc - lo) / (hi - lo), 0, 1) ** (1 / 1.2)
+    save_jpg("falsecolor.jpg", crown_detail(upsample(fc, 2048), 2048))
+
+    # Vegetation index from the same green-season composite.
+    ndvi = (nir - rgb[..., 0]) / np.maximum(nir + rgb[..., 0], 1e-4)
+    big = np.asarray(Image.fromarray(ndvi.astype(np.float32)).resize((1600, 1600), Image.BICUBIC))
+    save_jpg("ndvi.jpg", ramp(big, *NDVI), q=88)
+    legends["ndvi"] = {"stops": NDVI[0], "colors": NDVI[1], "p5": round(float(np.percentile(ndvi, 5)), 2), "p50": round(float(np.median(ndvi)), 2), "p95": round(float(np.percentile(ndvi, 95)), 2)}
+
+    # Tree height from the 1 m canopy model, with the same crown shading.
+    chm = load_npy("chm1").astype(np.float32)
+    c2 = np.asarray(Image.fromarray(chm).resize((2048, 2048), Image.BOX))
+    save_jpg("canopy.jpg", crown_detail(ramp(c2, *CANOPY), 2048, k=0.4), q=86)
+    legends["canopy"] = {"stops": CANOPY[0], "colors": CANOPY[1], "over5m": round(float((chm > 5).mean()), 3), "p95": round(float(np.percentile(chm[chm > 5], 95)), 1)}
+
+    # Land cover: ESA WorldCover classes, upsampled with smooth class edges.
+    wc = load_npy("worldcover10")
+    codes = [c for c in WORLDCOVER if (wc == c).any()]
+    W = 2000
+    prob = np.stack([ndimage.gaussian_filter(ndimage.zoom((wc == c).astype(np.float32), W / wc.shape[0], order=1), 2.0) for c in codes])
+    idx = prob.argmax(0).astype(np.uint8)
+    pal = Image.fromarray(idx, "P")
+    pal.putpalette([v for c in codes for v in (int(WORLDCOVER[c][1][i:i + 2], 16) for i in (1, 3, 5))])
+    pal.save(os.path.join(OUT, "landcover.png"), optimize=True)
+    print("landcover.png", W, "px,", os.path.getsize(os.path.join(OUT, "landcover.png")) // 1024, "KB")
+    legends["landcover"] = [{"code": c, "name": WORLDCOVER[c][0], "color": WORLDCOVER[c][1], "share": round(float((wc == c).mean()), 3)} for c in codes]
+
+    with open(os.path.join(OUT, "basemaps.json"), "w") as f:
+        json.dump(legends, f, indent=1)
 
 
 # -------------------------------------------------------------- Overture --
@@ -417,7 +489,7 @@ def step_export():
 
 
 if __name__ == "__main__":
-    steps = sys.argv[1:] or ["dem", "chm", "s2", "trees", "overture", "export"]
+    steps = sys.argv[1:] or ["dem", "chm", "s2", "trees", "layers", "overture", "export"]
     for s in steps:
         t0 = time.time()
         globals()["step_" + s]()
