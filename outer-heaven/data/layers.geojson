@@ -31,7 +31,8 @@
     "padron": "3126",
     "finca": "2663",
     "distrito": "Caacupé",
-    "lugar": "Yú"
+    "lugar": "Yú",
+    "id": "finca-2663"
    },
    "geometry": {
     "type": "Polygon",
@@ -92,7 +93,8 @@
     "padron": "3126",
     "finca": "2663",
     "distrito": "Caacupé",
-    "lugar": "Yú"
+    "lugar": "Yú",
+    "id": "finca-2663-title"
    },
    "geometry": {
     "type": "Polygon",
