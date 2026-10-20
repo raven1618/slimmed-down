@@ -213,7 +213,23 @@ a { color: var(--gold); text-underline-offset: 3px; }
 .btn:hover { filter: brightness(1.08); }
 .btn.ghost { background: transparent; color: var(--sand); border: 1px solid var(--line); }
 .btn.ghost:hover { background: var(--raised); }
-.note { font-size: 0.75rem; color: var(--faint); }
+.note { font-size: 0.75rem; color: var(--faint); margin: 0; }
+.drawer h3 { margin: 6px 0 0; font-size: 0.9375rem; font-weight: 600; }
+#d-extra { display: grid; gap: 12px; }
+.tool { display: grid; gap: 8px; }
+.tool label { font-size: 0.8125rem; color: var(--muted); }
+.tool input, .tool textarea, .copybox {
+  width: 100%; border-radius: 10px; border: 1px solid var(--line); background: var(--night); color: var(--sand);
+  padding: 9px 11px; font: 0.8125rem/1.45 var(--mono); font-variant-numeric: tabular-nums;
+}
+.tool textarea, .copybox { resize: vertical; min-height: 7.5em; }
+.tool input:focus-visible, .tool textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.facts li { flex-wrap: wrap; }
+.rowbtns { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.mini { border: 1px solid var(--line); background: var(--raised); color: var(--sand); border-radius: 8px; padding: 5px 9px; font-size: 0.75rem; cursor: pointer; }
+.mini:hover { border-color: var(--gold); }
+.pill.accent { color: var(--gold); }
+#d-extra ul.plain { font-size: 0.875rem; }
 
 /* ---------- veil / loader ---------- */
 .veil {
@@ -376,6 +392,7 @@ ul.plain b { color: var(--sand); font-weight: 600; }
   <p id="d-body"></p>
   <ul class="facts" id="d-facts"></ul>
   <div class="actions" id="d-actions"></div>
+  <div id="d-extra" hidden></div>
   <p class="note" id="d-note"></p>
 </aside>
 
@@ -405,10 +422,10 @@ ul.plain b { color: var(--sand); font-weight: 600; }
         <div class="stack">
           <p class="kick">Cerro Kavaju · Cordillera, Paraguay</p>
           <h2>One property, two sides, one forest behind them</h2>
-          <p class="lead">Outer Heaven runs along the foot of Cerro Kavaju, a protected hill between Caacupé, Atyrá and Tobatí. The south end opens to guests as a glamping retreat. The north end, under the summit, is a private community for family and friends. Both share the same solar power, water and staff.</p>
+          <p class="lead">Outer Heaven runs along the foot of Cerro Kavaju, a protected hill between Caacupé, Atyrá and Tobatí. Part of it opens to guests as a glamping retreat. The rest is a private community for family and friends. Both share the same solar power, water and staff.</p>
         </div>
         <div class="sitefacts">
-          <div><b>≈ 29 ha</b><span>Property, traced from the owners' sketch</span></div>
+          <div><b>Pending</b><span>Area and boundary come from the title plans</span></div>
           <div><b>65 km</b><span>From Asunción, in Cordillera department</span></div>
           <div><b>110 ha</b><span>Protected forest next door (Law 5377/2014)</span></div>
           <div><b>15 kWh</b><span>Solar battery already on site</span></div>
@@ -416,14 +433,14 @@ ul.plain b { color: var(--sand); font-weight: 600; }
         </div>
         <div class="grid2">
           <div class="card" style="--c: var(--public)">
-            <span class="tag">Public side · ≈ 10 ha</span>
+            <span class="tag">Public side</span>
             <h3>Glamping cabins, a natural pond, the tennis court</h3>
-            <p>Eight cabins dug into the bank at the forest edge, each facing east over the valley. Guests share a swimming pond cleaned by plants, the court, a food forest and the trail up the valley.</p>
+            <p>Eight cabins dug into the bank at the forest edge, each facing the view. Guests share a swimming pond cleaned by plants, the court, a food forest and the trail up the valley.</p>
           </div>
           <div class="card" style="--c: var(--private)">
-            <span class="tag">Private side · ≈ 11 ha</span>
+            <span class="tag">Private side</span>
             <h3>About eight homesites of roughly one hectare</h3>
-            <p>The quiet north end under the summit. Kybo and Kian Betancourt are buying the first hectare. Homes use the same earth walls and living roofs as the cabins and plug into the shared energy and water systems.</p>
+            <p>The quieter part of the land, closer to the summit. Kybo and Kian Betancourt are buying the first hectare. Homes use the same earth walls and living roofs as the cabins and plug into the shared energy and water systems.</p>
           </div>
         </div>
         <div class="stack">
@@ -610,7 +627,7 @@ ul.plain b { color: var(--sand); font-weight: 600; }
           <li><b>Weekday demand.</b> Asunción fills weekends. Weekdays need retreats, foreign visitors and events.</li>
           <li><b>The rate.</b> $170 is above every glamping comparable we found. The design, the pond and the court have to justify it, and the first season will tell.</li>
           <li><b>Currency.</b> Most bookings will be paid in guaraníes; some build costs are in dollars.</li>
-          <li><b>The map.</b> The boundary in the 3D view is traced from a phone sketch and the elevation is satellite data. A survey file (KML or DWG) will replace both.</li>
+          <li><b>The map.</b> The 3D hill is built from satellite elevation, imagery and tree-height data, accurate to a few metres. Boundaries come from the title plans; a drone survey of the property would sharpen the terrain to centimetres.</li>
         </ul>
       </div>
     </section>
@@ -643,7 +660,7 @@ ul.plain b { color: var(--sand); font-weight: 600; }
           <li><a href="https://www.infocasas.com.py/venta/terrenos/cordillera/atyra" target="_blank" rel="noopener">Land listings in Atyrá and Caacupé (InfoCasas)</a></li>
           <li><a href="https://www.bacn.gov.py/leyes-paraguayas/4559/ley-n-5377-declara-area-silvestre-protegida-bajo-dominio-publico-departamental-y-con-la-categoria-de-manejo-de-paisaje-protegido-al-cerro-kavaju-ubicado-en-los-municipios-de-atyra-y-caacupe-departamento-cordillera" target="_blank" rel="noopener">Law 5377/2014, Cerro Kavaju protected landscape</a>; <a href="https://www.kavaju.org/en" target="_blank" rel="noopener">Kavaju management</a></li>
           <li><a href="https://www.lanacion.com.py/gran-diario-domingo/2024/07/07/cerro-kavaju-una-maravilla-escondida-en-la-capital-espiritual-del-pais/" target="_blank" rel="noopener">Cerro Kavaju profile (La Nación)</a>; <a href="https://mapcarta.com/N6264739387" target="_blank" rel="noopener">coordinates (Mapcarta)</a></li>
-          <li>Terrain: SRTM elevation from the <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Terrain Tiles open dataset</a>. Satellite elevation includes the forest canopy, so the hill reads a little taller than the ground.</li>
+          <li>3D model: <a href="https://registry.opendata.aws/copernicus-dem/" target="_blank" rel="noopener">Copernicus DEM GLO-30</a>, <a href="https://registry.opendata.aws/dataforgood-fb-forests/" target="_blank" rel="noopener">Meta and WRI 1 m canopy height</a>, <a href="https://registry.opendata.aws/sentinel-2-l2a-cogs/" target="_blank" rel="noopener">Sentinel-2</a> imagery, <a href="https://registry.opendata.aws/esa-worldcover-vito/" target="_blank" rel="noopener">ESA WorldCover</a> and <a href="https://overturemaps.org" target="_blank" rel="noopener">Overture Maps</a>.</li>
           <li>Infrastructure, energy and water sizing, and the cabin and pond budgets, are our estimates for discussion.</li>
         </ol>
       </div>
@@ -830,102 +847,6 @@ function inPoly(x, z, poly) {
 }
 
 /* -------------------------------------------------------------- data -- */
-// Local metres: x east, z south. Origin ≈ 25.3101° S, 57.1233° W.
-const GEO = {
-  size: 3600, grid: 289, scale: 20,
-  peak: [-454, -589],
-  outline: [[-211.0,-824.6],[-120.9,-771.6],[60.5,-674.6],[141.2,-597.0],[168.7,-351.3],[206.3,-231.9],[282.0,-32.8],[318.9,126.1],[436.2,207.2],[584.3,336.3],[425.4,668.9],[292.7,618.2],[283.7,451.9],[286.4,293.6],[114.4,-65.3],[39.7,-323.8],[-93.6,-340.9],[-145.0,-514.8],[-180.5,-752.8]],
-  priv: [[-211.0,-824.6],[-120.9,-771.6],[60.5,-674.6],[141.2,-597.0],[168.7,-351.3],[39.7,-323.8],[-93.6,-340.9],[-145.0,-514.8],[-180.5,-752.8]],
-  pub: [[318.9,126.1],[436.2,207.2],[584.3,336.3],[425.4,668.9],[292.7,618.2],[283.7,451.9],[286.4,293.6]],
-};
-const BASE = 112, EX = 2.2;
-const AX = [0.342, 0.940];   // along the valley, toward the south end
-const PX = [0.940, -0.342];  // across, toward the east (the valley)
-const PUB_C = [375, 386], PRIV_C = [-38, -572];
-const FACE_EAST = Math.atan2(PX[0], PX[1]);
-const ap = (c, a, p) => [c[0] + a * AX[0] + p * PX[0], c[1] + a * AX[1] + p * PX[1]];
-function polyAP(poly, c) { return poly.map(([x, z]) => [(x - c[0]) * AX[0] + (z - c[1]) * AX[1], (x - c[0]) * PX[0] + (z - c[1]) * PX[1]]); }
-function spanAt(polyap, a) {
-  let lo = Infinity, hi = -Infinity;
-  for (let i = 0, j = polyap.length - 1; i < polyap.length; j = i++) {
-    const [a1, p1] = polyap[i], [a2, p2] = polyap[j];
-    if ((a1 > a) !== (a2 > a)) { const p = p1 + (p2 - p1) * (a - a1) / (a2 - a1); lo = Math.min(lo, p); hi = Math.max(hi, p); }
-  }
-  return [lo, hi];
-}
-const PUB_AP = polyAP(GEO.pub, PUB_C), PRIV_AP = polyAP(GEO.priv, PRIV_C);
-
-// Where things go on the public side (a along, p across).
-const CABINS = [];
-for (let i = 0; i < 8; i++) {
-  const a = -200 + i * 50;
-  const [lo] = spanAt(PUB_AP, a);
-  CABINS.push(ap(PUB_C, a, lo + 20));
-}
-const POND = ap(PUB_C, 25, 50);
-const COURT = ap(PUB_C, 140, 20);
-const HUB = ap(PUB_C, 70, 118);
-const SOLAR = ap(PUB_C, 112, 96);
-const PARK = ap(PUB_C, 30, 140);
-const ORCHARD = [250, -40];
-const ENTRY = ap(PUB_C, 60, 185);
-
-// Homesites on the private side.
-const PARCELS = [
-  { a: [-200, -90], p: [-140, 180] },
-  { a: [-90, 10], p: [-140, 15] }, { a: [-90, 10], p: [15, 190] },
-  { a: [10, 110], p: [-140, 15] }, { a: [10, 110], p: [15, 190], betancourt: true },
-  { a: [110, 200], p: [-140, 15] }, { a: [110, 200], p: [15, 190] },
-  { a: [200, 290], p: [-140, 180] },
-];
-PARCELS.forEach((pc, i) => {
-  const am = (pc.a[0] + pc.a[1]) / 2;
-  const [lo, hi] = spanAt(PRIV_AP, am);
-  const p0 = Math.max(pc.p[0], lo + 8), p1 = Math.min(pc.p[1], hi - 8);
-  pc.center = ap(PRIV_C, am, (p0 + p1) / 2);
-  pc.house = !pc.betancourt && i !== 0 && i !== 7;
-});
-const BETAN = PARCELS.find((p) => p.betancourt);
-
-const PLACES = [
-  { id: 'cabins', name: 'Glamping cabins', sub: '8 cabins · public side', c: 'var(--public)', at: CABINS[3], h: 30, far: 2600, r: 300, th: 1.25,
-    kick: 'Public side', title: 'Eight cabins dug into the bank',
-    body: 'Each cabin backs into the slope at the foot of the hill and opens east to the valley. Guests wake to sunrise over the trees; by mid-afternoon the hill puts them in shade. Earth walls and a living roof keep them cool with little air conditioning.',
-    facts: [['Inside', '58 m² + 30 m² deck'], ['Sleeps', '2, plus 2 on the sofa'], ['Build budget', '$60–70k each'], ['Target rate', '$150–200 / night']],
-    actions: [['Walk around a cabin', 'cabin'], ['Cabin numbers', 'plan:p-numbers']] },
-  { id: 'pond', name: 'Natural pond', sub: 'Swim, no chlorine', c: 'var(--public)', at: POND, h: 18, far: 1100, r: 200, th: 1.1,
-    kick: 'Public side', title: 'A swimming pond cleaned by plants',
-    body: 'One zone for swimming, one planted zone that filters the water. No chlorine, no salt. It is also the coolest place on the property on a January afternoon, and where everyone ends up at sunset.',
-    facts: [['Water surface', 'about 1,000 m²'], ['Budget', 'about $40k (estimate)'], ['Chemicals', 'none']],
-    actions: [['Shared infrastructure', 'plan:p-homes']] },
-  { id: 'court', name: 'Tennis court', sub: 'Already built', c: 'var(--public)', at: COURT, h: 14, far: 1100, r: 180, th: 1.35,
-    kick: 'Public side', title: 'The tennis court is already there',
-    body: 'A full-size court that guests and residents share. Lessons, clinics and weekend tournaments add income on top of the nights, and give city guests a reason to come back.',
-    facts: [['Status', 'built'], ['Shared by', 'guests and residents']], actions: [] },
-  { id: 'solar', name: 'Solar & storage', sub: '15 kWh on site today', c: 'var(--gold)', at: SOLAR, h: 16, far: 1100, r: 170, th: 0.95,
-    kick: 'Energy', title: 'A small grid of its own',
-    body: 'Panels and a 15 kWh battery already run the existing house. The plan grows that into one battery room for the whole site, fed by solar carports over the parking.',
-    facts: [['Today', 'solar + 15 kWh battery'], ['Phase 1', '≈30 kWp + ≈100 kWh'], ['Per cabin', '≈3 kWp']],
-    actions: [['How it runs itself', 'plan:p-energy']] },
-  { id: 'forest', name: 'Food forest', sub: 'Orchard, gardens, trail', c: 'var(--public)', at: ORCHARD, h: 16, far: 1500, r: 260, th: 1.2,
-    kick: 'The corridor', title: 'The kilometre between the two sides',
-    body: 'An orchard, vegetable beds and chickens along the track that joins the cabins to the homes. Guests walk it and eat from it; residents share it.',
-    facts: [['Trail', 'about 1 km'], ['Grows', 'fruit, vegetables, eggs']], actions: [] },
-  { id: 'private', name: 'Private community', sub: 'Homesites from $150k', c: 'var(--private)', at: ap(PRIV_C, 0, 20), h: 40, far: 2800, r: 420, th: 1.15,
-    kick: 'Private side', title: 'Homes for family and friends',
-    body: 'About 11 hectares at the quiet north end, under the summit. Roughly eight homesites of about a hectare each, on the same solar, water and staff as the cabins, with the protected forest as the back fence.',
-    facts: [['Homesites', '≈ 8 of ≈ 1 ha'], ['Price', 'from $150k each'], ['Shared', 'power, water, security']],
-    actions: [['See a residence', 'residence'], ['Homesite numbers', 'plan:p-homes']] },
-  { id: 'betancourt', name: 'Betancourt hectare', sub: 'First homesite', c: 'var(--private)', at: BETAN.center, h: 20, far: 1300, r: 230, th: 1.3,
-    kick: 'Private side', title: 'The first hectare is spoken for',
-    body: 'Kybo and Kian Betancourt are buying the first hectare. Their house will be the first one on the private side, and the model for the ones after it.',
-    facts: [['Size', 'about 1 ha'], ['Status', 'purchase in progress']], actions: [['See a residence', 'residence']] },
-  { id: 'hill', name: 'Cerro Kavaju', sub: 'Protected forest', c: 'var(--gold)', at: GEO.peak, h: 30, far: 4000, r: 900, th: 1.05,
-    kick: 'The hill', title: 'A forest no one can clear',
-    body: 'Cerro Kavaju is a 110-hectare protected landscape under Law 5377/2014, run by the Cordillera departmental government. The forest that rises behind the property stays forest. On satellite elevation the summit sits about 150 m above the valley floor.',
-    facts: [['Protected', '110 ha since 2014'], ['Summit', '≈ 294 m above sea level'], ['Above the valley', '≈ 150 m']], actions: [] },
-];
-
 const SPOTS = {
   cabin: [
     { id: 'earth', name: 'Rammed-earth walls', at: [5.95, 1.7, 0.4], cam: [13, 3.2, 8], tgt: [3, 1.4, 0], text: '45 cm walls of compacted local soil, built in layers you can see. The mass soaks up afternoon heat and gives it back at night.' },
@@ -1190,179 +1111,274 @@ function tuftGeometry(h = 0.5) {
 }
 
 /* ================================================================ */
-/*                          THE HILL (map)                          */
+/*        THE HILL: real terrain, imagery, trees and context        */
 /* ================================================================ */
-const S = GEO.size, G = GEO.grid, CELL = S / (G - 1);
-let H = null;
-function elevAt(x, z) {
-  const gx = clamp((x + S / 2) / CELL, 0, G - 1.001), gz = clamp((z + S / 2) / CELL, 0, G - 1.001);
-  const x0 = gx | 0, z0 = gz | 0, fx = gx - x0, fz = gz - z0, i = z0 * G + x0;
-  return H[i] * (1 - fx) * (1 - fz) + H[i + 1] * fx * (1 - fz) + H[i + G] * (1 - fx) * fz + H[i + G + 1] * fx * fz;
-}
-const yAt = (x, z) => (elevAt(x, z) - BASE) * EX;
+// WGS84 / UTM zone 21 south (EPSG:32721), Snyder's series (USGS PP 1395).
+const UTM = (() => {
+  const a = 6378137, f = 1 / 298.257223563, e2 = f * (2 - f), ep2 = e2 / (1 - e2), k0 = 0.9996;
+  const lon0 = (-57 * Math.PI) / 180, FE = 500000, FN = 10000000;
+  const e4 = e2 * e2, e6 = e4 * e2;
+  const M = (p) => a * ((1 - e2 / 4 - 3 * e4 / 64 - 5 * e6 / 256) * p - (3 * e2 / 8 + 3 * e4 / 32 + 45 * e6 / 1024) * Math.sin(2 * p)
+    + (15 * e4 / 256 + 45 * e6 / 1024) * Math.sin(4 * p) - (35 * e6 / 3072) * Math.sin(6 * p));
+  function fwd(lat, lon) {
+    const p = (lat * Math.PI) / 180, l = (lon * Math.PI) / 180;
+    const s = Math.sin(p), c = Math.cos(p), t = Math.tan(p);
+    const N = a / Math.sqrt(1 - e2 * s * s), T = t * t, C = ep2 * c * c, A = c * (l - lon0);
+    const x = k0 * N * (A + (1 - T + C) * A ** 3 / 6 + (5 - 18 * T + T * T + 72 * C - 58 * ep2) * A ** 5 / 120);
+    const y = k0 * (M(p) + N * t * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * A ** 4 / 24 + (61 - 58 * T + T * T + 600 * C - 330 * ep2) * A ** 6 / 720));
+    return [x + FE, y + FN];
+  }
+  function inv(E, Nn) {
+    const x = E - FE, mu = (Nn - FN) / k0 / (a * (1 - e2 / 4 - 3 * e4 / 64 - 5 * e6 / 256));
+    const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+    const p1 = mu + (3 * e1 / 2 - 27 * e1 ** 3 / 32) * Math.sin(2 * mu) + (21 * e1 * e1 / 16 - 55 * e1 ** 4 / 32) * Math.sin(4 * mu)
+      + (151 * e1 ** 3 / 96) * Math.sin(6 * mu) + (1097 * e1 ** 4 / 512) * Math.sin(8 * mu);
+    const s = Math.sin(p1), c = Math.cos(p1), t = Math.tan(p1);
+    const C1 = ep2 * c * c, T1 = t * t, N1 = a / Math.sqrt(1 - e2 * s * s), R1 = a * (1 - e2) / Math.pow(1 - e2 * s * s, 1.5), D = x / (N1 * k0);
+    const lat = p1 - (N1 * t / R1) * (D * D / 2 - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * ep2) * D ** 4 / 24
+      + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * ep2 - 3 * C1 * C1) * D ** 6 / 720);
+    const lon = lon0 + (D - (1 + 2 * T1 + C1) * D ** 3 / 6 + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * ep2 + 24 * T1 * T1) * D ** 5 / 120) / c;
+    return [(lat * 180) / Math.PI, (lon * 180) / Math.PI];
+  }
+  return { fwd, inv };
+})();
 
-function prepareHeights(raw) {
-  H = new Float32Array(G * G);
-  for (let i = 0; i < G * G; i++) H[i] = raw[i] / GEO.scale;
-  // Satellite elevation carries the canopy: calm the cleared land inside the property.
-  for (let pass = 0; pass < 3; pass++) {
-    const copy = H.slice();
-    for (let r = 1; r < G - 1; r++) for (let c = 1; c < G - 1; c++) {
-      const x = -S / 2 + c * CELL, z = -S / 2 + r * CELL;
-      if (!inPoly(x, z, GEO.outline)) continue;
-      let s = 0;
-      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) s += copy[(r + dr) * G + c + dc];
-      H[r * G + c] = s / 9;
+const hill = { scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 1, 40000), vs: 1, on: { trees: true, buildings: true, roads: true, contours: false, grid: false }, curtains: [] };
+let META, HG, HRES, HHALF, HBASE, HE, CTX, OFFICIAL = [];
+function groundAt(x, z) {
+  const gx = clamp((x + HHALF) / HRES, 0, HG - 1.001), gz = clamp((z + HHALF) / HRES, 0, HG - 1.001);
+  const x0 = gx | 0, z0 = gz | 0, fx = gx - x0, fz = gz - z0, i = z0 * HG + x0;
+  return HE[i] * (1 - fx) * (1 - fz) + HE[i + 1] * fx * (1 - fz) + HE[i + HG] * (1 - fx) * fz + HE[i + HG + 1] * fx * fz;
+}
+const yAt = (x, z) => (groundAt(x, z) - HBASE) * hill.vs;
+const toUTM = (x, z) => [META.origin.easting + x, META.origin.northing - z];
+const fromUTM = (E, N) => [E - META.origin.easting, META.origin.northing - N];
+const inSquare = (x, z) => Math.abs(x) <= HHALF && Math.abs(z) <= HHALF;
+
+function b64bytes(s) { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+async function getJSON(name) { const r = await fetch(name); if (!r.ok) throw new Error(name + ' ' + r.status); return r.json(); }
+function loadImage(src) { return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error(src)); im.src = src; }); }
+
+let imgPx = null, imgW = 0;
+function imageryColor(x, z, out) {
+  const u = clamp(Math.floor(((x + HHALF) / (2 * HHALF)) * imgW), 0, imgW - 1), v = clamp(Math.floor(((z + HHALF) / (2 * HHALF)) * imgW), 0, imgW - 1);
+  const k = (v * imgW + u) * 4;
+  return out.setRGB(imgPx[k] / 255, imgPx[k + 1] / 255, imgPx[k + 2] / 255, THREE.SRGBColorSpace);
+}
+
+/* Terrain: one vertex per 10 m, heights in metres above sea level. */
+function terrainGeometry() {
+  const n = HG, pos = new Float32Array(n * n * 3), uv = new Float32Array(n * n * 2);
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    const i = r * n + c;
+    pos[i * 3] = -HHALF + c * HRES; pos[i * 3 + 2] = -HHALF + r * HRES;
+    uv[i * 2] = c / (n - 1); uv[i * 2 + 1] = 1 - r / (n - 1);
+  }
+  const idx = new Uint32Array((n - 1) * (n - 1) * 6);
+  let k = 0;
+  for (let r = 0; r < n - 1; r++) for (let c = 0; c < n - 1; c++) {
+    const a = r * n + c, b = a + 1, d = a + n, e = d + 1;
+    idx[k++] = a; idx[k++] = d; idx[k++] = b; idx[k++] = b; idx[k++] = d; idx[k++] = e;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  g.setIndex(new THREE.BufferAttribute(idx, 1));
+  return g;
+}
+function setTerrainY(g) {
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setY(i, (HE[i] - HBASE) * hill.vs);
+  p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
+}
+/* Contour lines drawn in the terrain shader: thin every 10 m, stronger every 50 m. */
+function contourMaterial(map) {
+  const mat = new THREE.MeshStandardMaterial({ map, roughness: 1, metalness: 0 });
+  mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 } };
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, mat.userData.u);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uVS; uniform float uBase;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvElev = position.y / uVS + uBase;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn;')
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        if (uOn > 0.5) {
+          float w = max(fwidth(vElev), 1e-4);
+          float d10 = abs(fract(vElev / 10.0 + 0.5) - 0.5) * 10.0 / w;
+          float d50 = abs(fract(vElev / 50.0 + 0.5) - 0.5) * 50.0 / w;
+          float l = max(1.0 - smoothstep(0.4, 1.3, d10), (1.0 - smoothstep(0.8, 2.2, d50)) * 1.0);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.93, 0.72), l * 0.8);
+        }`);
+  };
+  return mat;
+}
+/* Skirts make the 4 km square read as a model block instead of a floating sheet. */
+function skirtGeometry() {
+  const n = HG, pos = [], idx = [];
+  let lo = Infinity; for (let i = 0; i < HE.length; i++) lo = Math.min(lo, HE[i]);
+  const bottom = (lo - HBASE) * hill.vs - 60;
+  const edges = [
+    (i) => i, (i) => i * n + (n - 1), (i) => (n - 1) * n + (n - 1 - i), (i) => (n - 1 - i) * n,
+  ];
+  for (const e of edges) {
+    const base = pos.length / 3;
+    for (let i = 0; i < n; i++) {
+      const v = e(i), r = Math.floor(v / n), c = v % n;
+      const x = -HHALF + c * HRES, z = -HHALF + r * HRES, y = (HE[v] - HBASE) * hill.vs;
+      pos.push(x, y, z, x, bottom, z);
+    }
+    for (let i = 0; i < n - 1; i++) { const a = base + i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+
+/* Trees: one per canopy top in the 1 m height model. Colour comes from the imagery under it. */
+let treeData = null;
+function treeGeometry() {
+  const crown = new THREE.IcosahedronGeometry(1, 0); crown.scale(1, 0.29, 1); crown.translate(0, 0.71, 0);
+  const trunk = new THREE.CylinderGeometry(0.06, 0.09, 0.5, 5, 1, true); trunk.translate(0, 0.25, 0);
+  return mergeGeometries([colorize(crown, 0xffffff), colorize(trunk, 0x7a6450)]);
+}
+function buildTrees() {
+  const raw = treeData, n = small ? Math.min(raw.count, 32000) : raw.count;
+  const mesh = new THREE.InstancedMesh(treeGeometry(), new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95 }), n);
+  const col = new THREE.Color(), leaf = new THREE.Color(), R = rng(3);
+  for (let i = 0; i < n; i++) {
+    imageryColor(raw.x[i], raw.z[i], col);
+    // Where the 10 m pixel under a tree is roof or bare soil, keep the crown green.
+    const l = (col.r + col.g + col.b) / 3, notGreen = col.g < Math.max(col.r, col.b) ? 0.6 : 0;
+    leaf.setHSL(0.24 + R() * 0.06, 0.38 + R() * 0.15, 0.13 + R() * 0.08, THREE.SRGBColorSpace);
+    col.lerp(leaf, clamp(Math.max((l - 0.07) / 0.12, notGreen), 0, 0.9)).multiplyScalar(0.95 + R() * 0.3);
+    mesh.setColorAt(i, col);
+  }
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  mesh.userData.n = n;
+  return mesh;
+}
+function placeTrees(mesh) {
+  const raw = treeData, m = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), s = new THREE.Vector3(), R = rng(5);
+  for (let i = 0; i < mesh.userData.n; i++) {
+    const x = raw.x[i], z = raw.z[i];
+    q.setFromAxisAngle(UP, R() * 6.283);
+    mesh.setMatrixAt(i, m.compose(v.set(x, yAt(x, z), z), q, s.set(raw.r[i], raw.h[i], raw.r[i])));
+  }
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.computeBoundingSphere();
+}
+
+/* Buildings: footprints extruded to their height, roofs coloured from the imagery. */
+function buildBuildings() {
+  const parts = [], wall = new THREE.Color(0xe6ded0), roof = new THREE.Color();
+  for (const b of CTX.buildings) {
+    const c = b.c, pts = [];
+    let cx = 0, cz = 0, base = Infinity;
+    for (let i = 0; i < c.length - 2; i += 2) { pts.push(new THREE.Vector2(c[i], -c[i + 1])); cx += c[i]; cz += c[i + 1]; base = Math.min(base, yAt(c[i], c[i + 1])); }
+    if (pts.length < 3) continue;
+    cx /= pts.length; cz /= pts.length;
+    const g = new THREE.ExtrudeGeometry(new THREE.Shape(pts), { depth: Math.max(2.8, b.h), bevelEnabled: false });
+    g.rotateX(-Math.PI / 2); g.translate(0, base - 0.4, 0);
+    imageryColor(cx, cz, roof);
+    const nrm = g.attributes.normal, cols = new Float32Array(nrm.count * 3);
+    for (let i = 0; i < nrm.count; i++) { const k = nrm.getY(i) > 0.5 ? roof : wall; cols[i * 3] = k.r; cols[i * 3 + 1] = k.g; cols[i * 3 + 2] = k.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    g.deleteAttribute('uv');
+    parts.push(g.index ? g.toNonIndexed() : g);
+  }
+  const mesh = new THREE.Mesh(mergeGeometries(parts), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 }));
+  mesh.castShadow = mesh.receiveShadow = true;
+  return mesh;
+}
+
+/* Roads: ribbons laid on the ground, width by class. */
+const ROAD_W = { primary: 8, secondary: 7, tertiary: 6, residential: 5, unclassified: 4.5, service: 3.5, track: 3, unknown: 3.5 };
+function buildRoads() {
+  const pos = [], col = [], idx = [];
+  const paved = new THREE.Color(0x6b6862), dirt = new THREE.Color(0xb3754c);
+  for (const r of CTX.roads) {
+    const c = r.c, pts = [];
+    for (let i = 0; i < c.length - 2; i += 2) {
+      const [x0, z0, x1, z1] = [c[i], c[i + 1], c[i + 2], c[i + 3]];
+      const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 6));
+      for (let s = 0; s < n; s++) pts.push([lerp(x0, x1, s / n), lerp(z0, z1, s / n)]);
+    }
+    pts.push([c[c.length - 2], c[c.length - 1]]);
+    if (pts.length < 2) continue;
+    const w = (ROAD_W[r.k] || 4) / 2, k = r.k === 'primary' || r.k === 'secondary' ? paved : dirt, base = pos.length / 3;
+    for (let i = 0; i < pts.length; i++) {
+      const [ax, az] = pts[Math.max(0, i - 1)], [bx, bz] = pts[Math.min(pts.length - 1, i + 1)];
+      let dx = bx - ax, dz = bz - az; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
+      const [x, z] = pts[i];
+      for (const sgn of [-1, 1]) {
+        const px = x - dz * w * sgn, pz = z + dx * w * sgn;
+        pos.push(px, yAt(px, pz) + 0.5 * hill.vs, pz); col.push(k.r, k.g, k.b);
+      }
+      if (i) { const a = base + (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
     }
   }
-  // Flat pads where buildings sit.
-  const pads = [...CABINS.map((p) => [p, 16]), [POND, 34], [COURT, 30], [HUB, 22], [SOLAR, 20], [PARK, 20],
-    ...PARCELS.filter((p) => p.house).map((p) => [p.center, 26])];
-  for (const [[px, pz], rad] of pads) {
-    const target = elevAt(px, pz), R = rad + 14;
-    const c0 = Math.floor((px - R + S / 2) / CELL), c1 = Math.ceil((px + R + S / 2) / CELL);
-    const r0 = Math.floor((pz - R + S / 2) / CELL), r1 = Math.ceil((pz + R + S / 2) / CELL);
-    for (let r = Math.max(0, r0); r <= Math.min(G - 1, r1); r++) for (let c = Math.max(0, c0); c <= Math.min(G - 1, c1); c++) {
-      const x = -S / 2 + c * CELL, z = -S / 2 + r * CELL, d = Math.hypot(x - px, z - pz);
-      const w = 1 - smooth(rad, R, d);
-      H[r * G + c] = lerp(H[r * G + c], target, w);
-    }
-  }
-  // Ease the edges down so the world ends in a soft shoulder, not a cliff.
-  let edgeMin = Infinity;
-  for (let i = 0; i < G; i++) edgeMin = Math.min(edgeMin, H[i], H[(G - 1) * G + i], H[i * G], H[i * G + G - 1]);
-  for (let r = 0; r < G; r++) for (let c = 0; c < G; c++) {
-    const e = Math.min(r, c, G - 1 - r, G - 1 - c) * CELL;
-    const w = smooth(0, 320, e);
-    H[r * G + c] = lerp(edgeMin - 4, H[r * G + c], w);
-  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setIndex(idx); g.computeVertexNormals();
+  const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, transparent: true, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, side: THREE.DoubleSide }));
+  mesh.receiveShadow = true;
+  return mesh;
 }
 
-function isForest(x, z, e, n) {
-  if (inPoly(x, z, GEO.outline)) return false;
-  let s = (e - 152) / 24 + (n - 0.5) * 2.6;
-  if (x > 620 && z > 120) s -= 0.75;
-  return s > 0.15;
-}
-
-function paintTerrain(W) {
-  const B = small ? 512 : 768;
-  const [bc, bg] = canvas(B, B);
-  const img = bg.createImageData(B, B), d = img.data;
-  const forestA = [31, 47, 28], forestB = [52, 70, 39], grassA = [118, 124, 70], grassB = [92, 108, 56], dry = [158, 140, 92];
-  for (let py = 0; py < B; py++) for (let px = 0; px < B; px++) {
-    const x = -S / 2 + (px + 0.5) / B * S, z = -S / 2 + (py + 0.5) / B * S;
-    const e = elevAt(x, z), n = fbm(x * 0.0045 + 3.1, z * 0.0045 - 1.7), n2 = fbm(x * 0.035 + 7, z * 0.035 + 2);
-    let col;
-    if (isForest(x, z, e, n)) {
-      col = forestA.map((v, i) => lerp(v, forestB[i], n2));
-    } else {
-      col = grassA.map((v, i) => lerp(v, grassB[i], n2));
-      if (n > 0.62) col = col.map((v, i) => lerp(v, dry[i], (n - 0.62) * 2));
-      if (inPoly(x, z, GEO.outline)) col = col.map((v, i) => lerp(v, [128, 136, 74][i], 0.35));
-    }
-    const k = (py * B + px) * 4;
-    d[k] = col[0]; d[k + 1] = col[1]; d[k + 2] = col[2]; d[k + 3] = 255;
-  }
-  bg.putImageData(img, 0, 0);
-  const [c, g] = canvas(W, W);
-  g.imageSmoothingQuality = 'high';
-  g.drawImage(bc, 0, 0, W, W);
-
-  // Fine speckle so the ground doesn't read as flat paint up close.
-  const [sc, sg] = canvas(256, 256), R = rng(4);
-  for (let i = 0; i < 5000; i++) { sg.fillStyle = `rgba(${R() < 0.5 ? '0,0,0' : '255,240,200'},${R() * 0.12})`; sg.fillRect(R() * 256, R() * 256, 1.5, 1.5); }
-  g.fillStyle = g.createPattern(sc, 'repeat'); g.fillRect(0, 0, W, W);
-
-  const k = W / S;
+/* Annotations: one transparent canvas laid over the terrain for boundaries and the UTM grid. */
+let overlay = null;
+function drawOverlay() {
+  const { c, g, tex } = overlay, W = c.width, k = W / (2 * HHALF);
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, W);
   g.setTransform(k, 0, 0, k, W / 2, W / 2);
-  const path = (pts) => { g.beginPath(); pts.forEach(([x, z], i) => (i ? g.lineTo(x, z) : g.moveTo(x, z))); };
-  const poly = (pts) => { path(pts); g.closePath(); };
-
-  // Town edge to the east-south-east: a loose grid of dirt streets.
-  g.save();
-  g.beginPath(); g.rect(-S / 2, -S / 2, S, S);
-  GEO.outline.forEach(([x, z], i) => (i ? g.lineTo(x, z) : g.moveTo(x, z))); g.closePath();
-  g.clip('evenodd');
-  g.beginPath(); g.rect(640, 150, 1200, 1700); g.clip();
-  g.strokeStyle = 'rgba(196,160,112,0.75)'; g.lineWidth = 7;
-  const ang = -0.36, ca = Math.cos(ang), sa = Math.sin(ang);
-  for (let i = -6; i <= 6; i++) {
-    const o = i * 150;
-    path([[1150 + ca * -700 - sa * o, 820 + sa * -700 + ca * o], [1150 + ca * 700 - sa * o, 820 + sa * 700 + ca * o]]); g.stroke();
-    path([[1150 - sa * -700 + ca * o, 820 + ca * -700 + sa * o], [1150 - sa * 700 + ca * o, 820 + ca * 700 + sa * o]]); g.stroke();
+  if (hill.on.grid) {
+    const e0 = META.origin.easting, n0 = META.origin.northing;
+    g.lineWidth = 1.6; g.strokeStyle = 'rgba(255,248,230,0.55)';
+    g.font = `${Math.round(26 / k * (W / 4096))}px "IBM Plex Mono", monospace`; g.fillStyle = 'rgba(255,248,230,0.9)';
+    for (let E = Math.ceil((e0 - HHALF) / 500) * 500; E <= e0 + HHALF; E += 500) {
+      const x = E - e0; g.beginPath(); g.moveTo(x, -HHALF); g.lineTo(x, HHALF); g.stroke();
+      g.fillText(`${E} E`, x + 6, -HHALF + 40);
+    }
+    for (let N = Math.ceil((n0 - HHALF) / 500) * 500; N <= n0 + HHALF; N += 500) {
+      const z = n0 - N; g.beginPath(); g.moveTo(-HHALF, z); g.lineTo(HHALF, z); g.stroke();
+      g.fillText(`${N} N`, -HHALF + 12, z - 8);
+    }
   }
-  g.restore();
-  // Access road from the east into the public side.
-  g.strokeStyle = 'rgba(176,96,58,0.95)'; g.lineWidth = 7;
-  path([[1800, 560], [1300, 600], [900, 520], [700, 470], ENTRY, HUB]); g.stroke();
-
-  // Zone tints.
-  g.fillStyle = 'rgba(160,205,110,0.13)'; poly(GEO.pub); g.fill();
-  g.fillStyle = 'rgba(130,180,235,0.13)'; poly(GEO.priv); g.fill();
-
-  // The track that runs the length of the property, worn into two ruts.
-  const trackPts = [ap(PRIV_C, -200, 15), ap(PRIV_C, 280, 10), [110, -300], [175, -140], [240, 20], [300, 190], ap(PUB_C, -250, 70), ap(PUB_C, -100, 30), ap(PUB_C, 20, 0), HUB];
-  g.lineCap = 'round'; g.lineJoin = 'round';
-  g.strokeStyle = 'rgba(170,90,52,0.95)'; g.lineWidth = 4.2; path(trackPts); g.stroke();
-  g.strokeStyle = 'rgba(120,128,66,0.9)'; g.lineWidth = 1.1; path(trackPts); g.stroke();
-  // Paths from the track to each cabin.
-  g.strokeStyle = 'rgba(176,96,58,0.8)'; g.lineWidth = 1.8;
-  CABINS.forEach(([x, z]) => { const f = [x + PX[0] * 30, z + PX[1] * 30]; path([[x + PX[0] * 7, z + PX[1] * 7], f]); g.stroke(); });
-  // Bare earth around the hub, court and parking.
-  g.fillStyle = 'rgba(176,100,62,0.7)';
-  for (const [[x, z], r] of [[HUB, 22], [PARK, 18], [SOLAR, 16]]) { g.beginPath(); g.ellipse(x, z, r, r * 0.8, 0.3, 0, Math.PI * 2); g.fill(); }
-  g.fillStyle = 'rgba(70,82,42,0.85)'; g.beginPath(); g.ellipse(POND[0], POND[1], 30, 20, Math.atan2(AX[1], AX[0]), 0, Math.PI * 2); g.fill();
-
-  // Vegetable beds along the corridor.
-  g.fillStyle = 'rgba(110,70,40,0.9)';
-  for (let i = 0; i < 6; i++) {
-    const [x, z] = [ORCHARD[0] + 60 + i * 4 * AX[0] + 30 * PX[0], ORCHARD[1] + 60 + i * 4 * AX[1] + 30 * PX[1]];
-    g.save(); g.translate(x, z); g.rotate(Math.atan2(PX[1], PX[0])); g.fillRect(-9, -1, 18, 2.2); g.restore();
+  for (const b of [...OFFICIAL, ...boundaries.list]) {
+    const pts = b.utm.map(([E, N]) => fromUTM(E, N));
+    if (pts.length < 2) continue;
+    g.beginPath(); pts.forEach(([x, z], i) => (i ? g.lineTo(x, z) : g.moveTo(x, z)));
+    if (b.closed !== false && pts.length > 2) { g.closePath(); g.fillStyle = b.fill || 'rgba(233,191,90,0.16)'; g.fill(); }
+    g.lineWidth = 3.2; g.strokeStyle = b.color || 'rgba(233,191,90,0.98)'; g.stroke();
+    g.fillStyle = b.color || '#e9bf5a';
+    pts.forEach(([x, z]) => { g.beginPath(); g.arc(x, z, 3.2, 0, Math.PI * 2); g.fill(); });
   }
-
-  // Homesite lines, clipped to the private side.
-  g.save(); poly(GEO.priv); g.clip();
-  g.strokeStyle = 'rgba(176,96,58,0.9)'; g.lineWidth = 4; path([ap(PRIV_C, -230, 15), ap(PRIV_C, 290, 15)]); g.stroke();
-  g.setLineDash([3, 3]); g.strokeStyle = 'rgba(241,233,219,0.6)'; g.lineWidth = 0.9;
-  for (const pc of PARCELS) {
-    poly([ap(PRIV_C, pc.a[0], pc.p[0]), ap(PRIV_C, pc.a[1], pc.p[0]), ap(PRIV_C, pc.a[1], pc.p[1]), ap(PRIV_C, pc.a[0], pc.p[1])]); g.stroke();
+  if (boundaries.draft.length) {
+    const pts = boundaries.draft.map(([E, N]) => fromUTM(E, N));
+    g.setLineDash([8, 6]); g.lineWidth = 2.4; g.strokeStyle = 'rgba(127,179,227,0.95)';
+    g.beginPath(); pts.forEach(([x, z], i) => (i ? g.lineTo(x, z) : g.moveTo(x, z))); g.stroke(); g.setLineDash([]);
+    g.fillStyle = '#7fb3e3'; pts.forEach(([x, z]) => { g.beginPath(); g.arc(x, z, 4, 0, Math.PI * 2); g.fill(); });
   }
-  g.setLineDash([]);
-  g.fillStyle = 'rgba(233,191,90,0.22)';
-  poly([ap(PRIV_C, BETAN.a[0], BETAN.p[0]), ap(PRIV_C, BETAN.a[1], BETAN.p[0]), ap(PRIV_C, BETAN.a[1], BETAN.p[1]), ap(PRIV_C, BETAN.a[0], BETAN.p[1])]); g.fill();
-  g.restore();
-
-  // Zone edges and the property line.
-  g.setLineDash([5, 4]); g.lineWidth = 1.4;
-  g.strokeStyle = 'rgba(160,215,130,0.9)'; poly(GEO.pub); g.stroke();
-  g.strokeStyle = 'rgba(140,190,240,0.9)'; poly(GEO.priv); g.stroke();
-  g.setLineDash([]);
-  g.strokeStyle = 'rgba(233,191,90,0.95)'; g.lineWidth = 2.6; poly(GEO.outline); g.stroke();
-
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO;
-  return t;
+  tex.needsUpdate = true;
 }
 
-function curtain(poly, height, color, strength) {
-  const pos = [], uv = [];
-  const pts = [];
-  for (let i = 0; i < poly.length; i++) {
-    const [x0, z0] = poly[i], [x1, z1] = poly[(i + 1) % poly.length];
-    const n = Math.max(2, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 8));
-    for (let s = 0; s < n; s++) pts.push([lerp(x0, x1, s / n), lerp(z0, z1, s / n)]);
-  }
-  pts.push(pts[0]);
-  let acc = 0;
+function curtain(pts, height, color, strength) {
+  const ring = [];
   for (let i = 0; i < pts.length; i++) {
-    const [x, z] = pts[i], y = yAt(x, z);
-    if (i) acc += Math.hypot(x - pts[i - 1][0], z - pts[i - 1][1]);
-    pos.push(x, y + 0.4, z, x, y + height, z);
-    uv.push(acc / 40, 0, acc / 40, 1);
+    const [x0, z0] = pts[i], [x1, z1] = pts[(i + 1) % pts.length];
+    const n = Math.max(2, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 8));
+    for (let s = 0; s < n; s++) ring.push([lerp(x0, x1, s / n), lerp(z0, z1, s / n)]);
   }
-  const idx = [];
-  for (let i = 0; i < pts.length - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  ring.push(ring[0]);
+  const pos = [], uv = [], idx = [];
+  let acc = 0;
+  ring.forEach(([x, z], i) => {
+    const y = yAt(x, z);
+    if (i) acc += Math.hypot(x - ring[i - 1][0], z - ring[i - 1][1]);
+    pos.push(x, y + 0.3, z, x, y + height, z); uv.push(acc / 40, 0, acc / 40, 1);
+    if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  });
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
@@ -1377,288 +1393,216 @@ function curtain(poly, height, color, strength) {
   });
   return new THREE.Mesh(geo, mat);
 }
-
-const map = { scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 2, 14000), hits: [], curtains: [] };
-
-function buildMap() {
-  const scene = map.scene;
-  const HAZE = new THREE.Color(0xc9c3ad);
-  scene.background = HAZE.clone();
-  scene.fog = new THREE.FogExp2(HAZE, 0.00026);
-  scene.environment = ENV; scene.environmentIntensity = 0.25;
-
-  const sunDir = new THREE.Vector3(0.8, 0.33, -0.42).normalize();
-  const sky = skyDome(0x86aed3, 0xe9d7b5, sunDir); sky.scale.setScalar(9000); scene.add(sky);
-
-  scene.add(new THREE.HemisphereLight(0xcfe0f0, 0x4a4231, 1.15));
-  const sun = new THREE.DirectionalLight(0xffdcb0, 3.0);
-  const focus = new THREE.Vector3(170, yAt(170, -100), -100);
-  sun.position.copy(focus).addScaledVector(sunDir, 1800);
-  sun.target.position.copy(focus);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
-  const sc = sun.shadow.camera; sc.left = -950; sc.right = 950; sc.top = 950; sc.bottom = -950; sc.near = 600; sc.far = 3200;
-  sun.shadow.bias = -0.0006; sun.shadow.normalBias = 1.2;
-  scene.add(sun, sun.target);
-
-  // Terrain.
-  const pos = new Float32Array(G * G * 3), uv = new Float32Array(G * G * 2);
-  for (let r = 0; r < G; r++) for (let c = 0; c < G; c++) {
-    const i = r * G + c;
-    pos[i * 3] = -S / 2 + c * CELL; pos[i * 3 + 1] = (H[i] - BASE) * EX; pos[i * 3 + 2] = -S / 2 + r * CELL;
-    uv[i * 2] = c / (G - 1); uv[i * 2 + 1] = 1 - r / (G - 1);
+function refreshCurtains() {
+  hill.curtains.forEach((m) => { hill.scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+  hill.curtains = [];
+  for (const b of [...OFFICIAL, ...boundaries.list]) {
+    if (b.closed === false || b.utm.length < 3) continue;
+    const m = curtain(b.utm.map(([E, N]) => fromUTM(E, N)), 14, b.glow || 0xe9bf5a, 0.7);
+    hill.scene.add(m); hill.curtains.push(m);
   }
-  const idx = new Uint32Array((G - 1) * (G - 1) * 6);
-  let k = 0;
-  for (let r = 0; r < G - 1; r++) for (let c = 0; c < G - 1; c++) {
-    const a = r * G + c, b = a + 1, d = a + G, e = d + 1;
-    idx[k++] = a; idx[k++] = d; idx[k++] = b; idx[k++] = b; idx[k++] = d; idx[k++] = e;
-  }
-  const tg = new THREE.BufferGeometry();
-  tg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  tg.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-  tg.setIndex(new THREE.BufferAttribute(idx, 1));
-  tg.computeVertexNormals();
-  const terrain = new THREE.Mesh(tg, new THREE.MeshStandardMaterial({ map: paintTerrain(small ? 2048 : 3072), roughness: 0.97, metalness: 0 }));
-  terrain.receiveShadow = true;
-  scene.add(terrain);
-  const skirt = new THREE.Mesh(new THREE.CircleGeometry(12000, 48), new THREE.MeshStandardMaterial({ color: 0x3b4a2c, roughness: 1 }));
-  skirt.rotation.x = -Math.PI / 2; skirt.position.y = (Math.min(...H.slice(0, G)) - BASE) * EX - 7;
-  scene.add(skirt);
+}
 
-  // Forest.
-  const avoid = [...CABINS.map((p) => [p, 16]), [POND, 34], [COURT, 28], [HUB, 22], [SOLAR, 18], [PARK, 18], ...PARCELS.map((p) => [p.center, 22])];
-  const blocked = (x, z) => avoid.some(([[ax, az], r]) => Math.hypot(x - ax, z - az) < r);
-  const SP = small ? 24 : 17, R = rng(7);
-  const trees = [], palms = [];
-  for (let gz = -S / 2 + 20; gz < S / 2 - 20; gz += SP) for (let gx = -S / 2 + 20; gx < S / 2 - 20; gx += SP) {
-    const x = gx + (R() - 0.5) * SP * 0.95, z = gz + (R() - 0.5) * SP * 0.95;
-    const e = elevAt(x, z), n = fbm(x * 0.0045 + 3.1, z * 0.0045 - 1.7);
-    const inside = inPoly(x, z, GEO.outline);
-    if (isForest(x, z, e, n)) {
-      if (R() < 0.05) palms.push([x, z, 0.9 + R() * 0.45]);
-      else trees.push([x, z, R()]);
-    } else if (!blocked(x, z)) {
-      const u = R();
-      if (inside) { if (u < 0.012) palms.push([x, z, 0.8 + R() * 0.4]); else if (u < 0.02) trees.push([x, z, R()]); }
-      else if (u < 0.05) palms.push([x, z, 0.8 + R() * 0.4]);
-      else if (u < 0.1) trees.push([x, z, R()]);
+/* ---------------------------------------------------- boundaries -- */
+const boundaries = {
+  list: [], draft: [],
+  load() { try { this.list = JSON.parse(localStorage.getItem('oh-boundaries-v1') || '[]'); } catch (e) { this.list = []; } },
+  save() { try { localStorage.setItem('oh-boundaries-v1', JSON.stringify(this.list)); } catch (e) {} },
+};
+function ringArea(utm) {
+  let a = 0, p = 0;
+  for (let i = 0; i < utm.length; i++) {
+    const [x1, y1] = utm[i], [x2, y2] = utm[(i + 1) % utm.length];
+    a += x1 * y2 - x2 * y1; p += Math.hypot(x2 - x1, y2 - y1);
+  }
+  return { ha: Math.abs(a) / 2 / 10000, m: p };
+}
+/* Numbers as people write them: 487570.25, 487 570,25, 7.200.720,10, 7,200,720.10. */
+function numberOptions(tok) {
+  const t = tok.replace(/\s/g, '').replace(/[.,]+$/, '');
+  const opts = new Set();
+  if (t.includes('.') && t.includes(',')) {
+    const dec = t.lastIndexOf('.') > t.lastIndexOf(',') ? '.' : ',';
+    opts.add(parseFloat(t.split(dec === '.' ? ',' : '.').join('').replace(',', '.')));
+  } else if (t.includes(',')) {
+    opts.add(parseFloat(t.replace(',', '.'))); if (/^-?\d{1,3}(,\d{3})+$/.test(t)) opts.add(parseFloat(t.replace(/,/g, '')));
+  } else if ((t.match(/\./g) || []).length > 1) {
+    opts.add(parseFloat(t.replace(/\./g, '')));
+  } else {
+    opts.add(parseFloat(t)); if (/^-?\d{1,3}\.\d{3}$/.test(t)) opts.add(parseFloat(t.replace('.', '')));
+  }
+  return [...opts].filter((v) => isFinite(v));
+}
+const isE = (v) => v > 160000 && v < 840000, isN = (v) => v > 6500000 && v < 8100000;
+function parseDMS(s) {
+  const out = [];
+  const re = /(-?\d+(?:[.,]\d+)?)\s*°\s*(?:(\d+(?:[.,]\d+)?)\s*['′’]\s*)?(?:(\d+(?:[.,]\d+)?)\s*(?:["″”]|'')\s*)?([NSEWOnsewo])?/g;
+  let m;
+  while ((m = re.exec(s))) {
+    let v = Math.abs(parseFloat(m[1].replace(',', '.'))) + (m[2] ? parseFloat(m[2].replace(',', '.')) / 60 : 0) + (m[3] ? parseFloat(m[3].replace(',', '.')) / 3600 : 0);
+    if (m[1].startsWith('-') || /[SWOswo]/.test(m[4] || '')) v = -v;
+    out.push(v);
+  }
+  return out;
+}
+function parseCoords(text) {
+  const pts = []; let kind = null, skipped = 0;
+  for (const line of text.split(/\n|;/)) {
+    if (!line.trim()) continue;
+    let got = null;
+    if (line.includes('°')) {
+      const d = parseDMS(line);
+      if (d.length >= 2) { const [a, b] = Math.abs(d[0]) <= 90 && Math.abs(d[1]) > 40 ? d : [d[1], d[0]]; got = UTM.fwd(a, b); kind = kind || 'latlon'; }
+    } else {
+      const toks = line.match(/-?\d{1,3}(?:[ \u00a0]\d{3})+(?:[.,]\d+)?(?!\d)|-?\d[\d.,]*/g) || [];
+      const nums = toks.map(numberOptions);
+      for (let i = 0; i < nums.length - 1 && !got; i++) {
+        for (const a of nums[i]) for (const b of nums[i + 1]) {
+          if (got) break;
+          if (isE(a) && isN(b)) { got = [a, b]; kind = kind || 'utm'; }
+          else if (isN(a) && isE(b)) { got = [b, a]; kind = kind || 'utm'; }
+          else if (a < -15 && a > -35 && b < -45 && b > -70) { got = UTM.fwd(a, b); kind = kind || 'latlon'; }
+          else if (b < -15 && b > -35 && a < -45 && a > -70) { got = UTM.fwd(b, a); kind = kind || 'latlon'; }
+        }
+      }
+    }
+    if (got) pts.push(got); else skipped++;
+  }
+  return { pts, kind, skipped };
+}
+function geojsonOf(b) {
+  const ring = b.utm.map(([E, N]) => { const [lat, lon] = UTM.inv(E, N); return [+lon.toFixed(8), +lat.toFixed(8)]; });
+  if (ring.length > 2) ring.push(ring[0]);
+  const a = ringArea(b.utm);
+  return { type: 'Feature', properties: { name: b.name, area_ha: +a.ha.toFixed(4), perimeter_m: +a.m.toFixed(2), utm_21s: b.utm },
+    geometry: ring.length > 3 ? { type: 'Polygon', coordinates: [ring] } : { type: 'LineString', coordinates: ring } };
+}
+function loadOfficial(fc) {
+  OFFICIAL = [];
+  for (const f of fc.features || []) {
+    const g = f.geometry; if (!g) continue;
+    const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : g.type === 'LineString' ? [[g.coordinates]] : [];
+    for (const poly of polys) {
+      const ring = poly[0].map(([lon, lat]) => UTM.fwd(lat, lon));
+      if (ring.length > 2 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]) ring.pop();
+      OFFICIAL.push({ name: (f.properties && f.properties.name) || 'Boundary', utm: ring, official: true, closed: g.type !== 'LineString',
+        color: (f.properties && f.properties.color) || '#e9bf5a' });
     }
   }
-  // Orchard rows on the corridor.
-  const orchard = [];
-  for (let i = 0; i < 6; i++) for (let j = 0; j < 9; j++) {
-    const [x, z] = [ORCHARD[0] + (j - 4) * 9 * AX[0] + (i - 2.5) * 9 * PX[0], ORCHARD[1] + (j - 4) * 9 * AX[1] + (i - 2.5) * 9 * PX[1]];
-    if (inPoly(x, z, GEO.outline)) orchard.push([x, z]);
-  }
+}
 
-  const canopyGeo = new THREE.IcosahedronGeometry(1, 0);
-  const tmat = new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.9 });
-  const forest = new THREE.InstancedMesh(canopyGeo, tmat, trees.length + orchard.length);
-  const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), SC = new THREE.Vector3(), col = new THREE.Color();
-  let ti = 0;
-  for (const [x, z, u] of trees) {
-    const r = 4.2 + u * 4.5;
-    V.set(x, yAt(x, z) + 3 + r * 0.6, z);
-    Q.setFromAxisAngle(UP, u * 6.28);
-    SC.set(r, r * (0.75 + R() * 0.3), r);
-    forest.setMatrixAt(ti, M4.compose(V, Q, SC));
-    const pick = R();
-    if (pick < 0.018) col.setHSL(0.92, 0.5, 0.62);
-    else if (pick < 0.03) col.setHSL(0.13, 0.75, 0.52);
-    else col.setHSL(0.23 + R() * 0.08, 0.3 + R() * 0.18, 0.11 + R() * 0.1);
-    forest.setColorAt(ti++, col);
-  }
-  for (const [x, z] of orchard) {
-    V.set(x, yAt(x, z) + 2.4, z); Q.identity(); SC.set(2.6, 2.2, 2.6);
-    forest.setMatrixAt(ti, M4.compose(V, Q, SC));
-    col.setHSL(0.25, 0.42, 0.3); forest.setColorAt(ti++, col);
-  }
-  forest.castShadow = true; forest.receiveShadow = true;
-  scene.add(forest);
-
-  const palmMesh = new THREE.InstancedMesh(palmGeometry(15), palmMat, palms.length);
-  palms.forEach(([x, z, s], i) => {
-    V.set(x, yAt(x, z) - 0.5, z); Q.setFromAxisAngle(UP, R() * 6.28); SC.set(s, s, s);
-    palmMesh.setMatrixAt(i, M4.compose(V, Q, SC));
-  });
-  palmMesh.castShadow = true;
-  scene.add(palmMesh);
-
-  // Town houses: small terracotta roofs on the east.
-  const houses = [];
-  const Rh = rng(31);
-  for (let i = 0; i < (small ? 120 : 220); i++) {
-    const x = 640 + Rh() * 1100, z = 200 + Rh() * 1350;
-    if (inPoly(x, z, GEO.outline)) continue;
-    houses.push([x, z, Rh()]);
-  }
-  const houseBody = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0xe8ddc8, roughness: 0.9 }), houses.length);
-  const roofGeo = new THREE.CylinderGeometry(0.577, 0.577, 1, 3); roofGeo.rotateZ(Math.PI / 2); roofGeo.rotateX(-Math.PI / 2);
-  const houseRoof = new THREE.InstancedMesh(roofGeo, new THREE.MeshStandardMaterial({ color: 0xbf6a40, roughness: 0.8 }), houses.length);
-  houses.forEach(([x, z, u], i) => {
-    const w = 8 + u * 6, d = 6 + u * 4, y = yAt(x, z);
-    Q.setFromAxisAngle(UP, -0.36 + (u > 0.5 ? Math.PI / 2 : 0));
-    houseBody.setMatrixAt(i, M4.compose(V.set(x, y + 1.6, z), Q, SC.set(w, 3.2, d)));
-    houseRoof.setMatrixAt(i, M4.compose(V.set(x, y + 3.9, z), Q, SC.set(w + 0.6, 2.4, d + 0.6)));
-  });
-  houseBody.castShadow = houseRoof.castShadow = true;
-  scene.add(houseBody, houseRoof);
-
-  // The property line as a soft curtain of light.
-  const line = curtain(GEO.outline, 16, 0xe9bf5a, 0.75);
-  scene.add(line); map.curtains.push(line);
-  const bc = BETAN;
-  const bet = curtain([ap(PRIV_C, bc.a[0], Math.max(bc.p[0], -200)), ap(PRIV_C, bc.a[1], bc.p[0]), ap(PRIV_C, bc.a[1], spanAt(PRIV_AP, bc.a[1])[1] - 4), ap(PRIV_C, bc.a[0], spanAt(PRIV_AP, bc.a[0])[1] - 4)], 7, 0x9cc8f0, 0.7);
-  scene.add(bet); map.curtains.push(bet);
-
-  // Buildings on the public side.
-  const M = mapMaterials();
-  CABINS.forEach(([x, z]) => scene.add(mapCabin(M, x, z)));
-  scene.add(mapPond(M));
-  scene.add(mapCourt(M));
-  scene.add(mapHub(M));
-  scene.add(mapSolar(M));
-  scene.add(mapCarports(M));
-  PARCELS.filter((p) => p.house).forEach((p, i) => scene.add(mapHouse(M, p.center[0], p.center[1], i)));
-  // Corner stakes on the Betancourt hectare.
+/* ------------------------------------------------------------ build -- */
+async function buildHill() {
+  const [meta, ter, trees, ctx, layers, img] = await Promise.all([
+    getJSON('data/meta.json'), getJSON('data/terrain.json'), getJSON('data/trees.json'), getJSON('data/context.json'),
+    getJSON('data/layers.geojson').catch(() => ({ features: [] })), loadImage('data/imagery.jpg'),
+  ]);
+  META = meta; CTX = ctx;
+  HG = ter.grid; HRES = ter.res; HHALF = meta.half; HBASE = ter.base;
+  const raw = new Uint16Array(b64bytes(ter.data).buffer);
+  HE = new Float32Array(raw.length);
+  for (let i = 0; i < raw.length; i++) HE[i] = HBASE + raw[i] / ter.scale;
   {
-    const stakes = new THREE.Group();
-    const [lo, hi] = spanAt(PRIV_AP, (bc.a[0] + bc.a[1]) / 2);
-    const corners = [ap(PRIV_C, bc.a[0] + 4, bc.p[0] + 4), ap(PRIV_C, bc.a[1] - 4, bc.p[0] + 4), ap(PRIV_C, bc.a[1] - 4, hi - 6), ap(PRIV_C, bc.a[0] + 4, hi - 6)];
-    corners.forEach(([x, z]) => box(0.5, 4, 0.5, x, yAt(x, z) + 2, z, M.stake, stakes));
-    scene.add(stakes);
+    const u = b64bytes(trees.data), dv = new DataView(u.buffer), n = trees.count;
+    treeData = { count: n, x: new Float32Array(n), z: new Float32Array(n), h: new Float32Array(n), r: new Float32Array(n) };
+    for (let i = 0; i < n; i++) {
+      const o = i * 6;
+      treeData.x[i] = dv.getInt16(o, true) / 10; treeData.z[i] = dv.getInt16(o + 2, true) / 10;
+      treeData.h[i] = dv.getUint8(o + 4) / 10; treeData.r[i] = dv.getUint8(o + 5) / 10;
+    }
   }
+  {
+    const [c, g] = canvas(img.width, img.height);
+    g.drawImage(img, 0, 0); imgPx = g.getImageData(0, 0, img.width, img.height).data; imgW = img.width;
+  }
+  loadOfficial(layers);
+  boundaries.load();
 
-  // Invisible pick volumes for tapping places in the 3D view.
-  for (const pl of PLACES) {
-    const [x, z] = pl.at;
-    const s = new THREE.Mesh(new THREE.SphereGeometry(pl.id === 'hill' ? 160 : pl.id === 'private' ? 140 : pl.id === 'cabins' ? 110 : 40, 12, 8), new THREE.MeshBasicMaterial({ visible: false }));
-    s.position.set(x, yAt(x, z) + 10, z);
-    s.userData.place = pl;
-    scene.add(s); map.hits.push(s);
-    pl.anchor = new THREE.Vector3(x, yAt(x, z) + pl.h, z);
+  const scene = hill.scene;
+  const HAZE = new THREE.Color(0xc8d3dc);
+  scene.background = HAZE.clone();
+  scene.fog = new THREE.FogExp2(HAZE, 0.000085);
+  scene.environment = ENV; scene.environmentIntensity = 0.2;
+  const sunDir = new THREE.Vector3(-0.42, 0.62, -0.66).normalize();
+  const sky = skyDome(0x6f9fd0, 0xd9e1e6, sunDir); sky.scale.setScalar(30000); scene.add(sky);
+  scene.add(new THREE.HemisphereLight(0xdfe9f2, 0x5b5040, 1.35));
+  const sun = new THREE.DirectionalLight(0xfff1dc, 2.1);
+  sun.position.copy(sunDir).multiplyScalar(5000); sun.target.position.set(0, 0, 0);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(small ? 2048 : 4096, small ? 2048 : 4096);
+  Object.assign(sun.shadow.camera, { left: -2300, right: 2300, top: 2300, bottom: -2300, near: 2000, far: 9000 });
+  sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.6;
+  scene.add(sun, sun.target);
+
+  const t = new THREE.Texture(img);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO; t.needsUpdate = true;
+  const tg = terrainGeometry();
+  hill.terrainMat = contourMaterial(t);
+  hill.terrain = new THREE.Mesh(tg, hill.terrainMat);
+  hill.terrain.receiveShadow = true;
+  scene.add(hill.terrain);
+  hill.skirt = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x4a3b2e, roughness: 1, side: THREE.DoubleSide }));
+  scene.add(hill.skirt);
+
+  const [oc, og] = canvas(small ? 2048 : 4096, small ? 2048 : 4096);
+  const otex = new THREE.CanvasTexture(oc); otex.colorSpace = THREE.SRGBColorSpace; otex.anisotropy = ANISO;
+  overlay = { c: oc, g: og, tex: otex };
+  hill.overlay = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ map: otex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6, fog: false }));
+  hill.overlay.renderOrder = 2;
+  scene.add(hill.overlay);
+
+  hill.trees = buildTrees(); scene.add(hill.trees);
+  hill.pin = new THREE.Group();
+  {
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 30, 8), new THREE.MeshBasicMaterial({ color: 0xe9bf5a }));
+    stem.position.y = 15;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 12), new THREE.MeshBasicMaterial({ color: 0xe9bf5a }));
+    head.position.y = 31;
+    hill.pin.add(stem, head); hill.pin.visible = false; scene.add(hill.pin);
   }
-  map.sun = sun;
+  relayout();
 }
 
-function mapMaterials() {
-  return {
-    earth: new THREE.MeshStandardMaterial({ color: 0xc19370, roughness: 0.95 }),
-    slab: new THREE.MeshStandardMaterial({ color: 0x2c2b27, roughness: 0.7 }),
-    roof: new THREE.MeshStandardMaterial({ color: 0x6f8c3f, roughness: 1 }),
-    glass: new THREE.MeshStandardMaterial({ color: 0x1d2c33, roughness: 0.08, metalness: 0.6, emissive: 0x2a2015, emissiveIntensity: 0.4 }),
-    deck: new THREE.MeshStandardMaterial({ color: 0x8a6040, roughness: 0.8 }),
-    water: new THREE.MeshStandardMaterial({ color: 0x2f5c5e, roughness: 0.05, metalness: 0.35 }),
-    pool: new THREE.MeshStandardMaterial({ color: 0x3f8f9a, roughness: 0.05, metalness: 0.2 }),
-    reed: new THREE.MeshStandardMaterial({ color: 0x5c7b34, roughness: 0.9 }),
-    white: new THREE.MeshStandardMaterial({ color: 0xe9e0cf, roughness: 0.85 }),
-    tile: new THREE.MeshStandardMaterial({ color: 0xbd6b42, roughness: 0.75 }),
-    panel: new THREE.MeshStandardMaterial({ map: T.solar, roughness: 0.25, metalness: 0.5 }),
-    steel: new THREE.MeshStandardMaterial({ color: 0x3b3d3e, roughness: 0.5, metalness: 0.6 }),
-    court: new THREE.MeshStandardMaterial({ map: T.court, roughness: 0.95 }),
-    fence: new THREE.MeshStandardMaterial({ color: 0x1f2522, roughness: 0.6, transparent: true, opacity: 0.45 }),
-    stake: new THREE.MeshBasicMaterial({ color: new THREE.Color(0x9cc8f0).multiplyScalar(1.4) }),
-  };
+/* Everything that sits on the ground, recomputed when the relief scale changes. */
+function relayout() {
+  setTerrainY(hill.terrain.geometry);
+  hill.terrainMat.userData.u.uVS.value = hill.vs;
+  hill.skirt.geometry.dispose(); hill.skirt.geometry = skirtGeometry();
+  placeTrees(hill.trees);
+  if (hill.buildings) { hill.scene.remove(hill.buildings); hill.buildings.geometry.dispose(); }
+  if (hill.roads) { hill.scene.remove(hill.roads); hill.roads.geometry.dispose(); }
+  hill.buildings = buildBuildings(); hill.roads = buildRoads();
+  hill.scene.add(hill.buildings, hill.roads);
+  applyLayers();
+  refreshCurtains();
+  drawOverlay();
+  for (const l of hill.labels || []) l.anchor.y = yAt(l.x, l.z) + l.lift;
+  if (hill.pin.visible) hill.pin.position.y = yAt(hill.pin.position.x, hill.pin.position.z);
 }
-function mapCabin(M, x, z) {
-  const g = new THREE.Group();
-  box(11.4, 3.0, 6.5, 0, 1.5, 0, M.earth, g);
-  box(8, 2.4, 0.1, -1.4, 1.3, 3.27, M.glass, g, { cast: false });
-  box(14, 0.35, 9, 0, 3.17, 1.0, M.slab, g);
-  box(13.6, 0.22, 8.6, 0, 3.45, 1.0, M.roof, g);
-  box(12, 0.3, 2.6, 0, 0.15, 4.6, M.deck, g);
-  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST;
-  return g;
+function applyLayers() {
+  hill.trees.visible = hill.on.trees;
+  hill.buildings.visible = hill.on.buildings;
+  hill.roads.visible = hill.on.roads;
+  hill.terrainMat.userData.u.uOn.value = hill.on.contours ? 1 : 0;
 }
-function mapHouse(M, x, z, i) {
-  const g = new THREE.Group();
-  box(15.9, 3.0, 7.9, -4.2, 1.5, 0, M.earth, g);
-  box(9.9, 3.3, 7.9, 8.7, 1.65, -2.5, M.earth, g);
-  box(10, 2.4, 0.1, -4.5, 1.3, 3.97, M.glass, g, { cast: false });
-  box(19, 0.35, 11, -4.2, 3.17, 1.0, M.slab, g);
-  box(18.6, 0.22, 10.6, -4.2, 3.45, 1.0, M.roof, g);
-  box(12.5, 0.35, 10.5, 8.7, 3.47, -1.8, M.slab, g);
-  box(12.1, 0.22, 10.1, 8.7, 3.75, -1.8, M.roof, g);
-  box(12, 0.2, 3.5, -4, 0.05, 8.8, M.pool, g, { cast: false });
-  box(16, 0.25, 3, -4.2, 0.12, 5.4, M.deck, g);
-  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST + (i % 2 ? 0.08 : -0.06);
-  return g;
-}
-function mapPond(M) {
-  const g = new THREE.Group(), R = rng(17);
-  const shape = new THREE.Shape(), N = 40, ra = 24, rb = 15;
-  for (let i = 0; i <= N; i++) {
-    const t = (i / N) * Math.PI * 2, w = 1 + (vnoise(Math.cos(t) * 2 + 4, Math.sin(t) * 2 + 4) - 0.5) * 0.35;
-    const px = Math.cos(t) * ra * w, pz = Math.sin(t) * rb * w;
-    i ? shape.lineTo(px, pz) : shape.moveTo(px, pz);
+
+/* Named places from Overture. Points stacked on one spot are geocoding guesses, so they are left out. */
+const LODGING = new Set(['lodging', 'hotel', 'private_lodging', 'campground', 'resort']);
+function hillLabels() {
+  const seen = new Map();
+  for (const p of CTX.places) { const k = p.x.toFixed(0) + ',' + p.z.toFixed(0); seen.set(k, (seen.get(k) || 0) + 1); }
+  const out = [];
+  const s = META.summit;
+  out.push({ name: 'Cerro Kavaju', sub: `Summit · ${Math.round(s.surface_m)} m`, x: s.x, z: s.z, lift: 45, c: 'var(--gold)', far: 9000 });
+  const names = new Set(['Cerro Kavaju']);
+  for (const p of CTX.places) {
+    const k = p.x.toFixed(0) + ',' + p.z.toFixed(0), n = (p.n || '').trim();
+    if (!n || names.has(n) || seen.get(k) > 2 || p.k === 'mountain') continue;
+    names.add(n);
+    const lodging = LODGING.has(p.k);
+    out.push({ name: n, sub: lodging ? 'Lodging' : (p.k || '').replace(/_/g, ' '), x: p.x, z: p.z, lift: 22, c: lodging ? 'var(--earth)' : 'var(--muted)', far: lodging ? 5000 : 2600 });
   }
-  const water = new THREE.Mesh(new THREE.ShapeGeometry(shape, 2), M.water);
-  water.rotation.x = -Math.PI / 2;
-  water.position.y = 0.35; water.receiveShadow = true;
-  g.add(water);
-  const reeds = new THREE.InstancedMesh(new THREE.ConeGeometry(0.6, 2.4, 5), M.reed, 90);
-  const m = new THREE.Matrix4();
-  for (let i = 0; i < 90; i++) {
-    const t = Math.PI * 0.15 + R() * Math.PI * 0.8, w = 0.85 + R() * 0.12;
-    m.makeTranslation(Math.cos(t) * ra * w, 1.2, Math.sin(t) * rb * w);
-    reeds.setMatrixAt(i, m);
-  }
-  reeds.castShadow = true;
-  g.add(reeds);
-  const [x, z] = POND;
-  g.position.set(x, yAt(x, z), z); g.rotation.y = Math.atan2(AX[0], AX[1]) - Math.PI / 2;
-  return g;
-}
-function mapCourt(M) {
-  const g = new THREE.Group();
-  const court = box(36.6, 0.2, 18.3, 0, 0.1, 0, M.court, g, { cast: false });
-  court.material = M.court;
-  [[0, 9.15, 36.6, 0.08], [0, -9.15, 36.6, 0.08]].forEach(([cx, cz, w, d]) => box(w, 3.4, d, cx, 1.8, cz, M.fence, g, { cast: false }));
-  [[18.3, 0], [-18.3, 0]].forEach(([cx, cz]) => box(0.08, 3.4, 18.3, cx, 1.8, cz, M.fence, g, { cast: false }));
-  const [x, z] = COURT;
-  g.position.set(x, yAt(x, z), z); g.rotation.y = Math.atan2(AX[0], AX[1]) - Math.PI / 2;
-  return g;
-}
-function mapHub(M) {
-  const g = new THREE.Group();
-  box(14, 3.6, 9, 0, 1.8, 0, M.white, g);
-  const shape = new THREE.Shape(); shape.moveTo(-5.4, 0); shape.lineTo(5.4, 0); shape.lineTo(0, 3.2); shape.closePath();
-  const roofGeo = new THREE.ExtrudeGeometry(shape, { depth: 15.4, bevelEnabled: false });
-  roofGeo.translate(0, 3.6, -7.7);
-  const roof = new THREE.Mesh(roofGeo, M.tile); roof.rotation.y = Math.PI / 2; roof.castShadow = true;
-  g.add(roof);
-  box(4, 2.6, 3, 10, 1.3, 2, M.white, g);
-  const [x, z] = HUB;
-  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST;
-  return g;
-}
-function mapSolar(M) {
-  const g = new THREE.Group(), parts = [];
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 8; c++) {
-    const geo = new THREE.BoxGeometry(1.1, 0.05, 2.1);
-    geo.rotateX(-0.35); geo.translate(-4.2 + c * 1.18, 1.1, -4 + r * 4);
-    parts.push(geo);
-  }
-  const panels = new THREE.Mesh(mergeGeometries(parts), M.panel); panels.castShadow = true;
-  g.add(panels);
-  box(3, 2.4, 2.4, 7.5, 1.2, 0, M.white, g);
-  const [x, z] = SOLAR;
-  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST + Math.PI;
-  return g;
-}
-function mapCarports(M) {
-  const g = new THREE.Group();
-  for (let i = 0; i < 2; i++) {
-    const cg = new THREE.Group();
-    [[-3.2, -2.4], [3.2, -2.4], [-3.2, 2.4], [3.2, 2.4]].forEach(([px, pz]) => box(0.15, 2.8, 0.15, px, 1.4, pz, M.steel, cg));
-    const p = box(7.2, 0.12, 5.6, 0, 2.95, 0, M.panel, cg); p.rotation.x = 0.1;
-    cg.position.x = (i - 0.5) * 8.5;
-    g.add(cg);
-  }
-  const [x, z] = PARK;
-  g.position.set(x, yAt(x, z), z); g.rotation.y = FACE_EAST;
-  return g;
+  return out.map((l) => ({ ...l, anchor: new THREE.Vector3(l.x, yAt(l.x, l.z) + l.lift, l.z) }));
 }
 
 /* ================================================================ */
@@ -2074,20 +2018,20 @@ function glowTexture() {
 /* ================================================================ */
 const labelsEl = $('labels'), bar = $('bar'), drawer = $('drawer'), specs = $('specs'), hint = $('hint');
 const planEl = $('plan'), compass = $('compass'), needle = $('needle');
-let mode = 'cerro', active = null, scenes = {}, selected = null, tween = null;
+let mode = 'cerro', active = null, scenes = {}, tween = null, picking = false;
 
-map.controls = new OrbitControls(map.camera, renderer.domElement);
-const mc = map.controls;
-mc.enableDamping = true; mc.dampingFactor = 0.06;
-mc.minDistance = 90; mc.maxDistance = 3200;
-mc.maxPolarAngle = 1.32; mc.minPolarAngle = 0.15;
+hill.controls = new OrbitControls(hill.camera, renderer.domElement);
+const mc = hill.controls;
+mc.enableDamping = true; mc.dampingFactor = 0.07;
+mc.minDistance = 25; mc.maxDistance = 7500;
+mc.maxPolarAngle = 1.45; mc.minPolarAngle = 0.02;
 mc.screenSpacePanning = false;
 mc.enabled = false;
 
 function fitCamera(cam) {
   const aspect = innerWidth / innerHeight;
   cam.aspect = aspect;
-  cam.fov = cam === map.camera ? (aspect < 1 ? 58 : 40) : (aspect < 1 ? 60 : 42);
+  cam.fov = cam === hill.camera ? (aspect < 1 ? 55 : 38) : (aspect < 1 ? 60 : 42);
   cam.updateProjectionMatrix();
 }
 
@@ -2101,30 +2045,37 @@ function makeChip(item, cls, onClick) {
   return b;
 }
 
-function openDrawer(kick, title, body, facts, actions, color, note = '') {
+function openDrawer(kick, title, body, facts, actions, color, note = '', extra = null) {
   drawer.style.setProperty('--c', color || 'var(--gold)');
   $('d-kick').textContent = kick;
   $('d-title').textContent = title;
-  $('d-body').textContent = body;
+  $('d-body').textContent = body || '';
+  $('d-body').hidden = !body;
   $('d-facts').innerHTML = (facts || []).map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('');
   $('d-facts').hidden = !(facts && facts.length);
   const box = $('d-actions'); box.innerHTML = '';
   (actions || []).forEach(([label, go], i) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'btn' + (i ? ' ghost' : ''); b.textContent = label;
-    b.addEventListener('click', () => {
-      if (go.startsWith('plan:')) openPlan(go.slice(5)); else setMode(go);
+    b.addEventListener('click', (e) => {
+      if (typeof go === 'function') go(e.currentTarget);
+      else if (go.startsWith('plan:')) openPlan(go.slice(5)); else setMode(go);
     });
     box.appendChild(b);
   });
   box.hidden = !(actions && actions.length);
   $('d-note').textContent = note;
+  $('d-note').hidden = !note;
+  const ex = $('d-extra'); ex.innerHTML = '';
+  if (extra) ex.appendChild(extra);
+  ex.hidden = !extra;
   drawer.hidden = false;
 }
 function closeDrawer() {
   drawer.hidden = true;
-  selected = null;
-  document.querySelectorAll('.chip.is-on, .pill[aria-pressed="true"]').forEach((el) => { el.classList.remove('is-on'); if (el.classList.contains('pill')) el.setAttribute('aria-pressed', 'false'); });
+  setPicking(false);
+  if (hill.pin) hill.pin.visible = false;
+  document.querySelectorAll('.chip.is-on').forEach((el) => el.classList.remove('is-on'));
 }
 $('drawer-close').addEventListener('click', closeDrawer);
 
@@ -2134,64 +2085,179 @@ function flyTo(pos, tgt, ms = 1700, lift = 0) {
   tween = { t0: performance.now(), ms, p0: active.camera.position.clone(), q0: ctl.target.clone(), p1: pos.clone(), q1: tgt.clone(), lift };
   ctl.enabled = false;
 }
-
-function selectPlace(pl) {
-  selected = pl;
-  pl.chip && document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('is-on', c === pl.chip));
-  bar.querySelectorAll('.pill').forEach((p) => p.setAttribute('aria-pressed', String(p.dataset.id === pl.id)));
-  const tgt = pl.anchor.clone(); tgt.y -= pl.h * 0.7;
-  const offset = new THREE.Vector3().setFromSphericalCoords(pl.r, pl.phi || 1.08, pl.th);
-  // On phones the drawer covers the lower screen: aim past the place so it sits in the top third.
-  if (innerWidth <= 760) tgt.add(new THREE.Vector3(offset.x, 0, offset.z).multiplyScalar(0.42));
-  const pos = tgt.clone().add(offset);
-  flyTo(pos, tgt, 1800, pl.r * 0.15);
-  openDrawer(pl.kick, pl.title, pl.body, pl.facts, pl.actions, pl.c, pl.id === 'hill' ? '' : 'Positions are illustrative until the boundary survey.');
+function flyAround(x, z, radius) {
+  const tgt = new THREE.Vector3(x, yAt(x, z), z);
+  const az = mc.getAzimuthalAngle();
+  const pos = tgt.clone().add(new THREE.Vector3().setFromSphericalCoords(radius, 0.95, az));
+  flyTo(pos, tgt, 1600, radius * 0.1);
 }
 
-function selectSpot(sc, s) {
+function selectSpot(s) {
   document.querySelectorAll('.chip.spot').forEach((c) => c.classList.toggle('is-on', c === s.chip));
-  bar.querySelectorAll('.pill').forEach((p) => p.setAttribute('aria-pressed', 'false'));
   flyTo(new THREE.Vector3(...s.cam), new THREE.Vector3(...s.tgt), 1400);
-  openDrawer(mode === 'cabin' ? 'The cabin' : 'The residence', s.name, s.text, null, null, mode === 'cabin' ? 'var(--public)' : 'var(--private)');
+  openDrawer(mode === 'cabin' ? 'The cabin' : 'The residence', s.name, s.text, null, null, mode === 'cabin' ? 'var(--public)' : 'var(--private)', 'Concept design, not final.');
 }
 
+/* ------------------------------------------------------- hill tools -- */
+const fmt = (n, d) => n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+function copyText(text, btn) {
+  const done = () => { const t = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = t), 1500); };
+  const fallback = () => {
+    const ta = document.createElement('textarea'); ta.className = 'copybox'; ta.value = text; ta.readOnly = true; ta.id = 'copy-fallback';
+    const ex = $('d-extra'); ex.hidden = false; ex.prepend(ta); ta.focus(); ta.select();
+    btn.textContent = 'Selected: press Ctrl+C or ⌘C';
+  };
+  try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+}
+function showPoint(x, z, title) {
+  const [E, N] = toUTM(x, z), [lat, lon] = UTM.inv(E, N), g = groundAt(x, z);
+  hill.pin.position.set(x, yAt(x, z), z); hill.pin.visible = true;
+  const s = META.summit, dist = Math.hypot(x - s.x, z - s.z);
+  const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}\nUTM 21S: ${E.toFixed(1)} E, ${N.toFixed(1)} N\nGround ≈ ${g.toFixed(0)} m`;
+  openDrawer('Point', title || `${lat.toFixed(5)}, ${lon.toFixed(5)}`, null, [
+    ['Latitude', lat.toFixed(6)], ['Longitude', lon.toFixed(6)],
+    ['UTM 21S easting', fmt(E, 1) + ' m'], ['UTM 21S northing', fmt(N, 1) + ' m'],
+    ['Ground elevation', `≈ ${g.toFixed(0)} m`], ['To the summit', `${fmt(dist, 0)} m`],
+  ], [['Copy coordinates', (b) => copyText(text, b)]], 'var(--gold)', 'Ground elevation under forest is estimated from radar data minus canopy height; expect a few metres of error.');
+}
+
+function bounds(utm) {
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (const [E, N] of utm) { const [x, z] = fromUTM(E, N); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+  return { x: (x0 + x1) / 2, z: (z0 + z1) / 2, r: Math.max(x1 - x0, z1 - z0) };
+}
+function setPicking(on) {
+  picking = on;
+  const b = $('b-pick'); if (b) { b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Stop picking' : 'Pick on map'; }
+  hint.textContent = on ? 'Tap the ground to add a corner' : (mode === 'cerro' ? (small ? 'Drag to orbit · Tap for coordinates' : 'Drag to orbit · Right-drag to pan · Tap the ground for coordinates') : 'Drag to look around · Tap a label');
+}
+function updateDraft() {
+  const ta = $('b-text'); if (!ta) return;
+  const r = parseCoords(ta.value);
+  boundaries.draft = r.pts;
+  const msg = $('b-msg');
+  if (msg) {
+    if (!ta.value.trim()) msg.textContent = '';
+    else if (!r.pts.length) msg.textContent = 'No coordinates recognised yet.';
+    else {
+      const a = r.pts.length > 2 ? ringArea(r.pts) : null;
+      const outside = r.pts.filter(([E, N]) => !inSquare(...fromUTM(E, N))).length;
+      msg.textContent = `${r.pts.length} corner${r.pts.length > 1 ? 's' : ''} read as ${r.kind === 'utm' ? 'UTM 21S' : 'latitude/longitude'}` +
+        (r.skipped ? `, ${r.skipped} line${r.skipped > 1 ? 's' : ''} skipped` : '') +
+        (a ? ` · ${fmt(a.ha, 2)} ha, perimeter ${fmt(a.m, 0)} m` : '') +
+        (outside ? ` · ${outside} outside the 4 km model` : '') + '.';
+    }
+  }
+  drawOverlay();
+}
+function boundaryList() {
+  const ul = $('b-list'); if (!ul) return;
+  const all = [...OFFICIAL, ...boundaries.list];
+  ul.innerHTML = all.length ? '' : '<li><span>None yet.</span><span></span></li>';
+  all.forEach((b) => {
+    const li = document.createElement('li');
+    const a = b.utm.length > 2 ? ringArea(b.utm) : null;
+    li.innerHTML = `<span>${b.official ? '<b>Survey</b> · ' : ''}${b.name.replace(/</g, '&lt;')}</span><span>${a ? fmt(a.ha, 2) + ' ha' : ''}</span>`;
+    const row = document.createElement('div'); row.className = 'rowbtns';
+    const fly = document.createElement('button'); fly.type = 'button'; fly.className = 'mini'; fly.textContent = 'Go';
+    fly.addEventListener('click', () => { const bb = bounds(b.utm); flyAround(bb.x, bb.z, bb.r * 1.5 + 160); });
+    const cp = document.createElement('button'); cp.type = 'button'; cp.className = 'mini'; cp.textContent = 'Copy GeoJSON';
+    cp.addEventListener('click', () => copyText(JSON.stringify(geojsonOf(b)), cp));
+    row.append(fly, cp);
+    if (!b.official) {
+      const del = document.createElement('button'); del.type = 'button'; del.className = 'mini'; del.textContent = 'Remove';
+      del.addEventListener('click', () => {
+        if (del.dataset.armed) { boundaries.list = boundaries.list.filter((x) => x !== b); boundaries.save(); refreshCurtains(); drawOverlay(); boundaryList(); }
+        else { del.dataset.armed = '1'; del.textContent = 'Tap again to remove'; }
+      });
+      row.append(del);
+    }
+    li.appendChild(row);
+    ul.appendChild(li);
+  });
+}
+function openBoundaryTool() {
+  const el = document.createElement('div');
+  el.className = 'tool';
+  el.innerHTML = `
+    <label for="b-name">Name</label>
+    <input id="b-name" type="text" value="Lote ${boundaries.list.length + 1}" autocomplete="off">
+    <label for="b-text">Corner coordinates, one per line</label>
+    <textarea id="b-text" rows="7" spellcheck="false" placeholder="487 520,35   7 200 110,20&#10;487 734,10   7 200 096,55&#10;…"></textarea>
+    <p class="note">UTM zone 21S (easting, northing) as printed on the title plan, or latitude/longitude. Paraguayan number formats work. Paste the coordinate table as is: vertex numbers and distances are ignored.</p>
+    <div class="actions"><button class="btn" type="button" id="b-draw">Draw boundary</button><button class="btn ghost" type="button" id="b-pick" aria-pressed="false">Pick on map</button></div>
+    <p class="note" id="b-msg" aria-live="polite"></p>
+    <h3>On the map</h3>
+    <ul class="facts" id="b-list"></ul>`;
+  openDrawer('Boundaries', 'Add a boundary', 'Type or paste the corner coordinates from a title plan. The outline appears as you type.', null, null, 'var(--gold)',
+    'Boundaries you add are saved in this browser only. Use Copy GeoJSON to send one, and it can be built into the shared model.', el);
+  const ta = $('b-text');
+  let t = 0;
+  ta.addEventListener('input', () => { clearTimeout(t); t = setTimeout(updateDraft, 150); });
+  $('b-pick').addEventListener('click', () => setPicking(!picking));
+  $('b-draw').addEventListener('click', () => {
+    const r = parseCoords(ta.value);
+    if (r.pts.length < 3) { $('b-msg').textContent = 'A boundary needs at least three corners.'; return; }
+    const name = $('b-name').value.trim() || `Lote ${boundaries.list.length + 1}`;
+    boundaries.list.push({ name, utm: r.pts.map(([E, N]) => [+E.toFixed(2), +N.toFixed(2)]) });
+    boundaries.save(); boundaries.draft = []; ta.value = ''; setPicking(false);
+    $('b-name').value = `Lote ${boundaries.list.length + 1}`;
+    refreshCurtains(); drawOverlay(); boundaryList();
+    const a = ringArea(r.pts);
+    $('b-msg').textContent = `Drew ${name}: ${fmt(a.ha, 2)} ha.`;
+    const bb = bounds(r.pts); flyAround(bb.x, bb.z, bb.r * 1.5 + 160);
+  });
+  boundaryList();
+}
+function openSources() {
+  const el = document.createElement('div');
+  const m = META.sources;
+  el.innerHTML = `<ul class="plain">
+    <li><b>Ground shape.</b> ${m.elevation}.</li>
+    <li><b>Trees.</b> ${m.canopy}. ${fmt(treeData.count, 0)} tree tops taller than 4 m are drawn at their measured height.</li>
+    <li><b>Ground colour.</b> ${m.imagery}. 10 m pixels, sharpened with the 1 m canopy model.</li>
+    <li><b>Roads, buildings, names.</b> ${m.context}.</li>
+    <li><b>Coordinates.</b> WGS84 / UTM zone 21S (EPSG:32721). Model origin ${fmt(META.origin.easting, 0)} E, ${fmt(META.origin.northing, 0)} N; the model covers 4 × 4 km.</li>
+  </ul>`;
+  openDrawer('About the data', 'What this model is made of', 'Every layer is open satellite or map data. The property boundary will come from the title plans.', null, null, 'var(--gold)', '', el);
+}
+
+/* ---------------------------------------------------- bars and chips -- */
+function pill(label, pressed, onClick, cls = '') {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'pill ' + cls; b.textContent = label;
+  if (pressed !== null) b.setAttribute('aria-pressed', String(pressed));
+  b.addEventListener('click', () => onClick(b));
+  bar.appendChild(b);
+  return b;
+}
 function buildBar() {
   bar.innerHTML = '';
   if (mode === 'cerro') {
-    for (const pl of PLACES) {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'pill'; b.dataset.id = pl.id; b.style.setProperty('--c', pl.c);
-      b.setAttribute('aria-pressed', 'false');
-      b.innerHTML = `<span class="dot"></span>${pl.name}`;
-      b.addEventListener('click', () => selectPlace(pl));
-      bar.appendChild(b);
+    pill('Overview', null, () => { closeDrawer(); flyTo(HOME.pos, HOME.tgt, 1800); });
+    for (const [key, label] of [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contours']]) {
+      pill(label, hill.on[key], (b) => { hill.on[key] = !hill.on[key]; b.setAttribute('aria-pressed', String(hill.on[key])); applyLayers(); });
     }
-    const ov = document.createElement('button');
-    ov.type = 'button'; ov.className = 'pill'; ov.textContent = 'Overview';
-    ov.addEventListener('click', () => { closeDrawer(); flyTo(HOME.pos, HOME.tgt, 1800); });
-    bar.prepend(ov);
+    pill('UTM grid', hill.on.grid, (b) => { hill.on.grid = !hill.on.grid; b.setAttribute('aria-pressed', String(hill.on.grid)); drawOverlay(); });
+    pill('Relief ×2', hill.vs > 1, (b) => { hill.vs = hill.vs > 1 ? 1 : 2; b.setAttribute('aria-pressed', String(hill.vs > 1)); relayout(); });
+    pill('Boundaries', null, () => openBoundaryTool(), 'accent');
+    pill('Data sources', null, () => openSources());
   } else {
     const sc = scenes[mode];
-    VIEWS[mode].forEach(([label, p, t]) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'pill'; b.textContent = label;
-      b.addEventListener('click', () => { closeDrawer(); flyTo(new THREE.Vector3(...p), new THREE.Vector3(...t), 1400); });
-      bar.appendChild(b);
-    });
-    const nb = document.createElement('button');
-    nb.type = 'button'; nb.className = 'pill'; nb.setAttribute('aria-pressed', String(sc.isNight()));
-    nb.textContent = sc.isNight() ? 'Night' : 'Day';
-    nb.addEventListener('click', () => { sc.setNight(!sc.isNight()); nb.textContent = sc.isNight() ? 'Night' : 'Day'; nb.setAttribute('aria-pressed', String(sc.isNight())); });
-    bar.appendChild(nb);
+    VIEWS[mode].forEach(([label, p, t]) => pill(label, null, () => { closeDrawer(); flyTo(new THREE.Vector3(...p), new THREE.Vector3(...t), 1400); }));
+    pill(sc.isNight() ? 'Night' : 'Day', sc.isNight(), (b) => { sc.setNight(!sc.isNight()); b.textContent = sc.isNight() ? 'Night' : 'Day'; b.setAttribute('aria-pressed', String(sc.isNight())); });
   }
 }
-
 function buildChips() {
   labelsEl.innerHTML = '';
   if (mode === 'cerro') {
-    for (const pl of PLACES) pl.chip = makeChip(pl, '', () => selectPlace(pl));
+    for (const l of hill.labels) l.chip = makeChip(l, '', () => {
+      document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('is-on', c === l.chip));
+      flyAround(l.x, l.z, l.far > 6000 ? 900 : 420);
+      showPoint(l.x, l.z, l.name);
+    });
   } else {
-    for (const s of scenes[mode].anchors) s.chip = makeChip({ name: s.name, c: mode === 'cabin' ? 'var(--public)' : 'var(--private)' }, 'spot', () => selectSpot(scenes[mode], s));
+    for (const s of scenes[mode].anchors) s.chip = makeChip({ name: s.name, c: mode === 'cabin' ? 'var(--public)' : 'var(--private)' }, 'spot', () => selectSpot(s));
   }
 }
 
@@ -2216,11 +2282,11 @@ $('plan-close').addEventListener('click', closePlan);
 planEl.querySelectorAll('.plan-nav a').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); const el = $(a.getAttribute('href').slice(1)); el && el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }));
 
 const LEDES = {
-  cerro: 'Glamping cabins and a private community on about 29 hectares at the foot of a protected forest hill, 65 km from Asunción. Built to run on its own sun and rain.',
-  cabin: 'A rammed-earth cabin set into the bank, with a living roof, deep eaves and a wall of glass to the valley. Tap a label or switch to night.',
-  residence: 'A home on the private side: two earth volumes stepped with the slope, living roofs, a pool, about a hectare of its own.',
+  cerro: 'A 4 × 4 km model of the hill built from satellite elevation, imagery and tree-height data. Tap the ground for coordinates; add boundaries from the title plans.',
+  cabin: 'A concept cabin: rammed-earth walls set into the bank, a living roof, deep eaves and glass to the view. Design not final.',
+  residence: 'A concept home for the private side: two earth volumes stepped with the slope, living roofs and a pool. Design not final.',
 };
-const EYEBROWS = { cerro: 'Cerro Kavaju · Cordillera, Paraguay', cabin: 'Public side · The cabin', residence: 'Private side · The residence' };
+const EYEBROWS = { cerro: small ? 'Cerro Kavaju · Cordillera, Paraguay' : 'Cerro Kavaju · Cordillera, Paraguay · UTM 21S', cabin: 'Concept · The cabin', residence: 'Concept · The residence' };
 
 let HOME;
 function setMode(m) {
@@ -2232,7 +2298,7 @@ function setMode(m) {
   if (active) active.controls.enabled = false;
   tween = null;
   mode = m;
-  active = m === 'cerro' ? map : scenes[m];
+  active = m === 'cerro' ? hill : scenes[m];
   active.controls.enabled = true;
   closeDrawer();
   markTab(m);
@@ -2240,7 +2306,7 @@ function setMode(m) {
   $('lede').textContent = LEDES[m];
   specs.hidden = m === 'cerro';
   if (m !== 'cerro') specs.innerHTML = SPECS[m];
-  hint.textContent = m === 'cerro' ? (small ? 'Drag to orbit · Tap a place' : 'Drag to orbit · Pinch or scroll to zoom · Tap a place') : 'Drag to look around · Tap a label';
+  setPicking(false);
   compass.hidden = m !== 'cerro';
   buildChips();
   buildBar();
@@ -2252,26 +2318,29 @@ const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let down = null;
 renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
 renderer.domElement.addEventListener('pointerup', (e) => {
-  if (!down || mode !== 'cerro') return;
+  if (!down || mode !== 'cerro' || e.button > 0) return;
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), quick = performance.now() - down.t < 450;
   down = null;
   if (moved > 6 || !quick) return;
   ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-  ray.setFromCamera(ndc, map.camera);
-  const hits = ray.intersectObjects(map.hits, false);
-  if (hits.length) {
-    hits.sort((a, b) => (a.object.geometry.parameters.radius - b.object.geometry.parameters.radius));
-    selectPlace(hits[0].object.userData.place);
+  ray.setFromCamera(ndc, hill.camera);
+  const hit = ray.intersectObject(hill.terrain, false)[0];
+  if (!hit) return;
+  const { x, z } = hit.point;
+  if (picking) {
+    const [E, N] = toUTM(x, z), ta = $('b-text');
+    if (ta) { ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + `${E.toFixed(2)}  ${N.toFixed(2)}`; updateDraft(); }
+    return;
   }
+  showPoint(x, z);
 });
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (!planEl.hidden) closePlan(); else if (!drawer.hidden) closeDrawer();
 });
-
 addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
-  fitCamera(map.camera);
+  fitCamera(hill.camera);
   Object.values(scenes).forEach((s) => fitCamera(s.camera));
 });
 
@@ -2294,17 +2363,15 @@ function tick() {
     if (k >= 1) { tween = null; ctl.enabled = true; ctl.update(); }
   } else {
     if (mode === 'cerro') {
-      ctl.target.x = clamp(ctl.target.x, -1300, 1300);
-      ctl.target.z = clamp(ctl.target.z, -1300, 1300);
+      ctl.target.x = clamp(ctl.target.x, -HHALF, HHALF);
+      ctl.target.z = clamp(ctl.target.z, -HHALF, HHALF);
     }
     ctl.update(dt);
   }
   if (mode === 'cerro') {
-    map.curtains.forEach((c) => (c.material.uniforms.uTime.value = elapsed));
-    const az = ctl.getAzimuthalAngle();
-    needle.setAttribute('transform', `rotate(${(az * 180) / Math.PI} 15 15)`);
-    const dist = cam.position.distanceTo(ctl.target);
-    for (const pl of PLACES) place(pl.chip, pl.anchor, cam, dist > pl.far * 0.55 && pl.far < 2000);
+    hill.curtains.forEach((c) => (c.material.uniforms.uTime.value = elapsed));
+    needle.setAttribute('transform', `rotate(${(ctl.getAzimuthalAngle() * 180) / Math.PI} 15 15)`);
+    for (const l of hill.labels) place(l.chip, l.anchor, cam, cam.position.distanceTo(l.anchor) > l.far);
   } else {
     active.tick(elapsed);
     for (const s of active.anchors) place(s.chip, s.anchor, cam, false);
@@ -2329,29 +2396,16 @@ function place(chip, anchor, cam, hide) {
 
 /* ------------------------------------------------------------- boot -- */
 async function boot() {
-  let buf;
-  try {
-    const res = await fetch('terrain.json');
-    if (!res.ok) throw new Error(res.status);
-    const bin = atob((await res.json()).data);
-    buf = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-    buf = buf.buffer;
-  } catch (err) {
-    fail('The terrain data did not load. Reload the page, or read the plan.');
-    return;
-  }
-  loaderText.textContent = 'Planting the forest';
-  await new Promise((r) => setTimeout(r, 30));
+  loaderText.textContent = 'Loading terrain, imagery and trees';
+  try { await buildHill(); }
+  catch (err) { console.error(err); fail('The terrain data did not load. Reload the page, or read the plan.'); return; }
   textures();
-  prepareHeights(new Uint16Array(buf));
-  buildMap();
-  fitCamera(map.camera);
+  hill.labels = hillLabels();
+  fitCamera(hill.camera);
   const portrait = innerWidth / innerHeight < 1;
-  const centre = portrait ? new THREE.Vector3(40, 0, -300) : new THREE.Vector3(120, 0, -60); centre.y = yAt(centre.x, centre.z) + 20;
-  const r0 = portrait ? 2200 : 1650;
-  HOME = { tgt: centre, pos: centre.clone().add(new THREE.Vector3().setFromSphericalCoords(r0, 1.08, 0.95)) };
-  map.camera.position.copy(HOME.pos); mc.target.copy(HOME.tgt); mc.update();
+  const tgt = new THREE.Vector3(-250, 0, 60); tgt.y = yAt(tgt.x, tgt.z);
+  HOME = { tgt, pos: tgt.clone().add(new THREE.Vector3().setFromSphericalCoords(portrait ? 4300 : 2900, 1.08, -1.22)) };
+  hill.camera.position.copy(HOME.pos); mc.target.copy(HOME.tgt); mc.update();
   const want = (location.hash || '').slice(1);
   setMode(want === 'cabin' || want === 'residence' ? want : 'cerro');
   if (want === 'plan') openPlan();
