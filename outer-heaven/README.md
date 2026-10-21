@@ -57,10 +57,18 @@ Open **Notes** in the hill view to lay out the site:
 
 - **Add a cabin** or **Add a building**, then tap where it goes. It appears as a 3D footprint (cabins with their deck) facing downhill.
 - Turn it with the slider or **Turn 15°**, change its width and depth, or tap **Move** and then the new spot.
+- **Add a pond** marks open water, such as the natural lagoon in front of the cabins.
 - **Add a note** drops a pin anywhere.
 - Every mark has a name and a free-text note. Tap a mark or its label to open it.
 
-Inside the Claude viewer the marks are saved in the artifact's shared database (collection `notes`: kind, name, text, UTM 21S `E`/`N`, `rot` bearing, `w`/`d` in metres), where Claude can read them. Elsewhere they stay in that browser. **Copy all as text** gives a plain summary to paste anywhere.
+Two kinds of note do more than mark a spot:
+
+- **The trail.** Notes named *Start of the trail* and *Checkpoint 1*, *Checkpoint 2*, … are joined by a walking trail, routed over the terrain on the gentlest ground between each pair. The overview gives its length, climb and steepest stretch per leg. Move a checkpoint and the trail follows.
+- **Installations.** A note can carry a first-draft model of an art installation (`model`: `stone-tower` for the lookout at checkpoint 1, `plaza` for the central plaza at checkpoint 4). The other checkpoints stay as pins until their designs are chosen.
+
+The cabins sit in the area marked *Cabañas glamping/laguna natural*, with their backs dug into the quarry wall so the green roofs line up with the top of it.
+
+Inside the Claude viewer the marks are saved in the artifact's shared database (collection `notes`: kind, name, text, UTM 21S `E`/`N`, `rot` bearing, `w`/`d` in metres, optional `model`), where Claude can read them. Elsewhere they stay in that browser. **Copy all as text** gives a plain summary to paste anywhere.
 
 ### Setting the property limits
 
@@ -128,7 +136,9 @@ The photo shows only on the Satellite base map and can be switched off under **D
 `data/objects.json` lists what is built on the site. Each entry has a `type` and a position in local metres:
 
 - `house`, `cabin`, `quincho`, `solar`, `tent`, `trampoline`, `oven`, `mast` and `palm` take `x`, `z` and `rot`, the compass bearing the front faces.
+- A `mango` takes a height `h` and crown radius `r`; a `boulder` takes `w`, `d`, `h` and `rot`.
 - A `pond` takes a `ring` of corners.
+- A `cut` lowers the ground inside its `ring` by `depth` metres, easing back up over `reach` metres, with a steep face along the corners listed in `wall`. The old quarry by the cabins is one (about 3 m, estimated from the photos).
 - A `gravel` drive takes a `path` and a width `w`.
 
 The viewer builds a 3D model for each type. Ponds are cut into the ground with their own banks. Tap a structure for its details; **Homestead** in the bar flies to the camera of the wide drone photo.

@@ -433,12 +433,12 @@ def step_site():
         near = cKDTree(np.stack([tx[keep], tz[keep]], 1)).query(np.stack([cx_, cz_], 1), distance_upper_bound=4.0)[0]
         cx_, cz_ = cx_[np.isinf(near)], cz_[np.isinf(near)]
         local = ndimage.gaussian_filter(chm, 3)[(cz_ + HALF).astype(int).clip(0, chm.shape[0] - 1), (cx_ + HALF).astype(int).clip(0, chm.shape[1] - 1)]
-        h = np.clip(local, 5, 16) * rng.uniform(0.85, 1.1, len(cx_))
+        h = np.clip(local, 2.5, 16) * rng.uniform(0.85, 1.1, len(cx_))       # low scrub at forest edges, taller trees inside
         new = np.zeros(len(cx_), dtype=TREE_DTYPE)
         new["x"], new["z"] = np.round(cx_ * 10), np.round(cz_ * 10)
-        new["h"], new["r"] = np.round(h * 10).clip(0, 255), np.round(rng.uniform(2.4, 3.3, len(cx_)) * 10)
+        new["h"], new["r"] = np.round(h * 10).clip(0, 255), np.round(np.clip(0.18 * h + 1.6, 1.8, 3.3) * rng.uniform(0.9, 1.1, len(cx_)) * 10)
         added.append(new)
-        print("  trees added where the photo shows woods:", len(new), "(canopy model height there, at least 5 m)")
+        print("  trees added where the photo shows woods:", len(new), "(canopy model height there, at least 2.5 m), heights p10/p50/p90", np.percentile(h, [10, 50, 90]).round(1))
         out.append({"id": site["id"], "name": site["name"], "file": name, "x0": x0, "z0": z0, "x1": x1, "z1": z1,
                     "source": site["source"], "credit": site["credit"], "trees_removed": int(gone.sum()), "trees_added": len(new)})
     allt = np.concatenate([rec[keep]] + added)

@@ -177,6 +177,168 @@
      759.6
     ]
    ]
+  },
+  {
+   "id": "quarry",
+   "group": "quarry",
+   "type": "cut",
+   "name": "Quarry wall",
+   "ring": [
+    [
+     341.1,
+     873.9
+    ],
+    [
+     341.3,
+     934.6
+    ],
+    [
+     359.7,
+     950.4
+    ],
+    [
+     405.8,
+     849.8
+    ],
+    [
+     447.5,
+     747.5
+    ],
+    [
+     376.5,
+     802.4
+    ]
+   ],
+   "wall": [
+    [
+     376.5,
+     802.4
+    ],
+    [
+     341.1,
+     873.9
+    ],
+    [
+     341.3,
+     934.6
+    ]
+   ],
+   "depth": 3.0,
+   "reach": 35,
+   "note": "The old quarry cut along the forest edge, about 3 m high, with the forest on top. Height taken from the owner's photos; a survey would pin it down."
+  },
+  {
+   "id": "wallpalm0",
+   "group": "quarry",
+   "type": "palm",
+   "x": 367.4,
+   "z": 807.6,
+   "h": 15.9
+  },
+  {
+   "id": "wallpalm1",
+   "group": "quarry",
+   "type": "palm",
+   "x": 363.4,
+   "z": 814.3,
+   "h": 12.9
+  },
+  {
+   "id": "wallpalm2",
+   "group": "quarry",
+   "type": "palm",
+   "x": 358.2,
+   "z": 831.1,
+   "h": 15.4
+  },
+  {
+   "id": "wallpalm3",
+   "group": "quarry",
+   "type": "palm",
+   "x": 348.9,
+   "z": 839.3,
+   "h": 13.4
+  },
+  {
+   "id": "wallpalm4",
+   "group": "quarry",
+   "type": "palm",
+   "x": 344.1,
+   "z": 850.6,
+   "h": 15.9
+  },
+  {
+   "id": "wallpalm5",
+   "group": "quarry",
+   "type": "palm",
+   "x": 337.5,
+   "z": 861.4,
+   "h": 15.6
+  },
+  {
+   "id": "wallpalm6",
+   "group": "quarry",
+   "type": "palm",
+   "x": 334.7,
+   "z": 878.0,
+   "h": 14.5
+  },
+  {
+   "id": "wallpalm7",
+   "group": "quarry",
+   "type": "palm",
+   "x": 334.3,
+   "z": 895.6,
+   "h": 11.7
+  },
+  {
+   "id": "wallpalm8",
+   "group": "quarry",
+   "type": "palm",
+   "x": 335.5,
+   "z": 905.9,
+   "h": 13.5
+  },
+  {
+   "id": "wallpalm9",
+   "group": "quarry",
+   "type": "palm",
+   "x": 336.5,
+   "z": 921.7,
+   "h": 12.1
+  },
+  {
+   "id": "mango",
+   "group": "mango",
+   "type": "mango",
+   "name": "Mango tree",
+   "x": -181.5,
+   "z": -598.3,
+   "h": 13,
+   "r": 8,
+   "note": "A huge old mango with two granite boulders at its foot, from the owner's photos. A natural checkpoint for the trail."
+  },
+  {
+   "id": "boulder1",
+   "group": "mango",
+   "type": "boulder",
+   "x": -185.7,
+   "z": -597.3,
+   "w": 4.2,
+   "d": 3.0,
+   "h": 2.0,
+   "rot": 20
+  },
+  {
+   "id": "boulder2",
+   "group": "mango",
+   "type": "boulder",
+   "x": -175.5,
+   "z": -596.1,
+   "w": 5.0,
+   "d": 3.4,
+   "h": 2.1,
+   "rot": 75
   }
  ]
 }

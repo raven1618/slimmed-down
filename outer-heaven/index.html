@@ -888,7 +888,7 @@ ul.plain b { color: var(--sand); font-weight: 600; }
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const small = matchMedia('(max-width: 760px), (pointer: coarse)').matches;
@@ -1262,7 +1262,8 @@ function refineTerrain() {
 function groundAt(x, z) {
   const gx = clamp((x + HHALF) / HFRES, 0, HFN - 1.001), gz = clamp((z + HHALF) / HFRES, 0, HFN - 1.001);
   const x0 = gx | 0, z0 = gz | 0, fx = gx - x0, fz = gz - z0, i = z0 * HFN + x0;
-  return HF[i] * (1 - fx) * (1 - fz) + HF[i + 1] * fx * (1 - fz) + HF[i + HFN] * (1 - fx) * fz + HF[i + HFN + 1] * fx * fz;
+  const h = HF[i] * (1 - fx) * (1 - fz) + HF[i + 1] * fx * (1 - fz) + HF[i + HFN] * (1 - fx) * fz + HF[i + HFN + 1] * fx * fz;
+  return CUTS.length ? h - cutAt(x, z) : h;
 }
 /* Ground slope in degrees at true scale, from the fine grid. */
 function slopeAt(x, z) {
@@ -1344,17 +1345,17 @@ function detailTexture() {
 }
 /* Contour lines drawn in the terrain shader: thin every 10 m, stronger every 50 m. The annotation
    canvas (boundaries, grid) is laid on top unlit, like a sheet of tracing paper. */
-function contourMaterial(map, ov) {
+function contourMaterial(map, ov, shared = null) {
   const mat = new THREE.MeshStandardMaterial({ map, roughness: 1, metalness: 0 });
-  mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 }, uLine: { value: new THREE.Color(1, 0.93, 0.72) }, uLineK: { value: 0.8 }, uOv: { value: ov }, uPatchOn: { value: 0 }, uDetail: { value: detailTexture() }, uHole: { value: BLANK }, uHoleR: { value: new THREE.Vector4(-1, -1, -1, -1) } };
-  const hole = pondMask();
-  if (hole) { mat.userData.u.uHole.value = hole.tex; mat.userData.u.uHoleR.value = hole.rect; }
+  if (shared) mat.userData.u = { ...shared.userData.u, uUseHole: { value: 0 } };   // same textures and settings, but it fills the holes
+  else mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 }, uLine: { value: new THREE.Color(1, 0.93, 0.72) }, uLineK: { value: 0.8 }, uOv: { value: ov }, uPatchOn: { value: 0 }, uDetail: { value: detailTexture() }, uHole: { value: BLANK }, uHoleR: { value: new THREE.Vector4(-1, -1, -1, -1) }, uUseHole: { value: 1 } };
+  if (!shared) { const hole = holeMask(); if (hole) { mat.userData.u.uHole.value = hole.tex; mat.userData.u.uHoleR.value = hole.rect; } }
   // Site photos: sharper images of parts of the site, each laid over its own rectangle of the map.
   let patchDecl = '', patchCode = '';
   SITES.forEach((p, i) => {
     const U = (x) => (x + HHALF) / (2 * HHALF), V = (z) => 1 - (z + HHALF) / (2 * HHALF);
-    mat.userData.u['uP' + i] = { value: BLANK };
-    mat.userData.u['uPR' + i] = { value: new THREE.Vector4(U(p.x0), V(p.z1), U(p.x1), V(p.z0)) };
+    mat.userData.u['uP' + i] = mat.userData.u['uP' + i] || { value: BLANK };          // kept when shared, so both materials get the photo
+    mat.userData.u['uPR' + i] = mat.userData.u['uPR' + i] || { value: new THREE.Vector4(U(p.x0), V(p.z1), U(p.x1), V(p.z0)) };
     patchDecl += ` uniform sampler2D uP${i}; uniform vec4 uPR${i};`;
     patchCode += `{ vec2 pu = (vMapUv - uPR${i}.xy) / (uPR${i}.zw - uPR${i}.xy); vec4 pc = texture2D(uP${i}, clamp(pu, 0.0, 1.0));
       float pa = pc.a * uPatchOn * step(0.0, pu.x) * step(pu.x, 1.0) * step(0.0, pu.y) * step(pu.y, 1.0);
@@ -1364,11 +1365,11 @@ function contourMaterial(map, ov) {
     Object.assign(sh.uniforms, mat.userData.u);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uVS; uniform float uBase;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvElev = position.y / uVS + uBase;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv; uniform float uPatchOn; uniform sampler2D uDetail; uniform sampler2D uHole; uniform vec4 uHoleR;' + patchDecl)
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv; uniform float uPatchOn; uniform sampler2D uDetail; uniform sampler2D uHole; uniform vec4 uHoleR; uniform float uUseHole;' + patchDecl)
       .replace('#include <tonemapping_fragment>', 'vec4 ov = texture2D(uOv, vMapUv);\ngl_FragColor.rgb = gl_FragColor.rgb * (1.0 - ov.a) + ov.rgb;\n#include <tonemapping_fragment>')
       .replace('#include <map_fragment>', `#include <map_fragment>
         { vec2 hu = (vMapUv - uHoleR.xy) / (uHoleR.zw - uHoleR.xy); float hm = texture2D(uHole, clamp(hu, 0.0, 1.0)).r;
-          if (hu.x > 0.0 && hu.x < 1.0 && hu.y > 0.0 && hu.y < 1.0 && hm > 0.5) discard; }
+          if (uUseHole > 0.5 && hu.x > 0.0 && hu.x < 1.0 && hu.y > 0.0 && hu.y < 1.0 && hm > 0.5) discard; }
         ${patchCode}
         { float k = 1.0 - smoothstep(25.0, 200.0, length(vViewPosition));
           vec2 wuv = vMapUv * 2000.0;
@@ -1573,6 +1574,7 @@ function siteMaterials() {
     bank: std({ map: gravelTex(), vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
     gravel: std({ map: gravelTex(), roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),
     mast: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.3 }),
+    leaves: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.65 }), granite: std({ color: 0x8e8c86, roughness: 0.9 }),
   });
 }
 const bearingRot = (deg) => Math.PI - (deg * Math.PI) / 180;    // turns a model's +z front to face that bearing
@@ -1734,14 +1736,15 @@ function roundRing(ring, n = 3) {
   return r;
 }
 const shoreOf = (o) => o.shore || (o.shore = roundRing(o.ring));
-function pondMask() {
-  const ponds = OBJECTS.objects.filter((o) => o.type === 'pond');
-  if (!ponds.length) return null;
-  const xs = ponds.flatMap((o) => o.ring.map((p) => p[0])), zs = ponds.flatMap((o) => o.ring.map((p) => p[1]));
-  const x0 = Math.min(...xs) - 3, x1 = Math.max(...xs) + 3, z0 = Math.min(...zs) - 3, z1 = Math.max(...zs) + 3, k = 10;   // 10 px per metre
+function holeMask() {
+  const rings = [...OBJECTS.objects.filter((o) => o.type === 'pond').map(shoreOf), ...CUTS.map((c) => c.ring)];
+  if (!rings.length) return null;
+  const xs = rings.flatMap((r) => r.map((p) => p[0])), zs = rings.flatMap((r) => r.map((p) => p[1]));
+  const x0 = Math.min(...xs) - 3, x1 = Math.max(...xs) + 3, z0 = Math.min(...zs) - 3, z1 = Math.max(...zs) + 3;
+  const k = clamp(2400 / Math.max(x1 - x0, z1 - z0), 2, 10);                        // pixels per metre
   const [c, g] = canvas(Math.ceil((x1 - x0) * k), Math.ceil((z1 - z0) * k));
   g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = '#fff';
-  for (const o of ponds) { g.beginPath(); shoreOf(o).forEach(([x, z], i) => (i ? g.lineTo : g.moveTo).call(g, (x - x0) * k, (z - z0) * k)); g.closePath(); g.fill(); }
+  for (const r of rings) { g.beginPath(); r.forEach(([x, z], i) => (i ? g.lineTo : g.moveTo).call(g, (x - x0) * k, (z - z0) * k)); g.closePath(); g.fill(); }
   const t = new THREE.CanvasTexture(c);
   const U = (x) => (x + HHALF) / (2 * HHALF), V = (z) => 1 - (z + HHALF) / (2 * HHALF);
   return { tex: t, rect: new THREE.Vector4(U(x0), V(z0 + c.height / k), U(x0 + c.width / k), V(z0)) };
@@ -1796,8 +1799,126 @@ function ribbon(path, w, mat) {
   const m = new THREE.Mesh(g, mat); m.receiveShadow = true;
   return m;
 }
-const BUILDERS = { house: houseModel, cabin: cabinModel, quincho: quinchoModel, solar: solarModel, tent: tentModel, trampoline: trampolineModel, oven: ovenModel };
-const FOOT = { house: 6, cabin: 4, quincho: 4.5, solar: 7, tent: 3, trampoline: 2.4, oven: 1.2, mast: 1.5, palm: 1 };
+/* Earthworks: an old quarry cut, given as a ring with a wall along some of its edges. Inside the ring the ground
+   is lowered: by the full depth at the wall, easing out over "reach" metres and towards the other edges. The
+   terrain shader leaves a hole there, and a finer mesh of the cut ground takes its place, so the wall is sharp. */
+let CUTS = [];
+function segDist(x, z, ax, az, bx, bz) {
+  const t = clamp(((x - ax) * (bx - ax) + (z - az) * (bz - az)) / ((bx - ax) ** 2 + (bz - az) ** 2 || 1), 0, 1);
+  return Math.hypot(x - ax - t * (bx - ax), z - az - t * (bz - az));
+}
+function prepCuts() {
+  const same = (a, b) => Math.abs(a[0] - b[0]) < 0.05 && Math.abs(a[1] - b[1]) < 0.05;
+  CUTS = OBJECTS.objects.filter((o) => o.type === 'cut' && o.ring && o.wall).map((o) => {
+    const xs = o.ring.map((p) => p[0]), zs = o.ring.map((p) => p[1]), walls = [], other = [];
+    o.ring.forEach((a, i) => {
+      const b = o.ring[(i + 1) % o.ring.length];
+      const isWall = o.wall.some((w, j) => j < o.wall.length - 1 && ((same(w, a) && same(o.wall[j + 1], b)) || (same(w, b) && same(o.wall[j + 1], a))));
+      (isWall ? walls : other).push([a[0], a[1], b[0], b[1]]);
+    });
+    return { o, ring: o.ring, walls, other, depth: o.depth || 3, reach: o.reach || 30, x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs) };
+  });
+}
+function cutAt(x, z) {
+  let d = 0;
+  for (const c of CUTS) {
+    if (x < c.x0 || x > c.x1 || z < c.z0 || z > c.z1 || !inPoly(x, z, c.ring)) continue;
+    let dw = Infinity, de = Infinity;
+    for (const s of c.walls) dw = Math.min(dw, segDist(x, z, ...s));
+    for (const s of c.other) de = Math.min(de, segDist(x, z, ...s));
+    d += c.depth * clamp(1 - dw / c.reach, 0, 1) * clamp(de / 8, 0, 1);
+  }
+  return d;
+}
+function cutModel(c, M) {
+  const g = new THREE.Group(), step = small ? 0.75 : 0.5, pad = 2.5;
+  const x0 = c.x0 - pad, z0 = c.z0 - pad, nx = Math.ceil((c.x1 - c.x0 + 2 * pad) / step) + 1, nz = Math.ceil((c.z1 - c.z0 + 2 * pad) / step) + 1;
+  const pos = new Float32Array(nx * nz * 3), uv = new Float32Array(nx * nz * 2), keep = new Uint8Array(nx * nz);
+  const near = (x, z) => inPoly(x, z, c.ring) || [...c.walls, ...c.other].some((s) => segDist(x, z, ...s) < 1.6);
+  for (let r = 0; r < nz; r++) for (let q = 0; q < nx; q++) {
+    const i = r * nx + q, x = x0 + q * step, z = z0 + r * step, inside = inPoly(x, z, c.ring);
+    pos[i * 3] = x; pos[i * 3 + 1] = (groundAt(x, z) - (inside ? 0 : 0.08) - HBASE) * hill.vs; pos[i * 3 + 2] = z;   // outside the ring it tucks under the terrain
+    uv[i * 2] = (x + HHALF) / (2 * HHALF); uv[i * 2 + 1] = 1 - (z + HHALF) / (2 * HHALF);
+    keep[i] = near(x, z) ? 1 : 0;
+  }
+  const idx = [];
+  for (let r = 0; r < nz - 1; r++) for (let q = 0; q < nx - 1; q++) {
+    const a = r * nx + q, b = a + 1, d = a + nx, e = d + 1;
+    if (keep[a] | keep[b] | keep[d] | keep[e]) idx.push(a, d, b, b, d, e);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  const ground = new THREE.Mesh(geo, hill.insertMat); ground.receiveShadow = true; ground.userData.ground = true; g.add(ground);
+  // The wall face: raw earth under a lip of grass, just in front of the step.
+  const fp = [], fc = [], fi = [], lip = new THREE.Color(0x7d7a3e), earth = new THREE.Color(0xc08a5c), foot = new THREE.Color(0x8f6446);
+  let row = 0;
+  for (const [ax, az, bx, bz] of c.walls) {
+    const L = Math.hypot(bx - ax, bz - az), tx = (bx - ax) / L, tz = (bz - az) / L;
+    let ix = -tz, iz = tx;
+    if (!inPoly((ax + bx) / 2 + ix * 2, (az + bz) / 2 + iz * 2, c.ring)) { ix = -ix; iz = -iz; }
+    const n = Math.ceil(L / 0.5);
+    for (let s = 0; s <= n; s++) {
+      const x = ax + tx * (L * s) / n, z = az + tz * (L * s) / n;
+      const top = (groundAt(x - ix * 0.4, z - iz * 0.4) - HBASE) * hill.vs + 0.05, bot = (groundAt(x + ix * 0.9, z + iz * 0.9) - HBASE) * hill.vs - 0.15;
+      const mid = top - Math.min(0.5, (top - bot) * 0.2), wx = x + ix * 0.12, wz = z + iz * 0.12;
+      fp.push(wx, top, wz, wx + ix * 0.1, mid, wz + iz * 0.1, wx + ix * 0.35, bot, wz + iz * 0.35);
+      fc.push(lip.r, lip.g, lip.b, earth.r, earth.g, earth.b, foot.r, foot.g, foot.b);
+      if (s) { const a = (row + s - 1) * 3, b = (row + s) * 3; fi.push(a, a + 1, b, b, a + 1, b + 1, a + 1, a + 2, b + 1, b + 1, a + 2, b + 2); }
+    }
+    row += n + 1;
+  }
+  const fgeo = new THREE.BufferGeometry();
+  fgeo.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); fgeo.setAttribute('color', new THREE.Float32BufferAttribute(fc, 3));
+  const fuv = []; for (let i = 0; i < fp.length / 3; i++) fuv.push(fp[i * 3] / 3 + fp[i * 3 + 2] / 3, fp[i * 3 + 1] / 3);
+  fgeo.setAttribute('uv', new THREE.Float32BufferAttribute(fuv, 2));
+  fgeo.setIndex(fi); fgeo.computeVertexNormals();
+  const face = new THREE.Mesh(fgeo, M.bank); face.receiveShadow = true; g.add(face);
+  return g;
+}
+/* A big old mango: a short split trunk and a broad, dense dome of glossy dark leaves. */
+function mangoModel(o, M) {
+  const g = new THREE.Group(), H = o.h || 13, R = o.r || 8, Rn = rng(41), parts = [];
+  const limb = (x0, y0, z0, x1, y1, z1, r0, r1) => {
+    const a = new THREE.Vector3(x0, y0, z0), b = new THREE.Vector3(x1, y1, z1), v = b.clone().sub(a), L = v.length();
+    const geo = new THREE.CylinderGeometry(r1, r0, L, 9, 1); geo.translate(0, L / 2, 0);
+    geo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(UP, v.normalize())); geo.translate(a.x, a.y, a.z);
+    parts.push(colorize(geo, 0x5a4232));
+  };
+  limb(0, -0.5, 0, 0.2, 2.4, 0.1, 0.75, 0.6);
+  limb(0.2, 2.2, 0.1, -1.8, 6.5, 0.8, 0.45, 0.25); limb(0.2, 2.2, 0.1, 1.9, 6.8, -0.6, 0.45, 0.25); limb(0.2, 2.4, 0.1, 0.4, 7.5, 1.9, 0.4, 0.22);
+  limb(-1.8, 6.5, 0.8, -4.5, 7.5, 1.8, 0.25, 0.12); limb(1.9, 6.8, -0.6, 4.6, 8, -1.5, 0.25, 0.12);
+  const leaf = new THREE.Color(), blobs = 22;
+  for (let i = 0; i < blobs; i++) {
+    const a = Rn() * Math.PI * 2, rr = Math.sqrt(Rn()) * R * 0.75, y = 6 + Rn() * (H - 8.5) + (1 - rr / R) * 2.5;
+    const s = 2.4 + Rn() * 2.4, b = new THREE.IcosahedronGeometry(1, 1);
+    b.scale(s * 1.15, s * 0.8, s * 1.15); b.translate(Math.cos(a) * rr, y, Math.sin(a) * rr);
+    leaf.setHSL(0.27 + Rn() * 0.05, 0.42 + Rn() * 0.15, 0.13 + Rn() * 0.07, THREE.SRGBColorSpace);
+    parts.push(colorize(b, leaf.getHex()));
+  }
+  const m = new THREE.Mesh(mergeGeometries(parts.map((p) => (p.index ? p.toNonIndexed() : p))), M.leaves);
+  m.castShadow = m.receiveShadow = true; g.add(m);
+  return g;
+}
+/* A rounded granite boulder, half in the ground. */
+function boulderModel(o, M) {
+  let geo = new THREE.IcosahedronGeometry(1, 3); geo.deleteAttribute('normal'); geo.deleteAttribute('uv'); geo = mergeVertices(geo);
+  const p = geo.attributes.position, v = new THREE.Vector3(), Rn = rng(Math.round(o.x * 7 + o.z * 13));
+  const k = [Rn(), Rn(), Rn()];
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i);
+    const n = 1 + 0.12 * Math.sin(v.x * 3 + k[0] * 6) * Math.cos(v.z * 2.5 + k[1] * 6) + 0.06 * Math.sin(v.y * 5 + k[2] * 6);
+    p.setXYZ(i, v.x * n, Math.max(v.y * n, -0.35) , v.z * n);
+  }
+  geo.computeVertexNormals();
+  geo.scale((o.w || 4) / 2, o.h || 2, (o.d || 3) / 2);
+  const m = new THREE.Mesh(geo, M.granite); m.position.y = -0.15; m.castShadow = m.receiveShadow = true;
+  const g = new THREE.Group(); g.add(m);
+  return g;
+}
+
+const BUILDERS = { mango: mangoModel, boulder: boulderModel, house: houseModel, cabin: cabinModel, quincho: quinchoModel, solar: solarModel, tent: tentModel, trampoline: trampolineModel, oven: ovenModel };
+const FOOT = { mango: 8, boulder: 2.5, house: 6, cabin: 4, quincho: 4.5, solar: 7, tent: 3, trampoline: 2.4, oven: 1.2, mast: 1.5, palm: 1 };
 function buildStructures() {
   const M = siteMaterials(), group = new THREE.Group();
   for (const o of OBJECTS.objects) {
@@ -1814,9 +1935,11 @@ function buildStructures() {
       m = pondModel(o, M);
     } else if (o.type === 'gravel') {
       m = ribbon(o.path, o.w || 3, M.gravel);
+    } else if (o.type === 'cut') {
+      const c = CUTS.find((k) => k.o === o); if (c) m = cutModel(c, M);
     }
     if (!m) continue;
-    m.traverse((c) => { if (c.isMesh) { c.castShadow = c.castShadow || (o.type !== 'gravel' && o.type !== 'pond'); if (o.type !== 'pond') c.receiveShadow = true; c.userData.site = o; } });
+    m.traverse((c) => { if (c.isMesh) { c.castShadow = c.castShadow || (o.type !== 'gravel' && o.type !== 'pond'); if (o.type !== 'pond') c.receiveShadow = true; if (!c.userData.ground) c.userData.site = o; } });
     group.add(m);
   }
   return group;
@@ -1833,11 +1956,13 @@ function clearOfStructures(x, z) {
       }
       continue;
     }
-    if (FOOT[o.type] && o.type !== 'palm' && Math.hypot(x - o.x, z - o.z) < FOOT[o.type] + 1.5) return false;
+    if (FOOT[o.type] && o.type !== 'palm' && Math.hypot(x - o.x, z - o.z) < (o.type === 'mango' ? (o.r || 8) + 6 : FOOT[o.type] + 1.5)) return false;   // the mango's crown was the canopy there
   }
+  if (CUTS.length && cutAt(x, z) > 0.4) return false;   // the floor of a cut was cleared
   for (const n of notes.list) {                     // planned buildings too, deck included
-    if (n.kind === 'note') continue;
+    if (n.kind === 'note' && !n.model) continue;
     const [nx, nz] = fromUTM(n.E, n.N), dx = x - nx, dz = z - nz;
+    if (n.kind === 'note') { if (Math.hypot(dx, dz) < (n.model === 'plaza' ? 14 : 4)) return false; continue; }
     if (dx * dx + dz * dz > 1600) continue;
     const b = (n.rot * Math.PI) / 180, along = dx * Math.sin(b) - dz * Math.cos(b), across = dx * Math.cos(b) + dz * Math.sin(b);
     if (Math.abs(across) < n.w / 2 + 1 && along > -n.d / 2 - 1 && along < n.d / 2 + (n.kind === 'cabin' ? 3 : 0) + 1) return false;
@@ -1876,6 +2001,14 @@ function drawOverlay() {
   for (const b of limits.list) { const k = kindOf(b), ed = b.id === limits.editing; ring(b.utm, k.color, k.fill, ed ? 4 : 3.2, true, ed ? [10, 6] : null); }
   if (limits.drawing && limits.drawing.utm.length) { const k = kindOf(limits.drawing); ring(limits.drawing.utm, k.color, k.fill, 3, limits.drawing.utm.length > 2, [9, 6]); }
   if (limits.textDraft.length) ring(limits.textDraft, '#7fb3e3', 'rgba(127,179,227,0.12)', 2.6, limits.textDraft.length > 2, [9, 6]);
+  if (display.trail && trail.path.length) {
+    g.lineJoin = g.lineCap = 'round';
+    for (const p of trail.path) {
+      g.beginPath(); p.forEach(([x, z], i) => (i ? g.lineTo(x, z) : g.moveTo(x, z)));
+      g.strokeStyle = 'rgba(40,24,10,0.55)'; g.lineWidth = 4.5; g.stroke();
+      g.strokeStyle = '#f2b46a'; g.lineWidth = 2.4; g.setLineDash([8, 5]); g.stroke(); g.setLineDash([]);
+    }
+  }
   tex.needsUpdate = true;
 }
 
@@ -2108,6 +2241,7 @@ async function buildHill() {
     getJSON('data/basemaps.json').catch(() => ({})), loadSites(), getJSON('data/objects.json').catch(() => ({ objects: [] })),
   ]);
   LEGENDS = legends; SITES = sites; OBJECTS = objects;
+  prepCuts();
   META = meta; CTX = ctx;
   HG = ter.grid; HRES = ter.res; HHALF = meta.half; HBASE = ter.base;
   const raw = new Uint16Array(b64bytes(ter.data).buffer);
@@ -2158,6 +2292,7 @@ async function buildHill() {
   const otex = new THREE.CanvasTexture(oc); otex.colorSpace = THREE.SRGBColorSpace; otex.anisotropy = ANISO; otex.premultiplyAlpha = true;
   overlay = { c: oc, g: og, tex: otex };
   hill.terrainMat = contourMaterial(t, otex);
+  hill.insertMat = contourMaterial(t, otex, hill.terrainMat);
   hill.terrain = new THREE.Mesh(terrainGeometry(), hill.terrainMat);
   hill.terrain.receiveShadow = true;
   scene.add(hill.terrain);
@@ -2380,7 +2515,7 @@ async function setBase(id) {
   catch (err) { console.error(err); if (baseWant === id) { display.base = hill.base; applyDisplay(); if (!displayEl.hidden) renderDisplay(); } return; }
   if (baseWant !== id) return;
   const b = BASES[id], u = hill.terrainMat.userData.u;
-  hill.terrainMat.map = t;
+  hill.terrainMat.map = t; hill.insertMat.map = t;
   u.uLine.value.copy(b.line); u.uLineK.value = b.line === CREAM ? 0.8 : 0.6;
   hill.base = id;
   showSitePhotos();
@@ -3381,12 +3516,15 @@ function resetOrbit() {
 const NOTE_KINDS = {
   cabin: { label: 'Cabin', color: '#93c97c', hex: 0x93c97c, w: 9, d: 6.5, add: 'Add a cabin' },
   building: { label: 'Building', color: '#e9bf5a', hex: 0xe9bf5a, w: 8, d: 6, add: 'Add a building' },
+  pond: { label: 'Pond', color: '#5fa9c9', hex: 0x5fa9c9, w: 12, d: 24, add: 'Add a pond' },
   note: { label: 'Note', color: '#7fb3e3', hex: 0x7fb3e3, add: 'Add a note' },
 };
 const notes = { list: [], local: [], shared: false, db: null, canEdit: true, me: null, placing: null, moving: null, open: null, error: '', writing: {}, dirty: {}, chips: [] };
 const NOTES_KEY = 'oh-notes-v1';
 const noteById = (id) => notes.list.find((n) => n.id === id);
-const kindOfNote = (n) => NOTE_KINDS[n.kind] || NOTE_KINDS.note;
+const TRAIL_KIND = { label: 'Trail', color: '#dd7a4b', hex: 0xdd7a4b };
+const kindOfNote = (n) => (n.kind === 'note' && isTrailNote(n) ? TRAIL_KIND : NOTE_KINDS[n.kind] || NOTE_KINDS.note);
+const NOTE_MODELS = { 'stone-tower': 'Stone tower lookout (first draft)', plaza: 'Central plaza (first draft)' };
 const newNoteId = () => 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const WINDS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
 const windOf = (deg) => WINDS[Math.round((((deg % 360) + 360) % 360) / 22.5) % 16];
@@ -3396,9 +3534,10 @@ function noteFromDoc(id, v) {
     id, kind, name: String(v.name || k.label).slice(0, 80), text: String(v.text || '').slice(0, 4000),
     E: +v.E || 0, N: +v.N || 0, rot: (((+v.rot || 0) % 360) + 360) % 360,
     w: clamp(+v.w || k.w || 2, 2, 60), d: clamp(+v.d || k.d || 2, 2, 60), by: v.by || null, updated: +v.updated || 0,
+    model: NOTE_MODELS[v.model] ? v.model : '',
   };
 }
-const noteDoc = (n) => ({ kind: n.kind, name: n.name, text: n.text, E: +n.E.toFixed(2), N: +n.N.toFixed(2), rot: Math.round(n.rot), w: n.w, d: n.d, by: n.by, updated: Date.now() });
+const noteDoc = (n) => ({ kind: n.kind, name: n.name, text: n.text, E: +n.E.toFixed(2), N: +n.N.toFixed(2), rot: Math.round(n.rot), w: n.w, d: n.d, by: n.by, model: n.model || '', updated: Date.now() });
 async function initNotes() {
   try { notes.list = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]').map((v) => noteFromDoc(v.id, v)); } catch (e) {}
   notesChanged();
@@ -3441,6 +3580,7 @@ async function deleteNote(id) {
 const noteTyping = () => { const a = document.activeElement; return !!(a && drawer.contains(a) && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.type !== 'range'); };
 function notesChanged() {
   if (!hill.terrain) return;
+  if (updateTrail()) drawOverlay();
   rebuildNoteMeshes();
   if (mode === 'cerro') buildChips();
   if (!drawer.hidden && drawer.dataset.panel === 'notes' && !noteTyping()) renderNotes();
@@ -3470,6 +3610,74 @@ function footprintModel(n, sel) {
   }
   return g;
 }
+/* A planned pond: water laid on the ground as an oval, inside a muddy rim. */
+function pondNoteModel(n, cx, cz, sel) {
+  const b = (n.rot * Math.PI) / 180, fx = Math.sin(b), fz = -Math.cos(b), rx = Math.cos(b), rz = Math.sin(b);
+  const seg = 56, rings = 7, pos = [], col = [], idx = [], water = new THREE.Color(0x3f6b66), deep = new THREE.Color(0x2c4f4c), mud = new THREE.Color(0x8a6a48);
+  const at = (u, v) => { const x = cx + rx * u + fx * v, z = cz + rz * u + fz * v; return [x, yAt(x, z) + 0.14, z]; };
+  pos.push(...at(0, 0)); col.push(deep.r, deep.g, deep.b);
+  for (let r = 1; r <= rings + 1; r++) {
+    const f = r <= rings ? r / rings : 1.12;
+    for (let s = 0; s < seg; s++) {
+      const t = (s / seg) * Math.PI * 2, wob = 1 + 0.05 * Math.sin(t * 3 + n.w) + 0.03 * Math.cos(t * 5);
+      pos.push(...at(Math.cos(t) * (n.w / 2) * f * wob, Math.sin(t) * (n.d / 2) * f * wob));
+      const c = r > rings ? mud : deep.clone().lerp(water, f); col.push(c.r, c.g, c.b);
+    }
+  }
+  for (let s = 0; s < seg; s++) idx.push(0, 1 + ((s + 1) % seg), 1 + s);
+  for (let r = 1; r <= rings; r++) for (let s = 0; s < seg; s++) {
+    const a = 1 + (r - 1) * seg + s, b2 = 1 + (r - 1) * seg + ((s + 1) % seg), c = a + seg, d = b2 + seg;
+    idx.push(a, b2, c, b2, d, c);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, noteMat(0xffffff, sel, { vertexColors: true, roughness: 0.12, metalness: 0.05, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
+  const g = new THREE.Group(); g.add(m);
+  return g;
+}
+/* First drafts of the art on the trail, set on a checkpoint note by its "model". */
+function stoneTex() {
+  if (SITE.stone) return SITE.stone;
+  const r = rng(53), [c, g] = canvas(512, 512);
+  g.fillStyle = '#6e675d'; g.fillRect(0, 0, 512, 512);
+  for (let y = 0; y < 512;) {
+    const h = 30 + r() * 26;
+    for (let x = -r() * 60; x < 512;) {
+      const w = 40 + r() * 70, v = 120 + r() * 70, t = r() * 20;
+      g.fillStyle = `rgb(${v + t},${v + t * 0.6 - 4},${v - 10})`;
+      g.beginPath(); g.roundRect(x + 2, y + 2, w - 4, h - 4, 7); g.fill();
+      g.fillStyle = 'rgba(0,0,0,0.12)'; g.fillRect(x + 2, y + h - 8, w - 4, 6);
+      x += w;
+    }
+    y += h;
+  }
+  return (SITE.stone = tex(c));
+}
+function installationModel(kind, sel) {
+  const g = new THREE.Group(), stone = noteMat(0xffffff, sel, { map: stoneTex(), roughness: 0.95 });
+  if (kind === 'stone-tower') {                       // a dry-stone lookout that clears the canopy
+    const H = 12;
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.6, H + 1, 20, 1), stone); tower.position.y = (H - 1) / 2;
+    const deck = new THREE.Mesh(new THREE.CylinderGeometry(3.1, 3.1, 0.35, 24), stone); deck.position.y = H + 0.15;
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(3.1, 3.1, 1.05, 24, 1, true), noteMat(0xffffff, sel, { map: stoneTex(), roughness: 0.95, side: THREE.DoubleSide })); wall.position.y = H + 0.85;
+    const door = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.1, 0.3), noteMat(0x1a1714, sel)); door.position.set(0, 1.05, 2.45);
+    for (let k = 0; k < 4; k++) {
+      const a = (k / 4) * Math.PI * 2 + 0.6, w2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 0.3), noteMat(0x1a1714, sel));
+      w2.position.set(Math.sin(a) * 2.25, 3.5 + k * 2.1, Math.cos(a) * 2.25); w2.rotation.y = a; g.add(w2);
+    }
+    g.add(tower, deck, wall, door);
+  } else if (kind === 'plaza') {                      // a round stone floor with a fire circle and benches
+    const floor = new THREE.Mesh(new THREE.CylinderGeometry(13, 13.4, 0.8, 48), stone); floor.position.y = -0.2;
+    const fire = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.35, 8, 24), stone); fire.rotation.x = Math.PI / 2; fire.position.y = 0.4;
+    g.add(floor, fire);
+    for (let k = 0; k < 10; k++) {
+      const a = (k / 10) * Math.PI * 2, b = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.45, 0.6), noteMat(0x8a5f3c, sel));
+      b.position.set(Math.cos(a) * 9.5, 0.45, Math.sin(a) * 9.5); b.rotation.y = -a + Math.PI / 2; g.add(b);
+    }
+  }
+  return g;
+}
 function rebuildNoteMeshes() {
   if (hill.notes) { hill.scene.remove(hill.notes); hill.notes.traverse((c) => { if (c.geometry && c.geometry !== NOTE_GEO.stem && c.geometry !== NOTE_GEO.head) c.geometry.dispose(); }); }
   const g = new THREE.Group(), panel = !drawer.hidden && drawer.dataset.panel === 'notes';
@@ -3478,7 +3686,11 @@ function rebuildNoteMeshes() {
     if (!inSquare(x, z)) continue;
     const sel = panel && n.id === notes.open;
     let m;
-    if (n.kind === 'note') {
+    if (n.kind === 'pond') {
+      m = pondNoteModel(n, x, z, sel);
+    } else if (n.kind === 'note' && n.model) {
+      m = installationModel(n.model, sel); m.position.set(x, baseY(x, z, n.model === 'plaza' ? 10 : 3), z); m.rotation.y = bearingRot(n.rot);
+    } else if (n.kind === 'note') {
       m = new THREE.Group();
       const mat = noteMat(kindOfNote(n).hex, sel);
       const stem = new THREE.Mesh(NOTE_GEO.stem, mat), head = new THREE.Mesh(NOTE_GEO.head, mat);
@@ -3493,15 +3705,16 @@ function rebuildNoteMeshes() {
   }
   g.visible = display.notes;
   hill.notes = g; hill.scene.add(g);
-  const sig = notes.list.filter((n) => n.kind !== 'note').map((n) => [n.E.toFixed(1), n.N.toFixed(1), n.rot, n.w, n.d].join()).join('|');
+  const sig = notes.list.filter((n) => n.kind !== 'note' || n.model).map((n) => [n.E.toFixed(1), n.N.toFixed(1), n.rot, n.w, n.d, n.model].join()).join('|');
   if (hill.trees && sig !== notes.treeSig) { notes.treeSig = sig; placeTrees(hill.trees); }   // trees step aside for planned buildings
   renderer.shadowMap.needsUpdate = true;
 }
 function noteChips() {
   notes.chips = notes.list.map((n) => {
     const [x, z] = fromUTM(n.E, n.N), k = kindOfNote(n);
-    const sub = n.kind === 'note' ? (n.text.split('\n')[0].slice(0, 42) + (n.text.length > 42 ? '…' : '')) || 'Note' : `${k.label} · faces ${windOf(n.rot)}`;
-    const l = { name: n.name, sub, c: k.color, anchor: new THREE.Vector3(x, yAt(x, z) + (n.kind === 'note' ? 11 : 7), z) };
+    const sub = n.kind === 'note' ? (n.text.split('\n')[0].slice(0, 42) + (n.text.length > 42 ? '…' : '')) || 'Note' : n.kind === 'pond' ? `Pond · ${fmt((Math.PI / 4) * n.w * n.d, 0)} m²` : `${k.label} · faces ${windOf(n.rot)}`;
+    const lift = n.model === 'stone-tower' ? 17 : n.kind === 'note' ? 11 : n.kind === 'pond' ? 4 : 7;
+    const l = { name: n.name, sub, c: k.color, anchor: new THREE.Vector3(x, yAt(x, z) + lift, z) };
     l.chip = makeChip(l, '', () => openNote(n.id));
     return l;
   });
@@ -3547,6 +3760,8 @@ function notesAsText() {
     if (n.text) lines.push(n.text);
     lines.push('');
   }
+  const t = trailSummary();
+  if (t) lines.push(`Trail: ${(t.len / 1000).toFixed(2)} km, climbs ${Math.round(t.up)} m, steepest ${Math.round(t.steep * 100)}%.`);
   return lines.join('\n');
 }
 function notesStorage() {
@@ -3581,7 +3796,9 @@ function renderNotes() {
     const facts = [['Ground', `≈ ${groundAt(x, z).toFixed(0)} m`], ['Slope', `≈ ${slopeAt(x, z).toFixed(0)}°`]];
     const house = OBJECTS.objects.find((o) => o.type === 'house');
     if (house) facts.push(['To the house', `≈ ${fmt(Math.hypot(x - house.x, z - house.z), 0)} m`]);
-    if (n.kind !== 'note') facts.push(['Footprint', `${n.w} × ${n.d} m · ${fmt(n.w * n.d, 0)} m²${n.kind === 'cabin' ? ' + deck' : ''}`]);
+    if (n.kind === 'pond') facts.push(['Water', `${n.w} × ${n.d} m · ≈ ${fmt((Math.PI / 4) * n.w * n.d, 0)} m²`]);
+    else if (n.kind !== 'note') facts.push(['Footprint', `${n.w} × ${n.d} m · ${fmt(n.w * n.d, 0)} m²${n.kind === 'cabin' ? ' + deck' : ''}`]);
+    if (n.model) facts.push(['In the model', NOTE_MODELS[n.model]]);
     facts.push(['UTM 21S', `${fmt(n.E, 1)} E, ${fmt(n.N, 1)} N`]);
     let t = 0;
     const save = (ms = 600) => { n.updated = Date.now(); clearTimeout(t); t = setTimeout(() => persistNote(n.id), ms); };
@@ -3596,9 +3813,10 @@ function renderNotes() {
       text.addEventListener('blur', () => buildChips());
       el.append(lab('Name', 'n-name'), name, lab('Notes for Claude', 'n-text'), text);
       if (n.kind !== 'note') {
-        const rl = lab(`Faces ${windOf(n.rot)} · ${Math.round(n.rot)}°`, 'n-rot');
+        const turnLabel = n.kind === 'pond' ? 'Long side runs' : 'Faces';
+        const rl = lab(`${turnLabel} ${windOf(n.rot)} · ${Math.round(n.rot)}°`, 'n-rot');
         const rot = document.createElement('input'); rot.id = 'n-rot'; rot.type = 'range'; rot.min = 0; rot.max = 355; rot.step = 5; rot.value = n.rot;
-        rot.addEventListener('input', () => { n.rot = +rot.value; rl.textContent = `Faces ${windOf(n.rot)} · ${n.rot}°`; rebuildNoteMeshes(); save(400); });
+        rot.addEventListener('input', () => { n.rot = +rot.value; rl.textContent = `${turnLabel} ${windOf(n.rot)} · ${n.rot}°`; rebuildNoteMeshes(); save(400); });
         rot.addEventListener('change', () => buildChips());
         const size = document.createElement('div'); size.className = 'pair';
         for (const [key, label] of [['w', 'Width (m)'], ['d', 'Depth (m)']]) {
@@ -3649,10 +3867,114 @@ function renderNotes() {
     li.append(nm, snippet, rb); ul.appendChild(li);
   }
   el.appendChild(ul);
+  const tsum = trailSummary();
+  if (tsum) {
+    const th = document.createElement('h3'); th.textContent = 'The trail'; el.appendChild(th);
+    const tp = document.createElement('p'); tp.className = 'note';
+    tp.textContent = `${fmt(tsum.len / 1000, 2)} km through ${trail.legs.length + 1} stops · climbs ${fmt(tsum.up, 0)} m, descends ${fmt(tsum.down, 0)} m · steepest stretch ${Math.round(tsum.steep * 100)}%. Routed along the gentlest ground between the checkpoints; it follows them when you move one.`;
+    el.appendChild(tp);
+    const tl = document.createElement('ul'); tl.className = 'facts';
+    for (const l of trail.legs) {
+      const li = document.createElement('li'), a = document.createElement('span'), b2 = document.createElement('span');
+      a.textContent = `${l.from} → ${l.to}`; b2.textContent = `${fmt(l.len, 0)} m · +${fmt(l.up, 0)} / −${fmt(l.down, 0)} m · ${Math.round(l.steep * 100)}%`;
+      li.append(a, b2); tl.appendChild(li);
+    }
+    el.appendChild(tl);
+  }
   if (notes.list.length) el.appendChild(btn('Copy all as text', 'mini', (e) => copyText(notesAsText(), e.currentTarget)));
   openDrawer('Notes', 'Lay out the site', notes.canEdit ? 'Put down cabins and other buildings where you want them, turn them to face the view, and leave notes for Claude anywhere on the map.' : '', null, null, '#7fb3e3', notesStorage(), el);
   drawer.dataset.panel = 'notes';
   setHint();
+}
+
+/* -------------------------------------------------------------- the trail -- */
+/* The public trail runs through the notes named "Start of the trail", "Checkpoint 1", "Checkpoint 2"… and
+   "End of the trail", in that order. Between each pair it takes the easiest way over the ground: a
+   least-cost route on the terrain grid that prices steepness, so it winds where a straight line would be steep. */
+const trail = { path: [], legs: [], key: '', cache: new Map() };
+const isTrailNote = (n) => /^(start of the trail|end of the trail|checkpoint\s*\d+)/i.test(n.name.trim());
+function trailStops() {
+  const by = (re) => notes.list.find((n) => re.test(n.name.trim()));
+  const cps = notes.list.map((n) => ({ n, m: /^checkpoint\s*(\d+)/i.exec(n.name.trim()) })).filter((x) => x.m).sort((a, b) => +a.m[1] - +b.m[1]).map((x) => x.n);
+  return [by(/^start of the trail/i), ...cps, by(/^end of the trail/i)].filter(Boolean);
+}
+function routeLeg(ax, az, bx, bz) {
+  const key = [ax, az, bx, bz].map((v) => v.toFixed(1)).join();
+  if (trail.cache.has(key)) return trail.cache.get(key);
+  const res = HFRES, n = HFN, m = 120;
+  const c0 = clamp(Math.floor((Math.min(ax, bx) - m + HHALF) / res), 0, n - 1), c1 = clamp(Math.ceil((Math.max(ax, bx) + m + HHALF) / res), 0, n - 1);
+  const r0 = clamp(Math.floor((Math.min(az, bz) - m + HHALF) / res), 0, n - 1), r1 = clamp(Math.ceil((Math.max(az, bz) + m + HHALF) / res), 0, n - 1);
+  const W = c1 - c0 + 1, H = r1 - r0 + 1, N = W * H;
+  const hAt = (i) => groundAt(-HHALF + (c0 + (i % W)) * res, -HHALF + (r0 + Math.floor(i / W)) * res);
+  const h = new Float32Array(N); for (let i = 0; i < N; i++) h[i] = hAt(i);
+  const cell = (x, z) => clamp(Math.round((z + HHALF) / res) - r0, 0, H - 1) * W + clamp(Math.round((x + HHALF) / res) - c0, 0, W - 1);
+  const s = cell(ax, az), t = cell(bx, bz), tx = t % W, tz = Math.floor(t / W);
+  const g = new Float64Array(N).fill(Infinity), from = new Int32Array(N).fill(-1), done = new Uint8Array(N);
+  const heap = [];   // binary heap of [f, i]
+  const push = (f, i) => { heap.push([f, i]); let k = heap.length - 1; while (k) { const p = (k - 1) >> 1; if (heap[p][0] <= heap[k][0]) break; [heap[p], heap[k]] = [heap[k], heap[p]]; k = p; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let k = 0; for (;;) { const l = 2 * k + 1, r = l + 1; let mi = k; if (l < heap.length && heap[l][0] < heap[mi][0]) mi = l; if (r < heap.length && heap[r][0] < heap[mi][0]) mi = r; if (mi === k) break; [heap[mi], heap[k]] = [heap[k], heap[mi]]; k = mi; } } return top; };
+  const hgt = (i) => Math.hypot((i % W) - tx, Math.floor(i / W) - tz) * res;
+  g[s] = 0; push(hgt(s), s);
+  const steps = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1], [2, 1], [1, 2], [-2, 1], [-1, 2], [2, -1], [1, -2], [-2, -1], [-1, -2]];
+  while (heap.length) {
+    const [, i] = pop();
+    if (done[i]) continue;
+    done[i] = 1;
+    if (i === t) break;
+    const x = i % W, z = Math.floor(i / W);
+    for (const [dx, dz] of steps) {
+      const X = x + dx, Z = z + dz;
+      if (X < 0 || Z < 0 || X >= W || Z >= H) continue;
+      const j = Z * W + X, L = Math.hypot(dx, dz) * res, grade = Math.abs(h[j] - h[i]) / L;
+      const cost = L * (1 + (grade / 0.12) ** 2) + (grade > 0.4 ? L * 30 : 0);      // a 12% grade costs double; past 40% it is a wall
+      if (g[i] + cost < g[j]) { g[j] = g[i] + cost; from[j] = i; push(g[j] + hgt(j), j); }
+    }
+  }
+  const pts = [];
+  for (let i = t; i >= 0; i = from[i]) { pts.push([-HHALF + (c0 + (i % W)) * res, -HHALF + (r0 + Math.floor(i / W)) * res]); if (i === s) break; }
+  pts.reverse(); pts[0] = [ax, az]; pts[pts.length - 1] = [bx, bz];
+  let p = pts;
+  for (let k = 0; k < 2 && p.length > 2; k++) {                       // round the corners of the grid route
+    const q = [p[0]];
+    for (let i = 0; i < p.length - 1; i++) { const [x0, z0] = p[i], [x1, z1] = p[i + 1]; q.push([0.75 * x0 + 0.25 * x1, 0.75 * z0 + 0.25 * z1], [0.25 * x0 + 0.75 * x1, 0.25 * z0 + 0.75 * z1]); }
+    q.push(p[p.length - 1]); p = q;
+  }
+  trail.cache.set(key, p);
+  return p;
+}
+function legStats(p) {
+  let len = 0, up = 0, down = 0, steep = 0;
+  const hs = p.map(([x, z]) => groundAt(x, z));
+  for (let i = 1; i < p.length; i++) {
+    const L = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]), dh = hs[i] - hs[i - 1];
+    len += Math.hypot(L, dh); if (dh > 0) up += dh; else down -= dh;
+  }
+  const cum = [0];
+  for (let i = 1; i < p.length; i++) cum.push(cum[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
+  for (let i = 0, j = 0; i < p.length; i++) {                       // steepest over any 20 m stretch
+    while (j < p.length - 1 && cum[j] - cum[i] < 20) j++;
+    if (cum[j] - cum[i] >= 20) steep = Math.max(steep, Math.abs(hs[j] - hs[i]) / (cum[j] - cum[i]));
+  }
+  return { len, up, down, steep };
+}
+function updateTrail() {
+  const stops = trailStops();
+  const key = stops.map((n) => `${n.id}:${n.E.toFixed(1)},${n.N.toFixed(1)}`).join('|');
+  if (key === trail.key) return false;
+  trail.key = key; trail.path = []; trail.legs = [];
+  for (let i = 1; i < stops.length; i++) {
+    const [ax, az] = fromUTM(stops[i - 1].E, stops[i - 1].N), [bx, bz] = fromUTM(stops[i].E, stops[i].N);
+    if (!inSquare(ax, az) || !inSquare(bx, bz)) continue;
+    const p = routeLeg(ax, az, bx, bz);
+    trail.legs.push({ from: stops[i - 1].name, to: stops[i].name, ...legStats(p) });
+    trail.path.push(p);
+  }
+  return true;
+}
+function trailSummary() {
+  if (!trail.legs.length) return null;
+  const t = trail.legs.reduce((a, l) => ({ len: a.len + l.len, up: a.up + l.up, down: a.down + l.down, steep: Math.max(a.steep, l.steep) }), { len: 0, up: 0, down: 0, steep: 0 });
+  return t;
 }
 
 function openSources() {
@@ -3664,6 +3986,7 @@ function openSources() {
     <li><b>Ground colour.</b> ${m.imagery}. 10 m pixels, sharpened with the 1 m canopy model.</li>
     ${SITES.map((p) => `<li><b>Site photo, ${esc(p.name)}.</b> ${esc(p.source)}. ${esc(p.credit)}. Placed by matching it to the satellite imagery (about ±5 m). Where it shows cleared ground, ${p.trees_removed} model trees are left out; where it shows woods the canopy model missed, ${fmt(p.trees_added || 0, 0)} trees are added at the canopy model's local height.</li>`).join('')}
     ${OBJECTS.objects.length ? `<li><b>Homestead.</b> House, solar array, pond, quincho, cabin and the rest are modelled from the owner's drone photos. ${esc(OBJECTS.source)}</li>` : ''}
+    ${CUTS.length ? `<li><b>Quarry wall and mango tree.</b> Placed from the owner's notes and photos. The wall is drawn about 3 m high, an estimate from the photos rather than a survey.</li>` : ''}
     <li><b>Other base maps.</b> Land cover from ${m.landcover}. Vegetation index and infrared from the same Sentinel-2 passes (near-infrared band). Tree height from the canopy model. Topographic, shaded relief and slope are drawn from the elevation model.</li>
     <li><b>Roads, buildings, names.</b> ${m.context}.</li>
     <li><b>Coordinates.</b> WGS84 / UTM zone 21S (EPSG:32721). Model origin ${fmt(META.origin.easting, 0)} E, ${fmt(META.origin.northing, 0)} N; the model covers 4 × 4 km.</li>
@@ -3684,14 +4007,14 @@ function pill(label, pressed, onClick, cls = '') {
 const DISPLAY_DEFAULT = {
   base: 'satellite',
   propLabels: true, propArea: true, site: true, notes: true, summit: false, lodging: false, places: false,
-  trees: true, buildings: true, roads: true, contours: false, grid: false, relief: false, sitePhoto: true,
+  trees: true, buildings: true, roads: true, contours: false, grid: false, relief: false, sitePhoto: true, trail: true,
   title: true, compass: true, hint: true, legend: true,
 };
 const display = { ...DISPLAY_DEFAULT };
 try { Object.assign(display, JSON.parse(localStorage.getItem('oh-display-v1') || '{}')); } catch (e) {}
 const DISPLAY_GROUPS = [
   ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['site', 'Homestead buildings', 'var(--sand)'], ['notes', 'Notes and planned cabins', '#7fb3e3'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
-  ['Map', [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contour lines (10 m)'], ['grid', 'UTM grid (500 m)'], ['relief', 'Relief ×2'], ['sitePhoto', 'Site photos (satellite map only)']]],
+  ['Map', [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contour lines (10 m)'], ['grid', 'UTM grid (500 m)'], ['relief', 'Relief ×2'], ['sitePhoto', 'Site photos (satellite map only)'], ['trail', 'Trail between checkpoints']]],
   ['Screen', [['title', 'Title and description'], ['compass', 'Compass'], ['hint', 'Hints'], ['legend', 'Map legend']]],
 ];
 const displayEl = $('display'), legendEl = $('legend'), creditEl = $('credit');
@@ -3701,8 +4024,8 @@ function applyDisplay() {
   document.body.classList.toggle('hide-hint', !display.hint);
   compass.hidden = mode !== 'cerro' || !display.compass;
   hill.on.trees = display.trees; hill.on.buildings = display.buildings; hill.on.roads = display.roads; hill.on.contours = display.contours;
-  const gridChanged = hill.on.grid !== display.grid;
-  hill.on.grid = display.grid;
+  const gridChanged = hill.on.grid !== display.grid || hill.on.trail !== display.trail;
+  hill.on.grid = display.grid; hill.on.trail = display.trail;
   if (!BASES[display.base]) display.base = 'satellite';
   if (hill.notes) hill.notes.visible = display.notes;
   renderLegend();
@@ -3999,9 +4322,10 @@ function tick() {
   if (mode === 'cerro') {
     hill.curtains.forEach((c) => (c.material.uniforms.uTime.value = elapsed));
     needle.setAttribute('transform', `rotate(${(ctl.getAzimuthalAngle() * 180) / Math.PI} 15 15)`);
-    for (const l of hill.labels) place(l.chip, l.anchor, cam, !display[l.cat] || cam.position.distanceTo(l.anchor) > l.far || !!limits.drawing || !!limits.editing);
-    for (const l of limitLabels) place(l.chip, l.anchor, cam, !display.propLabels || !!limits.editing || !!limits.drawing);
-    for (const l of notes.chips) place(l.chip, l.anchor, cam, !display.notes || !!limits.editing || !!limits.drawing || !!notes.placing || !!notes.moving);
+    for (const l of hill.labels) place(l.chip, l.anchor, cam, !display[l.cat] || cam.position.distanceTo(l.anchor) > l.far || !!limits.drawing || !!limits.editing, true);
+    for (const l of limitLabels) place(l.chip, l.anchor, cam, !display.propLabels || !!limits.editing || !!limits.drawing, true);
+    for (const l of notes.chips) place(l.chip, l.anchor, cam, !display.notes || !!limits.editing || !!limits.drawing || !!notes.placing || !!notes.moving, true);
+    declutter();
     for (const h of handleGroup.children) h.scale.setScalar(Math.max(0.6, cam.position.distanceTo(h.position) * 0.011 * h.userData.s));
   } else {
     active.tick(elapsed);
@@ -4027,15 +4351,31 @@ function adaptResolution() {
   perf.sum = 0; perf.n = 0;
   if (avg > 30 && pr > 1) renderer.setPixelRatio(Math.max(1, pr - 0.25));
 }
-function place(chip, anchor, cam, hide) {
+const crowd = [];
+function place(chip, anchor, cam, hide, crowded = false) {
   if (!chip) return;
   v3.copy(anchor).project(cam);
   const off = hide || v3.z > 1 || Math.abs(v3.x) > 1.05 || Math.abs(v3.y) > 1.05;
+  const was = chip.dataset.hidden === 'false';
   chip.dataset.hidden = off ? 'true' : 'false';
   if (!off) {
     const x = ((v3.x + 1) / 2) * innerWidth, y = ((1 - v3.y) / 2) * innerHeight;
     chip.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, calc(-100% - 18px))`;
+    if (crowded) crowd.push({ chip, x, y, d: cam.position.distanceTo(anchor) * (was ? 0.85 : 1) });
   }
+}
+/* Where labels pile up on screen, the nearest (or the selected one) wins and the rest wait until there is room. */
+function declutter() {
+  crowd.sort((a, b) => (b.chip.classList.contains('is-on') - a.chip.classList.contains('is-on')) || a.d - b.d);
+  const kept = [];
+  for (const c of crowd) {
+    const t = c.chip.textContent;
+    if (c.chip._t !== t) { c.chip._t = t; c.chip._w = c.chip.offsetWidth; c.chip._h = c.chip.offsetHeight; }
+    const r = [c.x - c.chip._w / 2 - 4, c.y - c.chip._h - 22, c.x + c.chip._w / 2 + 4, c.y - 14];
+    if (kept.some((k) => r[0] < k[2] && r[2] > k[0] && r[1] < k[3] && r[3] > k[1])) c.chip.dataset.hidden = 'true';
+    else kept.push(r);
+  }
+  crowd.length = 0;
 }
 
 /* ------------------------------------------------------------- boot -- */
