@@ -21,7 +21,18 @@ To preview locally, run `npx serve outer-heaven` or `python3 -m http.server -d o
 
 ## Links to individual views
 
-Add `#cabin`, `#residence` or `#plan` to the URL to open that view directly.
+Add `#cabin`, `#residence`, `#trail` or `#plan` to the URL to open that view directly.
+
+## The trail: Mala Visión, playable
+
+**The trail** tab is a browser version of the fight planned for the trail's midpoint: a ring of whitewashed trees around one white tree, where Mala Visión lives. On the real trail it would run on the phone's camera, motion sensors and flash; here you drag to look around and buttons stand in for the rest.
+
+1. **The circle.** Answer her cry three times (E) to walk in. She steps out of the centre tree, then hides among the white trees.
+2. **Find her.** Take her picture (Space) while she hides. The flash throws her back to the centre.
+3. **Three rounds.** Each round she charges her white gaze three times. Look away (L) before it lands: if she is on screen when it does, you lose one of three eyes. When her light is spent, turn your back with the mirror (M) and shoot her in the selfie view. Shooting her straight on once she is awake costs an eye. Round 2 adds a feint and she hides; round 3 is faster and fills the ring with copies that the mirror does not show.
+4. **The end.** Take the last picture and she breaks into moths (dark path), or lay the phone down for ten seconds without touching it and she tells you her name (light path).
+
+The story follows option B from the myth map: Mala Visión is Porâsý, the woman whose fire sealed the seven sons. Sound (wind, crickets, her cry and whispers, all made in the browser) is placed in 3D, so headphones help. The view has its own renderer, built the first time the tab opens; the hill pauses while it is open.
 
 ## The 3D hill: real data
 
