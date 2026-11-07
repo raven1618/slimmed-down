@@ -4319,14 +4319,14 @@ const DISPLAY_DEFAULT = {
   base: 'satellite',
   propLabels: true, propArea: true, site: true, notes: true, summit: false, lodging: false, places: false,
   trees: true, buildings: true, roads: true, contours: false, grid: false, relief: false, sitePhoto: true, trail: true,
-  title: true, compass: true, hint: true, legend: true,
+  title: true, compass: true, hint: true, legend: true, effects: true,
 };
 const display = { ...DISPLAY_DEFAULT };
 try { Object.assign(display, JSON.parse(localStorage.getItem('oh-display-v1') || '{}')); } catch (e) {}
 const DISPLAY_GROUPS = [
   ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['site', 'Homestead buildings', 'var(--sand)'], ['notes', 'Notes and planned cabins', '#7fb3e3'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
   ['Map', [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contour lines (10 m)'], ['grid', 'UTM grid (500 m)'], ['relief', 'Relief ×2'], ['sitePhoto', 'Site photos (satellite map only)'], ['trail', 'Trail between checkpoints']]],
-  ['Screen', [['title', 'Title and description'], ['compass', 'Compass'], ['hint', 'Hints'], ['legend', 'Map legend']]],
+  ['Screen', [['title', 'Title and description'], ['compass', 'Compass'], ['hint', 'Hints'], ['legend', 'Map legend'], ['effects', 'Cinematic effects (shading, glow, film look)']]],
 ];
 const displayEl = $('display'), legendEl = $('legend'), creditEl = $('credit');
 function applyDisplay() {
@@ -5521,13 +5521,21 @@ const GradeShader = {
       gl_FragColor = vec4(mix(c0, clamp(c, 0.0, 1.0), uAmt), 1.0);
     }`,
 };
-const composers = new Set();
+const composers = new Set(), POST_PR = small ? 1.25 : 1.5;   // the effects render at most at 1.5× pixels, to fit in any GPU's memory
+let postView = null, postFailed = false, aoOff = small;
+renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); postFailed = true; });
 function makeComposer(scene, camera, hillScale) {
-  const pr = renderer.getPixelRatio(), w = innerWidth, h = innerHeight;
-  const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: small ? 2 : 4 });
+  const pr = Math.min(renderer.getPixelRatio(), POST_PR), w = innerWidth, h = innerHeight;
+  const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: small ? 0 : Math.min(2, renderer.capabilities.maxSamples || 0) });
+  // The GPU has to accept a half-float target, or the chain is skipped and the view draws plainly.
+  const gl = renderer.getContext();
+  renderer.setRenderTarget(rt);
+  const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+  renderer.setRenderTarget(null);
+  if (!ok) { rt.dispose(); throw new Error('this GPU cannot render to half-float targets'); }
   const c = new EffectComposer(renderer, rt);
   c.addPass(new RenderPass(scene, camera));
-  if (!small) {
+  if (!aoOff) {
     const ao = new GTAOPass(scene, camera, w, h);
     // Glows, labels on sprites and see-through overlays cast no occlusion (the pass only skips lines and points).
     ao._overrideVisibility = function () {
@@ -5550,14 +5558,21 @@ function makeComposer(scene, camera, hillScale) {
   composers.add(c);
   return c;
 }
-function syncComposers() { const pr = renderer.getPixelRatio(); composers.forEach((c) => { c.setPixelRatio(pr); c.setSize(innerWidth, innerHeight); }); }
+function dropComposer(view) {
+  const c = view.composer;
+  if (!c) return;
+  c.passes.forEach((p) => p.dispose && p.dispose()); c.dispose(); composers.delete(c); view.composer = null;
+}
+function syncComposers() { const pr = Math.min(renderer.getPixelRatio(), POST_PR); composers.forEach((c) => { c.setPixelRatio(pr); c.setSize(innerWidth, innerHeight); }); }
 addEventListener('resize', syncComposers);
 function renderFrame(view, cam) {
-  if (!view.composer) {
-    try { view.composer = makeComposer(view.scene, cam, view === hill); }
-    catch (err) { console.error(err); view.composer = false; }
+  const want = display.effects && !postFailed;
+  if (postView && (postView !== view || !want)) { dropComposer(postView); postView = null; }   // one chain in memory at a time
+  if (want && !view.composer) {
+    try { view.composer = makeComposer(view.scene, cam, view === hill); postView = view; }
+    catch (err) { console.warn('Effects off:', err.message); postFailed = true; }
   }
-  if (!view.composer) { renderer.render(view.scene, cam); return; }
+  if (!want || !view.composer) { renderer.render(view.scene, cam); return; }
   const g = view.composer.grade.uniforms;
   g.uAmt.value = view === hill && hill.base !== 'satellite' ? 0 : 1;      // data maps stay true to their legends
   g.uTime.value = elapsed; g.uRes.value.set(innerWidth, innerHeight);
@@ -5620,7 +5635,10 @@ function adaptResolution() {
   if (perf.n < 90) return;
   const avg = perf.sum / perf.n, pr = renderer.getPixelRatio();
   perf.sum = 0; perf.n = 0;
-  if (avg > 30 && pr > 1) { renderer.setPixelRatio(Math.max(1, pr - 0.25)); syncComposers(); }
+  if (avg <= 30) return;
+  const ao = active && active.composer && active.composer.passes.find((p) => p instanceof GTAOPass && p.enabled);
+  if (ao) { ao.enabled = false; aoOff = true; return; }        // the occlusion is the heaviest effect: it goes first
+  if (pr > 1) { renderer.setPixelRatio(Math.max(1, pr - 0.25)); syncComposers(); }
 }
 const crowd = [];
 function place(chip, anchor, cam, hide, crowded = false) {
