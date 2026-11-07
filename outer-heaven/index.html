@@ -1023,6 +1023,7 @@ ul.plain b { color: var(--sand); font-weight: 600; }
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { Sky } from 'three/addons/objects/Sky.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1122,6 +1123,69 @@ $('stage').appendChild(renderer.domElement);
 const ANISO = renderer.capabilities.getMaxAnisotropy();
 const pmrem = new THREE.PMREMGenerator(renderer);
 const ENV = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+/* Daylight: a physically based sky, and the same sky (over a brown-green ground) as the light
+   that fills shadows and shows in glass and water. */
+function physicalSky(sunDir, scale) {
+  const sky = new Sky(), u = sky.material.uniforms;
+  sky.scale.setScalar(scale);
+  u.turbidity.value = 3.2; u.rayleigh.value = 2.2; u.mieCoefficient.value = 0.003; u.mieDirectionalG.value = 0.82;
+  u.sunPosition.value.copy(sunDir);
+  sky.material.fragmentShader = sky.material.fragmentShader.replace('gl_FragColor = vec4( retColor, 1.0 );', 'gl_FragColor = vec4( retColor * 0.62, 1.0 );');
+  return sky;
+}
+function skyEnvironment(sunDir) {
+  const s = new THREE.Scene();
+  s.add(physicalSky(sunDir, 900));
+  const ground = new THREE.Mesh(new THREE.SphereGeometry(400, 32, 16, 0, Math.PI * 2, Math.PI / 2 + 0.02, Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x4d4a35, side: THREE.BackSide }));
+  s.add(ground);
+  return pmrem.fromScene(s, 0.02, 1, 2000).texture;
+}
+/* Value noise and bump mapping for the shaders that dress the ground and the leaves. */
+const GLSL_NOISE = `
+float ohHash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float ohNoise(vec3 x) {
+  vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(ohHash(i), ohHash(i + vec3(1.0, 0.0, 0.0)), f.x), mix(ohHash(i + vec3(0.0, 1.0, 0.0)), ohHash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+             mix(mix(ohHash(i + vec3(0.0, 0.0, 1.0)), ohHash(i + vec3(1.0, 0.0, 1.0)), f.x), mix(ohHash(i + vec3(0.0, 1.0, 1.0)), ohHash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
+}
+vec3 ohBump(vec3 surfPos, vec3 surfNorm, vec2 dHdxy, float faceDir) {
+  vec3 sx = normalize(dFdx(surfPos)), sy = normalize(dFdy(surfPos)), r1 = cross(sy, surfNorm), r2 = cross(surfNorm, sx);
+  float det = dot(sx, r1) * faceDir;
+  return normalize(abs(det) * surfNorm - sign(det) * (dHdxy.x * r1 + dHdxy.y * r2));
+}`;
+/* Leaves: clumps of light and shade across every crown, light coming through when you look toward
+   the sun, and a slow breeze. One set of uniforms drives every tree material. */
+const FOL = { uTime: { value: 0 }, uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color(0xfff0d0) } };
+function foliage(mat, { scale = 1, wind = 0.05, trans = 0.45, instanced = true } = {}) {
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, FOL);
+    const M = instanced ? 'modelMatrix * instanceMatrix' : 'modelMatrix';
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uTime; varying vec3 vOhW;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        { vec3 o = (${M} * vec4(0.0, 0.0, 0.0, 1.0)).xyz; float ph = o.x * 0.11 + o.z * 0.07, up = max(position.y - 0.35, 0.0);
+          transformed.x += sin(uTime * 1.3 + ph) * ${wind.toFixed(3)} * up;
+          transformed.z += cos(uTime * 1.1 + ph * 1.3) * ${(wind * 0.7).toFixed(3)} * up; }`)
+      .replace('#include <project_vertex>', `#include <project_vertex>\nvOhW = (${M} * vec4(transformed, 1.0)).xyz;`);
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform vec3 uSunDir; uniform vec3 uSunCol; varying vec3 vOhW;' + GLSL_NOISE)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        float ohD = length(vViewPosition), ohF = 1.0 - smoothstep(${(140 / scale).toFixed(1)}, ${(900 / scale).toFixed(1)}, ohD);
+        float ohC = ohNoise(vOhW * ${(0.9 * scale).toFixed(3)}) * 0.62 + ohNoise(vOhW * ${(2.9 * scale).toFixed(3)} + 7.3) * 0.38;
+        float ohBig = ohNoise(vOhW * ${(0.07 * scale).toFixed(4)} + 3.1);
+        diffuseColor.rgb *= (0.86 + 0.28 * ohBig) * mix(1.0, 0.78 + 0.44 * ohC, ohF);
+        diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.12, 1.08, 0.8), smoothstep(0.62, 0.9, ohC) * 0.6 * ohF);`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        normal = ohBump(-vViewPosition, normal, vec2(dFdx(ohC), dFdy(ohC)) * 0.9 * ohF, faceDirection);`)
+      .replace('#include <opaque_fragment>', `{ vec3 vd = normalize(vOhW - cameraPosition);
+          float tr = pow(max(dot(vd, uSunDir), 0.0), 5.0) * ${trans.toFixed(2)};
+          outgoingLight += diffuseColor.rgb * uSunCol * tr * (0.4 + 0.6 * ohC); }
+        #include <opaque_fragment>`);
+  };
+  mat.customProgramCacheKey = () => `fol${scale}:${wind}:${trans}:${instanced}`;
+  return mat;
+}
 
 /* ---------------------------------------------------------- textures -- */
 function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
@@ -1325,16 +1389,20 @@ const palmMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 
 
 /* A clump of five thin blades leaning outward; flat normals keep it reading as grass. */
 function tuftGeometry(h = 0.5) {
-  const pos = [], nrm = [];
+  const pos = [], nrm = [], col = [];
   for (let k = 0; k < 5; k++) {
     const a = (k / 5) * Math.PI * 2 + 0.3, dx = Math.cos(a), dz = Math.sin(a);
-    const px = -dz * 0.03, pz = dx * 0.03, lean = 0.16 + (k % 2) * 0.08, hh = h * (0.7 + 0.3 * ((k * 3) % 5) / 4);
-    pos.push(-px, 0, -pz, px, 0, pz, dx * lean, hh, dz * lean);
-    nrm.push(0, 1, 0, 0, 1, 0, 0, 1, 0);
+    const px = -dz * 0.025, pz = dx * 0.025, lean = 0.16 + (k % 2) * 0.08, hh = h * (0.7 + 0.3 * ((k * 3) % 5) / 4);
+    // Each blade twice, once per winding, so both sides face front and keep the upward normal:
+    // lit like the ground they grow from, dark at the root and sunlit at the tip.
+    pos.push(-px, 0, -pz, px, 0, pz, dx * lean, hh, dz * lean, px, 0, pz, -px, 0, -pz, dx * lean, hh, dz * lean);
+    for (let j = 0; j < 6; j++) nrm.push(0, 1, 0);
+    col.push(0.5, 0.5, 0.42, 0.5, 0.5, 0.42, 1.08, 1.06, 0.9, 0.5, 0.5, 0.42, 0.5, 0.5, 0.42, 1.08, 1.06, 0.9);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   return g;
 }
 
@@ -1457,25 +1525,65 @@ function setTerrainY(g) {
   p.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
 }
 const BLANK = new THREE.DataTexture(new Uint8Array(4), 1, 1); BLANK.needsUpdate = true;
-/* Fine grain for the ground up close, where even the sharpest photo turns soft: seamless noise, 2 m across. */
+/* Ground up close, where even the sharpest photo turns soft. One seamless tile, 6 m across:
+   red = grass tufts and blades, green = red earth with pebbles and cracks, blue = leaf litter,
+   alpha = soft patches for the middle distance. The shader picks a channel by the photo's colour. */
 function detailTexture() {
-  const n = 128, R = rng(31), [c, g] = canvas(n, n), im = g.createImageData(n, n);
-  const blur = (a, r) => {
-    const out = new Float32Array(n * n);
+  const n = 512, N = n * n, R = rng(31);
+  const field = (p) => {
+    const L = Float32Array.from({ length: p * p }, () => R()), out = new Float32Array(N), s = p / n;
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
-      let s = 0;
-      for (let k = -r; k <= r; k++) s += a[y * n + ((x + k + n) % n)] + a[((y + k + n) % n) * n + x];
-      out[y * n + x] = s / (4 * r + 2);
+      const fx = x * s, fy = y * s, ix = Math.floor(fx), iy = Math.floor(fy), tx = fx - ix, ty = fy - iy, u = tx * tx * (3 - 2 * tx), v = ty * ty * (3 - 2 * ty);
+      const a = L[(iy % p) * p + (ix % p)], b = L[(iy % p) * p + ((ix + 1) % p)], c = L[((iy + 1) % p) * p + (ix % p)], d = L[((iy + 1) % p) * p + ((ix + 1) % p)];
+      const top = a + (b - a) * u;
+      out[y * n + x] = top + (c + (d - c) * u - top) * v;
     }
     return out;
   };
-  const white = Float32Array.from({ length: n * n }, () => R());
-  const coarse = blur(blur(white, 5), 5), fine = blur(white, 1);
-  const norm = (a) => { let lo = Infinity, hi = -Infinity; for (const v of a) { lo = Math.min(lo, v); hi = Math.max(hi, v); } return (v) => (v - lo) / (hi - lo); };
-  const nc = norm(coarse), nf = norm(fine);
-  for (let i = 0; i < n * n; i++) { im.data[i * 4] = nc(coarse[i]) * 255; im.data[i * 4 + 1] = nf(fine[i]) * 255; im.data[i * 4 + 2] = 128; im.data[i * 4 + 3] = 255; }
-  g.putImageData(im, 0, 0);
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = ANISO;
+  const fbm = (ps, ws) => { const out = new Float32Array(N); ps.forEach((p, k) => { const f = field(p); for (let i = 0; i < N; i++) out[i] += f[i] * ws[k]; }); return out; };
+  const at = (x, y) => ((((y | 0) % n) + n) % n) * n + ((((x | 0) % n) + n) % n);
+  const norm = (a) => {                       // mean 0.5, two standard deviations either side fill the range
+    let m = 0, q = 0; for (let i = 0; i < N; i++) m += a[i]; m /= N;
+    for (let i = 0; i < N; i++) q += (a[i] - m) ** 2; q = Math.sqrt(q / N) || 1;
+    for (let i = 0; i < N; i++) a[i] = clamp(0.5 + (a[i] - m) / (q * 4), 0, 1);
+    return a;
+  };
+  const disc = (a, cx, cy, r, f) => { for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) { const d = Math.hypot(x, y) / r; if (d <= 1) { const k = at(cx + x, cy + y); a[k] = f(a[k], d); } } };
+  const grass = fbm([8, 32], [0.4, 0.25]);
+  for (let i = 0; i < 2600; i++) disc(grass, R() * n, R() * n, (6 + R() * 14) | 0, (v, d) => v + (1 - d * d) * 0.35);
+  for (let i = 0; i < 60000; i++) {
+    let x = R() * n, y = R() * n;
+    const a = R() * 6.283, L = 3 + R() * 7, dx = Math.cos(a), dy = Math.sin(a), b = R() < 0.3 ? -0.18 : 0.1 + R() * 0.12;
+    for (let k = 0; k < L; k++) { grass[at(x, y)] += b * (0.4 + (0.6 * k) / L); x += dx; y += dy; }
+  }
+  const soil = fbm([4, 16, 64], [0.35, 0.25, 0.15]);
+  for (let i = 0; i < N; i++) soil[i] += (R() - 0.5) * 0.04;
+  for (let i = 0; i < 1800; i++) { const b = R() < 0.6 ? 0.25 : -0.2; disc(soil, R() * n, R() * n, (1 + R() * 5) | 0, (v, d) => v + b * (1 - d) - (d > 0.8 ? 0.08 : 0)); }
+  for (let i = 0; i < 70; i++) {
+    let x = R() * n, y = R() * n, a = R() * 6.283;
+    const L = 30 + R() * 90;
+    for (let k = 0; k < L; k++) { soil[at(x, y)] -= 0.22; a += (R() - 0.5) * 0.7; x += Math.cos(a); y += Math.sin(a); }
+  }
+  const litter = fbm([8, 32], [0.3, 0.2]);
+  for (let i = 0; i < 9000; i++) {
+    const cx = R() * n, cy = R() * n, a = R() * 3.14, len = 3 + R() * 6, wid = 1.5 + R() * 2.5, b = (R() - 0.5) * 0.6, ca = Math.cos(a), sa = Math.sin(a);
+    for (let y = -len; y <= len; y++) for (let x = -len; x <= len; x++) {
+      const u = (x * ca + y * sa) / len, v = (-x * sa + y * ca) / wid;
+      if (u * u + v * v <= 1) litter[at(cx + x, cy + y)] = 0.5 + b + (1 - u * u - v * v) * 0.1;
+    }
+  }
+  for (let i = 0; i < 160; i++) {
+    let x = R() * n, y = R() * n;
+    const a = R() * 6.283, L = 10 + R() * 40;
+    for (let k = 0; k < L; k++) { litter[at(x, y)] -= 0.3; x += Math.cos(a); y += Math.sin(a); }
+  }
+  const macro = fbm([2, 4, 8], [0.5, 0.3, 0.2]);
+  [grass, soil, litter, macro].forEach(norm);
+  const data = new Uint8Array(N * 4);
+  for (let i = 0; i < N; i++) { data[i * 4] = grass[i] * 255; data[i * 4 + 1] = soil[i] * 255; data[i * 4 + 2] = litter[i] * 255; data[i * 4 + 3] = macro[i] * 255; }
+  const t = new THREE.DataTexture(data, n, n, THREE.RGBAFormat);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.generateMipmaps = true; t.anisotropy = ANISO; t.needsUpdate = true;
   return t;
 }
 /* Contour lines drawn in the terrain shader: thin every 10 m, stronger every 50 m. The annotation
@@ -1483,7 +1591,7 @@ function detailTexture() {
 function contourMaterial(map, ov, shared = null) {
   const mat = new THREE.MeshStandardMaterial({ map, roughness: 1, metalness: 0 });
   if (shared) mat.userData.u = { ...shared.userData.u, uUseHole: { value: 0 } };   // same textures and settings, but it fills the holes
-  else mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 }, uLine: { value: new THREE.Color(1, 0.93, 0.72) }, uLineK: { value: 0.8 }, uOv: { value: ov }, uPatchOn: { value: 0 }, uDetail: { value: detailTexture() }, uHole: { value: BLANK }, uHoleR: { value: new THREE.Vector4(-1, -1, -1, -1) }, uUseHole: { value: 1 } };
+  else mat.userData.u = { uVS: { value: 1 }, uBase: { value: HBASE }, uOn: { value: 0 }, uLine: { value: new THREE.Color(1, 0.93, 0.72) }, uLineK: { value: 0.8 }, uOv: { value: ov }, uPatchOn: { value: 0 }, uPhoto: { value: 1 }, uDetail: { value: detailTexture() }, uHole: { value: BLANK }, uHoleR: { value: new THREE.Vector4(-1, -1, -1, -1) }, uUseHole: { value: 1 } };
   if (!shared) { const hole = holeMask(); if (hole) { mat.userData.u.uHole.value = hole.tex; mat.userData.u.uHoleR.value = hole.rect; } }
   // Site photos: sharper images of parts of the site, each laid over its own rectangle of the map.
   let patchDecl = '', patchCode = '';
@@ -1500,16 +1608,41 @@ function contourMaterial(map, ov, shared = null) {
     Object.assign(sh.uniforms, mat.userData.u);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uVS; uniform float uBase;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvElev = position.y / uVS + uBase;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv; uniform float uPatchOn; uniform sampler2D uDetail; uniform sampler2D uHole; uniform vec4 uHoleR; uniform float uUseHole;' + patchDecl)
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv; uniform float uPatchOn; uniform float uPhoto; uniform sampler2D uDetail; uniform sampler2D uHole; uniform vec4 uHoleR; uniform float uUseHole;' + patchDecl + GLSL_NOISE)
       .replace('#include <tonemapping_fragment>', 'vec4 ov = texture2D(uOv, vMapUv);\ngl_FragColor.rgb = gl_FragColor.rgb * (1.0 - ov.a) + ov.rgb;\n#include <tonemapping_fragment>')
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        if (ohK > 0.0) normal = ohBump(-vViewPosition, normal, ohDH * 1.1 * ohK, faceDirection);`)
       .replace('#include <map_fragment>', `#include <map_fragment>
         { vec2 hu = (vMapUv - uHoleR.xy) / (uHoleR.zw - uHoleR.xy); float hm = texture2D(uHole, clamp(hu, 0.0, 1.0)).r;
           if (uUseHole > 0.5 && hu.x > 0.0 && hu.x < 1.0 && hu.y > 0.0 && hu.y < 1.0 && hm > 0.5) discard; }
         ${patchCode}
-        { float k = 1.0 - smoothstep(25.0, 200.0, length(vViewPosition));
-          vec2 wuv = vMapUv * 2000.0;
-          float dn = texture2D(uDetail, wuv).r * 0.5 + texture2D(uDetail, wuv * 3.1 + 0.37).g * 0.5;
-          diffuseColor.rgb *= mix(1.0, 0.55 + 0.9 * dn, k * 0.85); }
+        float ohDist = length(vViewPosition), ohK = 1.0 - smoothstep(30.0, 320.0, ohDist); vec2 ohDH = vec2(0.0);
+        {
+          vec3 c = diffuseColor.rgb;
+          if (uPhoto > 0.5) {                    // satellite colours: a little more contrast and colour than the hazy source
+            float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+            c = mix(vec3(l), c, 1.08); c = clamp(c, 0.0, 1.0); c = c * c * (3.0 - 2.0 * c) * 0.15 + c * 0.85;
+            diffuseColor.rgb = c;
+          }
+          vec2 wuv = vMapUv * ${(2 * HHALF / 6).toFixed(3)};
+          vec4 d = mix(texture2D(uDetail, wuv), texture2D(uDetail, wuv * 0.31 + 0.27), 0.4 + 0.4 * smoothstep(40.0, 200.0, ohDist));
+          float macro = texture2D(uDetail, vMapUv * ${(2 * HHALF / 90).toFixed(3)}).a;
+          diffuseColor.rgb *= mix(1.0, 0.86 + 0.28 * macro, (1.0 - smoothstep(300.0, 2500.0, ohDist)) * 0.8);
+          float det = mix(d.r, d.g, 0.5);
+          ohDH = (vec2(dFdx(d.r), dFdy(d.r)) + vec2(dFdx(d.g), dFdy(d.g))) * 0.5;
+          if (uPhoto > 0.5) {                    // grass where the photo is green, red earth where it is bare, leaf litter where it is dark
+            float l = (c.r + c.g + c.b) / 3.0;
+            float wg = clamp((c.g - max(c.r, c.b)) * 14.0 + 0.25, 0.0, 1.0), ws = clamp((c.r - c.g) * 9.0 + (l - 0.35) * 2.0, 0.0, 1.0);
+            float wl = clamp((0.16 - l) * 9.0, 0.0, 1.0) * wg;
+            wg *= 1.0 - wl;
+            float sum = wg + ws + wl + 1e-3;
+            det = (d.r * wg + d.g * ws + d.b * wl) / sum;
+            // relief from the textures alone, so the edge between grass and earth doesn't read as a ridge
+            ohDH = (vec2(dFdx(d.r), dFdy(d.r)) * wg + vec2(dFdx(d.g), dFdy(d.g)) * ws + vec2(dFdx(d.b), dFdy(d.b)) * wl) / sum;
+            diffuseColor.rgb *= mix(vec3(1.0), vec3(1.06, 1.0, 0.92), (det - 0.5) * 2.0 * ohK * ws / sum);
+          }
+          diffuseColor.rgb *= uPhoto > 0.5 ? mix(1.0, 0.72 + 0.56 * det, ohK) : mix(1.0, 0.5 + det, ohK * 0.5);
+        }
         if (uOn > 0.5) {
           float w = max(fwidth(vElev), 1e-4);
           float d10 = abs(fract(vElev / 10.0 + 0.5) - 0.5) * 10.0 / w;
@@ -1544,6 +1677,20 @@ function skirtGeometry() {
   return g;
 }
 
+/* A round crown with lumps that depend only on position (so shared corners stay joined), darker underneath. */
+function lumpySphere(detail, amp) {
+  const g = new THREE.IcosahedronGeometry(1, detail), p = g.attributes.position, nrm = g.attributes.normal;
+  const col = new Float32Array(p.count * 3), v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i).normalize();
+    nrm.setXYZ(i, v.x, v.y, v.z);
+    const k = 1 - amp / 2 + amp * hash2(Math.round(v.x * 40) + Math.round(v.z * 40) * 7, Math.round(v.y * 40));
+    p.setXYZ(i, v.x * k, v.y * k, v.z * k);
+    col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = 0.55 + 0.45 * smooth(-0.9, 0.8, v.y);
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.deleteAttribute('uv');
+  return g;
+}
 /* Trees: one per canopy top in the 1 m height model. Colour comes from the imagery under it. */
 let treeData = null;
 function treeGeometry() {
@@ -1553,7 +1700,7 @@ function treeGeometry() {
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i).normalize();
     nrm.setXYZ(i, v.x, v.y, v.z);
-    const k = 0.92 + 0.16 * hash2(Math.round(v.x * 50) + Math.round(v.z * 50) * 7, Math.round(v.y * 50));
+    const k = 0.89 + 0.22 * hash2(Math.round(v.x * 50) + Math.round(v.z * 50) * 7, Math.round(v.y * 50));
     p.setXYZ(i, v.x * k, v.y * k, v.z * k);
     const ao = 0.58 + 0.42 * smooth(-0.9, 0.8, v.y);
     col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = ao;
@@ -1565,7 +1712,7 @@ function treeGeometry() {
 }
 function buildTrees() {
   const raw = treeData, n = small ? Math.min(raw.count, 32000) : raw.count;
-  const mesh = new THREE.InstancedMesh(treeGeometry(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }), n);
+  const mesh = new THREE.InstancedMesh(treeGeometry(), foliage(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }), { wind: 0.06 }), n);
   const col = new THREE.Color(), leaf = new THREE.Color(), R = rng(3);
   for (let i = 0; i < n; i++) {
     imageryColor(raw.x[i], raw.z[i], col);
@@ -1709,7 +1856,7 @@ function siteMaterials() {
     bank: std({ map: gravelTex(), vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
     gravel: std({ map: gravelTex(), roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),
     mast: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.3 }),
-    leaves: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.65 }), granite: std({ color: 0x8e8c86, roughness: 0.9 }),
+    leaves: foliage(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.65 }), { instanced: false, scale: 1.3, wind: 0.008 }), granite: std({ color: 0x8e8c86, roughness: 0.9 }),
   });
 }
 const bearingRot = (deg) => Math.PI - (deg * Math.PI) / 180;    // turns a model's +z front to face that bearing
@@ -2405,14 +2552,16 @@ async function buildHill() {
   loadOfficial(layers);
 
   const scene = hill.scene;
-  const HAZE = new THREE.Color(0xc8d3dc);
+  const HAZE = new THREE.Color(0xb3c6da);
   scene.background = HAZE.clone();
-  scene.fog = new THREE.FogExp2(HAZE, 0.000085);
-  scene.environment = ENV; scene.environmentIntensity = 0.2;
-  const sunDir = new THREE.Vector3(-0.42, 0.62, -0.66).normalize();
-  const sky = skyDome(0x6f9fd0, 0xd9e1e6, sunDir); sky.scale.setScalar(30000); scene.add(sky);
-  scene.add(new THREE.HemisphereLight(0xdfe9f2, 0x5b5040, 1.35));
-  const sun = new THREE.DirectionalLight(0xfff1dc, 2.1);
+  scene.fog = new THREE.FogExp2(HAZE, 0.0001);
+  const sunDir = new THREE.Vector3(-0.42, 0.52, -0.66).normalize();     // mid-afternoon, from the north-west
+  scene.environment = skyEnvironment(sunDir); scene.environmentIntensity = 0.75;
+  scene.add(physicalSky(sunDir, 30000));
+  scene.add(new THREE.HemisphereLight(0xcfe0f2, 0x5b5040, 0.6));
+  const sun = new THREE.DirectionalLight(0xffeacc, 2.7);
+  hill.sun = sun; hill.sunDir = sunDir;
+  FOL.uSunDir.value.copy(sunDir); FOL.uSunCol.value.set(0xffe2a8);
   sun.position.copy(sunDir).multiplyScalar(5000); sun.target.position.set(0, 0, 0);
   sun.castShadow = true;
   sun.shadow.mapSize.set(small ? 2048 : 4096, small ? 2048 : 4096);
@@ -2651,7 +2800,7 @@ async function setBase(id) {
   if (baseWant !== id) return;
   const b = BASES[id], u = hill.terrainMat.userData.u;
   hill.terrainMat.map = t; hill.insertMat.map = t;
-  u.uLine.value.copy(b.line); u.uLineK.value = b.line === CREAM ? 0.8 : 0.6;
+  u.uLine.value.copy(b.line); u.uLineK.value = b.line === CREAM ? 0.8 : 0.6; u.uPhoto.value = id === 'satellite' ? 1 : 0;
   hill.base = id;
   showSitePhotos();
 }
@@ -2918,7 +3067,7 @@ function buildHouseScene(kind) {
   // Grass tufts on the living roof(s), so the roof line reads as meadow.
   {
     const tuft = tuftGeometry(0.55);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x7f9347, roughness: 1, side: THREE.DoubleSide });
+    const mat = new THREE.MeshStandardMaterial({ color: 0x7f9347, roughness: 1, vertexColors: true });
     const R = rng(isCabin ? 3 : 4);
     const vols = isCabin ? [house.children[0]] : [house.children[0], house.children[1]];
     const count = isCabin ? 1600 : 3400;
@@ -2999,8 +3148,8 @@ function buildHouseScene(kind) {
   // Trees on the slope behind, palms in the field like the ones on site, grass tufts in front.
   {
     const R = rng(isCabin ? 41 : 42);
-    const canopy = new THREE.IcosahedronGeometry(1, 1);
-    const tmat = new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.9 });
+    const canopy = lumpySphere(small ? 1 : 2, 0.24);
+    const tmat = foliage(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }), { scale: 1.5, wind: 0.035, trans: 0.35 });
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3c, roughness: 1 });
     const trees = [];
     for (let i = 0; i < 260; i++) {
@@ -3035,7 +3184,7 @@ function buildHouseScene(kind) {
     pm.castShadow = true; scene.add(pm);
 
     const tuft = tuftGeometry(0.5);
-    const gm = new THREE.MeshStandardMaterial({ roughness: 1, side: THREE.DoubleSide });
+    const gm = new THREE.MeshStandardMaterial({ roughness: 1, vertexColors: true });
     const N = small ? 4000 : 9000;
     const tf = new THREE.InstancedMesh(tuft, gm, N);
     let n = 0;
@@ -3048,7 +3197,7 @@ function buildHouseScene(kind) {
       if (onHouse || onPool || onCar || onPit) continue;
       const s = 0.7 + R() * 0.9;
       tf.setMatrixAt(n, m4.compose(v3.set(x, hf(x, z) - 0.03, z), q.setFromAxisAngle(UP, R() * 6), s3.set(s, s * (0.7 + R() * 0.8), s)));
-      tf.setColorAt(n, col.setHSL(0.16 + R() * 0.08, 0.3 + R() * 0.2, 0.16 + R() * 0.12));
+      tf.setColorAt(n, col.setHSL(0.17 + R() * 0.08, 0.32 + R() * 0.2, 0.3 + R() * 0.16, THREE.SRGBColorSpace));
       n++;
     }
     tf.count = n; scene.add(tf);
@@ -3057,6 +3206,8 @@ function buildHouseScene(kind) {
   // Sky, sun, night.
   const sunDir = new THREE.Vector3(0.55, 0.42, 0.72).normalize();
   const sky = skyDome(0x7ea6cf, 0xf0d7ad, sunDir); sky.scale.setScalar(1500); scene.add(sky);
+  const dayEnv = skyEnvironment(sunDir);
+  scene.environment = dayEnv; scene.environmentIntensity = 0.85;
   const starField = stars(1400, 1200); starField.visible = false; scene.add(starField);
   const hemi = new THREE.HemisphereLight(0xd6e4f2, 0x5a4a36, 1.0); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd8a8, 3.2);
@@ -3090,7 +3241,7 @@ function buildHouseScene(kind) {
     sun.intensity = on ? 0.35 : 3.2;
     sun.color.set(on ? 0x9db5e0 : 0xffd8a8);
     sun.position.copy(on ? new THREE.Vector3(-0.4, 0.8, 0.5).normalize() : sunDir).multiplyScalar(60);
-    scene.environmentIntensity = on ? 0.08 : 0.45;
+    scene.environmentIntensity = on ? 0.08 : 0.85;
     lights.forEach((l) => (l.intensity = on ? 14 : 0));
     SM.window.emissiveIntensity = on ? 0.8 : 0;
     SM.lamp.emissiveIntensity = on ? 3 : 0;
@@ -3729,14 +3880,33 @@ function noteMat(hex, sel, extra = {}) {
   const key = hex + ':' + sel + ':' + JSON.stringify(extra);
   return noteMats[key] || (noteMats[key] = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.8, emissive: sel ? hex : 0x000000, emissiveIntensity: sel ? 0.35 : 0, ...extra }));
 }
+function cabinMats(sel) {
+  const key = 'cabin:' + sel;
+  if (noteMats[key]) return noteMats[key];
+  if (!T.earth) textures();
+  const lit = (hex) => ({ emissive: sel ? hex : 0x000000, emissiveIntensity: sel ? 0.3 : 0 });
+  return (noteMats[key] = {
+    wall: new THREE.MeshStandardMaterial({ map: T.earth, bumpMap: T.earth, bumpScale: 1.2, roughness: 0.95, ...lit(0xc9a283) }),
+    roof: new THREE.MeshStandardMaterial({ map: T.roofGrass, roughness: 1, ...lit(0x6f8a45) }),
+    frame: new THREE.MeshStandardMaterial({ color: 0x2b2722, roughness: 0.45, metalness: 0.6, ...lit(0x2b2722) }),
+    glass: new THREE.MeshStandardMaterial({ color: 0x8fa9b2, roughness: 0.04, metalness: 0.9, envMapIntensity: 1.4, ...lit(0x1c242c) }),
+    deck: new THREE.MeshStandardMaterial({ map: T.deck, roughness: 0.8, ...lit(0x8a5f3c) }),
+  });
+}
 function footprintModel(n, sel) {
   const g = new THREE.Group(), k = kindOfNote(n), W = n.w, D = n.d, H = n.kind === 'cabin' ? 3.0 : 3.4;
-  const wall = noteMat(n.kind === 'cabin' ? 0xc9a283 : 0xe6ded0, sel), roof = noteMat(n.kind === 'cabin' ? 0x6f8a45 : 0x8d8a84, sel);
-  box(W, H + 1.2, D, 0, (H - 1.2) / 2, 0, wall, g);                                         // reaches into the slope
-  const r = box(W + 0.8, 0.3, D + 0.8, 0, H + 0.2, 0, roof, g); r.rotation.x = n.kind === 'cabin' ? -0.08 : 0;
   if (n.kind === 'cabin') {
-    box(W - 0.6, H - 0.7, 0.06, 0, (H - 0.7) / 2 + 0.2, D / 2 + 0.03, noteMat(0x1c242c, sel, { roughness: 0.2, metalness: 0.4 }), g);   // glass to the view
-    box(W, 0.18, 3, 0, 0.25, D / 2 + 1.5, noteMat(0x8a5f3c, sel), g);                                                                // deck
+    const M = cabinMats(sel);
+    box(W, H + 1.2, D, 0, (H - 1.2) / 2, 0, M.wall, g, { uv: 3 });                          // rammed earth, reaching into the slope
+    const r = box(W + 0.8, 0.32, D + 0.8, 0, H + 0.2, 0, M.roof, g, { uv: 4 }); r.rotation.x = -0.08;   // living roof
+    box(W + 0.84, 0.14, 0.06, 0, H + 0.12, D / 2 + 0.44, M.frame, g);                       // its edge
+    box(W - 0.6, H - 0.7, 0.05, 0, (H - 0.7) / 2 + 0.2, D / 2 + 0.03, M.glass, g);          // glass to the view
+    for (let i = 0; i <= 3; i++) box(0.08, H - 0.7, 0.1, -(W - 0.6) / 2 + (i * (W - 0.6)) / 3, (H - 0.7) / 2 + 0.2, D / 2 + 0.06, M.frame, g);
+    box(W, 0.18, 3, 0, 0.25, D / 2 + 1.5, M.deck, g, { uv: 2 });                            // deck
+  } else {
+    const wall = noteMat(0xe6ded0, sel), roof = noteMat(0x8d8a84, sel);
+    box(W, H + 1.2, D, 0, (H - 1.2) / 2, 0, wall, g);                                       // reaches into the slope
+    box(W + 0.8, 0.3, D + 0.8, 0, H + 0.2, 0, roof, g);
   }
   if (sel) {                                                   // the selected one is outlined, through anything in front of it
     const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => new THREE.Vector3((a * (W + 1)) / 2, 0.15, (b * (D + (n.kind === 'cabin' ? 4 : 1))) / 2 + (n.kind === 'cabin' ? 1.5 : 0)))),
@@ -5308,6 +5478,24 @@ async function buildTrail() {
   else needResize = true;
 }
 
+/* Sun shadows: the whole model from far away, a tight box around the view up close, so roofs,
+   cabins and trees cast crisp shadows. Redrawn only when the view has moved well away from the last fit. */
+let shadowFit = null, shadowCheck = 0;
+function fitHillShadow(force = false) {
+  const sun = hill.sun;
+  if (!sun || !mc) return;
+  const t = mc.target, d = hill.camera.position.distanceTo(t);
+  const ext = d > 1600 ? 2300 : clamp(d * 1.15, 70, 2300), c = ext >= 2300 ? new THREE.Vector3() : t.clone();
+  if (!force && shadowFit && Math.abs(ext - shadowFit.ext) < shadowFit.ext * 0.3 && c.distanceTo(shadowFit.c) < shadowFit.ext * 0.25) return;
+  shadowFit = { ext, c };
+  sun.target.position.copy(c); sun.position.copy(c).addScaledVector(hill.sunDir, 5000);
+  sun.target.updateMatrixWorld();
+  const sc = sun.shadow.camera;
+  sc.left = sc.bottom = -ext; sc.right = sc.top = ext; sc.updateProjectionMatrix();
+  sun.shadow.normalBias = ((2 * ext) / sun.shadow.mapSize.x) * 0.55;
+  renderer.shadowMap.needsUpdate = true;
+}
+
 /* -------------------------------------------------------------- loop -- */
 const clock = new THREE.Clock();
 const v3 = new THREE.Vector3();
@@ -5317,6 +5505,7 @@ function tick() {
   if (!active || (!first && (!planEl.hidden || !trailEl.hidden || document.hidden))) return;
   const dt = Math.min(clock.getDelta(), 0.05);
   elapsed += dt;
+  FOL.uTime.value = elapsed;
   const cam = active.camera, ctl = active.controls;
   if (tween) {
     const k = Math.min((performance.now() - tween.t0) / tween.ms, 1), e = ease(k);
@@ -5333,6 +5522,7 @@ function tick() {
     ctl.update(dt);
   }
   if (mode === 'cerro') {
+    if (!tween && ++shadowCheck % 20 === 0) fitHillShadow();
     hill.curtains.forEach((c) => (c.material.uniforms.uTime.value = elapsed));
     needle.setAttribute('transform', `rotate(${(ctl.getAzimuthalAngle() * 180) / Math.PI} 15 15)`);
     for (const l of hill.labels) place(l.chip, l.anchor, cam, !display[l.cat] || cam.position.distanceTo(l.anchor) > l.far || !!limits.drawing || !!limits.editing, true);
@@ -5405,6 +5595,7 @@ async function boot() {
   const tgt = new THREE.Vector3(-250, 0, 60); tgt.y = yAt(tgt.x, tgt.z);
   HOME = { tgt, pos: tgt.clone().add(new THREE.Vector3().setFromSphericalCoords(portrait ? 4300 : 2900, 1.08, -1.22)) };
   hill.camera.position.copy(HOME.pos); mc.target.copy(HOME.tgt); mc.update();
+  fitHillShadow(true);
   const want = (location.hash || '').slice(1);
   setMode(want === 'cabin' || want === 'residence' ? want : 'cerro');
   if (want === 'plan') openPlan();

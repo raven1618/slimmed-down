@@ -114,6 +114,13 @@ If a plan uses an older datum rather than WGS84/SIRGAS, it has to be converted f
 
 A drone mapping flight over the property (an orthophoto plus a surface model at a few cm) can replace the terrain and imagery inside the boundary.
 
+### Light and materials
+
+- **Sky and light.** The hill and the concept scenes use a physically based sky (three.js `Sky`). The same sky, over a brown-green ground, is the light that fills shadows and shows in glass and water. The sun is mid-afternoon, from the north-west.
+- **Shadows** cover the whole model from far away. Zoom in and they tighten to a box around the view, so roofs, cabins and trees cast crisp shadows. They are redrawn only when the view moves well away from the last fit.
+- **Ground up close.** One procedural tile, 6 m across, holds grass, red earth with pebbles, and leaf litter. The terrain shader picks among them by the colour of the satellite or site photo underneath, and adds matching relief. It fades out past about 300 m, where the photo carries the detail. The photo itself gets a little more contrast and colour than the hazy source. Data maps such as topographic or land cover are left untouched apart from a fine grain.
+- **Trees** share one leaf shader: clumps of light and shade across each crown, light coming through when you look toward the sun, and a slow breeze.
+
 ### Base maps
 
 Topographic, shaded relief and slope are drawn in the browser from `terrain.json`. The topographic map numbers the 50 m contours and turns the contour lines on. Each base map comes with the layers that suit it: trees are on for satellite and off for the others, because the crowns would cover the data. Any layer can be switched back on in **Display**.
