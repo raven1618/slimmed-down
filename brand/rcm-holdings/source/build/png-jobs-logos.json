@@ -1,0 +1,287 @@
+[
+ {
+  "svg": "logos/horizontal/rcm-logo-horizontal-fullcolor.svg",
+  "png": "logos/png/rcm-logo-horizontal-fullcolor@600w.png",
+  "width": 600
+ },
+ {
+  "svg": "logos/horizontal/rcm-logo-horizontal-fullcolor.svg",
+  "png": "logos/png/rcm-logo-horizontal-fullcolor@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal/rcm-logo-horizontal-fullcolor.svg",
+  "png": "logos/png/rcm-logo-horizontal-fullcolor@2400w.png",
+  "width": 2400
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-fullcolor.svg",
+  "png": "logos/png/rcm-logo-tagline-fullcolor@600w.png",
+  "width": 600
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-fullcolor.svg",
+  "png": "logos/png/rcm-logo-tagline-fullcolor@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-fullcolor.svg",
+  "png": "logos/png/rcm-logo-tagline-fullcolor@2400w.png",
+  "width": 2400
+ },
+ {
+  "svg": "logos/stacked/rcm-logo-stacked-fullcolor.svg",
+  "png": "logos/png/rcm-logo-stacked-fullcolor@600w.png",
+  "width": 600
+ },
+ {
+  "svg": "logos/stacked/rcm-logo-stacked-fullcolor.svg",
+  "png": "logos/png/rcm-logo-stacked-fullcolor@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/stacked/rcm-logo-stacked-fullcolor.svg",
+  "png": "logos/png/rcm-logo-stacked-fullcolor@2400w.png",
+  "width": 2400
+ },
+ {
+  "svg": "logos/wordmark/rcm-wordmark-fullcolor.svg",
+  "png": "logos/png/rcm-wordmark-fullcolor@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-fullcolor.svg",
+  "png": "logos/png/rcm-symbol-fullcolor@256w.png",
+  "width": 256
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-fullcolor.svg",
+  "png": "logos/png/rcm-symbol-fullcolor@512w.png",
+  "width": 512
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-fullcolor.svg",
+  "png": "logos/png/rcm-symbol-fullcolor@1024w.png",
+  "width": 1024
+ },
+ {
+  "svg": "logos/horizontal/rcm-logo-horizontal-reverse.svg",
+  "png": "logos/png/rcm-logo-horizontal-reverse@600w.png",
+  "width": 600
+ },
+ {
+  "svg": "logos/horizontal/rcm-logo-horizontal-reverse.svg",
+  "png": "logos/png/rcm-logo-horizontal-reverse@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal/rcm-logo-horizontal-reverse.svg",
+  "png": "logos/png/rcm-logo-horizontal-reverse@2400w.png",
+  "width": 2400
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-reverse.svg",
+  "png": "logos/png/rcm-logo-tagline-reverse@600w.png",
+  "width": 600
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-reverse.svg",
+  "png": "logos/png/rcm-logo-tagline-reverse@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-reverse.svg",
+  "png": "logos/png/rcm-logo-tagline-reverse@2400w.png",
+  "width": 2400
+ },
+ {
+  "svg": "logos/stacked/rcm-logo-stacked-reverse.svg",
+  "png": "logos/png/rcm-logo-stacked-reverse@600w.png",
+  "width": 600
+ },
+ {
+  "svg": "logos/stacked/rcm-logo-stacked-reverse.svg",
+  "png": "logos/png/rcm-logo-stacked-reverse@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/stacked/rcm-logo-stacked-reverse.svg",
+  "png": "logos/png/rcm-logo-stacked-reverse@2400w.png",
+  "width": 2400
+ },
+ {
+  "svg": "logos/wordmark/rcm-wordmark-reverse.svg",
+  "png": "logos/png/rcm-wordmark-reverse@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-reverse.svg",
+  "png": "logos/png/rcm-symbol-reverse@256w.png",
+  "width": 256
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-reverse.svg",
+  "png": "logos/png/rcm-symbol-reverse@512w.png",
+  "width": 512
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-reverse.svg",
+  "png": "logos/png/rcm-symbol-reverse@1024w.png",
+  "width": 1024
+ },
+ {
+  "svg": "logos/horizontal/rcm-logo-horizontal-navy.svg",
+  "png": "logos/png/rcm-logo-horizontal-navy@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-navy.svg",
+  "png": "logos/png/rcm-logo-tagline-navy@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/stacked/rcm-logo-stacked-navy.svg",
+  "png": "logos/png/rcm-logo-stacked-navy@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/wordmark/rcm-wordmark-navy.svg",
+  "png": "logos/png/rcm-wordmark-navy@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-navy.svg",
+  "png": "logos/png/rcm-symbol-navy@256w.png",
+  "width": 256
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-navy.svg",
+  "png": "logos/png/rcm-symbol-navy@512w.png",
+  "width": 512
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-navy.svg",
+  "png": "logos/png/rcm-symbol-navy@1024w.png",
+  "width": 1024
+ },
+ {
+  "svg": "logos/horizontal/rcm-logo-horizontal-white.svg",
+  "png": "logos/png/rcm-logo-horizontal-white@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-white.svg",
+  "png": "logos/png/rcm-logo-tagline-white@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/stacked/rcm-logo-stacked-white.svg",
+  "png": "logos/png/rcm-logo-stacked-white@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/wordmark/rcm-wordmark-white.svg",
+  "png": "logos/png/rcm-wordmark-white@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-white.svg",
+  "png": "logos/png/rcm-symbol-white@256w.png",
+  "width": 256
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-white.svg",
+  "png": "logos/png/rcm-symbol-white@512w.png",
+  "width": 512
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-white.svg",
+  "png": "logos/png/rcm-symbol-white@1024w.png",
+  "width": 1024
+ },
+ {
+  "svg": "logos/horizontal/rcm-logo-horizontal-black.svg",
+  "png": "logos/png/rcm-logo-horizontal-black@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-black.svg",
+  "png": "logos/png/rcm-logo-tagline-black@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/stacked/rcm-logo-stacked-black.svg",
+  "png": "logos/png/rcm-logo-stacked-black@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/wordmark/rcm-wordmark-black.svg",
+  "png": "logos/png/rcm-wordmark-black@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-black.svg",
+  "png": "logos/png/rcm-symbol-black@256w.png",
+  "width": 256
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-black.svg",
+  "png": "logos/png/rcm-symbol-black@512w.png",
+  "width": 512
+ },
+ {
+  "svg": "logos/symbol/rcm-symbol-black.svg",
+  "png": "logos/png/rcm-symbol-black@1024w.png",
+  "width": 1024
+ },
+ {
+  "svg": "logos/app-icon/rcm-app-icon.svg",
+  "png": "logos/png/rcm-app-icon@180w.png",
+  "width": 180
+ },
+ {
+  "svg": "logos/app-icon/rcm-app-icon.svg",
+  "png": "logos/png/rcm-app-icon@512w.png",
+  "width": 512
+ },
+ {
+  "svg": "logos/app-icon/rcm-app-icon.svg",
+  "png": "logos/png/rcm-app-icon@1024w.png",
+  "width": 1024
+ },
+ {
+  "svg": "logos/app-icon/rcm-app-icon-square.svg",
+  "png": "logos/png/rcm-app-icon-square@512w.png",
+  "width": 512
+ },
+ {
+  "svg": "logos/app-icon/rcm-app-icon-square.svg",
+  "png": "logos/png/rcm-app-icon-square@1024w.png",
+  "width": 1024
+ },
+ {
+  "svg": "logos/app-icon/rcm-app-icon-light.svg",
+  "png": "logos/png/rcm-app-icon-light@512w.png",
+  "width": 512
+ },
+ {
+  "svg": "logos/app-icon/rcm-favicon.svg",
+  "png": "logos/png/rcm-favicon@16w.png",
+  "width": 16
+ },
+ {
+  "svg": "logos/app-icon/rcm-favicon.svg",
+  "png": "logos/png/rcm-favicon@32w.png",
+  "width": 32
+ },
+ {
+  "svg": "logos/app-icon/rcm-favicon.svg",
+  "png": "logos/png/rcm-favicon@48w.png",
+  "width": 48
+ },
+ {
+  "svg": "logos/app-icon/rcm-favicon.svg",
+  "png": "logos/png/rcm-favicon@64w.png",
+  "width": 64
+ }
+]

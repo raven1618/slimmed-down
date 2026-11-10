@@ -1,0 +1,212 @@
+{
+  "rcm": {
+    "color": {
+      "navy": {
+        "$type": "color",
+        "$value": "#0B1D3A",
+        "$description": "Navy Blue. Primary brand colour. Logo, headlines, large fields of colour.",
+        "$extensions": {
+          "rcm": {
+            "rgb": [
+              11,
+              29,
+              58
+            ],
+            "cmyk": [
+              100,
+              78,
+              30,
+              60
+            ],
+            "pantone": "PANTONE 289 C",
+            "ral": "RAL 5011",
+            "usage_share_percent": 60
+          }
+        }
+      },
+      "graphite": {
+        "$type": "color",
+        "$value": "#2B2F36",
+        "$description": "Graphite. Body copy, secondary text, UI chrome and dark neutral backgrounds.",
+        "$extensions": {
+          "rcm": {
+            "rgb": [
+              43,
+              47,
+              54
+            ],
+            "cmyk": [
+              72,
+              62,
+              50,
+              65
+            ],
+            "pantone": "PANTONE 433 C",
+            "ral": "RAL 7021",
+            "usage_share_percent": 20
+          }
+        }
+      },
+      "stone": {
+        "$type": "color",
+        "$value": "#E6E7E9",
+        "$description": "Stone. Light neutral for panels, tables, dividers and quiet backgrounds.",
+        "$extensions": {
+          "rcm": {
+            "rgb": [
+              230,
+              231,
+              233
+            ],
+            "cmyk": [
+              8,
+              5,
+              5,
+              0
+            ],
+            "pantone": "PANTONE Cool Gray 1 C",
+            "ral": "RAL 9002",
+            "usage_share_percent": 10
+          }
+        }
+      },
+      "orange": {
+        "$type": "color",
+        "$value": "#FF4A00",
+        "$description": "Orange Red. Accent only. The forward quadrant, highlights, key data, calls to action.",
+        "$extensions": {
+          "rcm": {
+            "rgb": [
+              255,
+              74,
+              0
+            ],
+            "cmyk": [
+              0,
+              80,
+              100,
+              0
+            ],
+            "pantone": "PANTONE 1655 C",
+            "ral": "RAL 2004",
+            "usage_share_percent": 10
+          }
+        }
+      },
+      "white": {
+        "$type": "color",
+        "$value": "#FFFFFF",
+        "$description": "White. Space and clarity. The base for documents and digital layouts.",
+        "$extensions": {
+          "rcm": {
+            "rgb": [
+              255,
+              255,
+              255
+            ],
+            "cmyk": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pantone": "\u2014",
+            "ral": "RAL 9016",
+            "usage_share_percent": 0
+          }
+        }
+      },
+      "navy-80": {
+        "$type": "color",
+        "$value": "#3C4A61",
+        "$description": "Navy Blue 80% tint"
+      },
+      "navy-60": {
+        "$type": "color",
+        "$value": "#6D7789",
+        "$description": "Navy Blue 60% tint"
+      },
+      "navy-40": {
+        "$type": "color",
+        "$value": "#9DA5B0",
+        "$description": "Navy Blue 40% tint"
+      },
+      "navy-20": {
+        "$type": "color",
+        "$value": "#CED2D8",
+        "$description": "Navy Blue 20% tint"
+      },
+      "navy-10": {
+        "$type": "color",
+        "$value": "#E7E8EB",
+        "$description": "Navy Blue 10% tint"
+      },
+      "graphite-75": {
+        "$type": "color",
+        "$value": "#606368",
+        "$description": "Graphite 75% tint"
+      },
+      "graphite-50": {
+        "$type": "color",
+        "$value": "#95979A",
+        "$description": "Graphite 50% tint"
+      },
+      "graphite-25": {
+        "$type": "color",
+        "$value": "#CACBCD",
+        "$description": "Graphite 25% tint"
+      },
+      "graphite-10": {
+        "$type": "color",
+        "$value": "#EAEAEB",
+        "$description": "Graphite 10% tint"
+      },
+      "stone-50": {
+        "$type": "color",
+        "$value": "#F2F3F4",
+        "$description": "Stone 50% tint"
+      },
+      "orange-80": {
+        "$type": "color",
+        "$value": "#FF6E33",
+        "$description": "Orange Red 80% tint"
+      },
+      "orange-60": {
+        "$type": "color",
+        "$value": "#FF9266",
+        "$description": "Orange Red 60% tint"
+      },
+      "orange-40": {
+        "$type": "color",
+        "$value": "#FFB799",
+        "$description": "Orange Red 40% tint"
+      },
+      "orange-20": {
+        "$type": "color",
+        "$value": "#FFDBCC",
+        "$description": "Orange Red 20% tint"
+      }
+    },
+    "font": {
+      "primary": {
+        "$type": "fontFamily",
+        "$value": [
+          "Aktiv Grotesk",
+          "Inter",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif"
+        ]
+      },
+      "secondary": {
+        "$type": "fontFamily",
+        "$value": [
+          "Inter",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif"
+        ]
+      }
+    }
+  }
+}

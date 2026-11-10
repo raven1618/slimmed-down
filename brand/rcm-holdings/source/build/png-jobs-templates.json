@@ -1,0 +1,62 @@
+[
+ {
+  "svg": "templates/print/rcm-business-card-front.svg",
+  "png": "templates/png/print/rcm-business-card-front.png",
+  "width": 1050
+ },
+ {
+  "svg": "templates/print/rcm-business-card-back.svg",
+  "png": "templates/png/print/rcm-business-card-back.png",
+  "width": 1050
+ },
+ {
+  "svg": "templates/print/rcm-letterhead-us-letter.svg",
+  "png": "templates/png/print/rcm-letterhead-us-letter.png",
+  "width": 1275
+ },
+ {
+  "svg": "templates/print/rcm-letterhead-a4.svg",
+  "png": "templates/png/print/rcm-letterhead-a4.png",
+  "width": 1240
+ },
+ {
+  "svg": "templates/print/rcm-envelope-10.svg",
+  "png": "templates/png/print/rcm-envelope-10.png",
+  "width": 1425
+ },
+ {
+  "svg": "templates/print/rcm-folder-cover.svg",
+  "png": "templates/png/print/rcm-folder-cover.png",
+  "width": 1200
+ },
+ {
+  "svg": "templates/digital/rcm-linkedin-banner.svg",
+  "png": "templates/png/digital/rcm-linkedin-banner.png",
+  "width": 1584
+ },
+ {
+  "svg": "templates/digital/rcm-social-post.svg",
+  "png": "templates/png/digital/rcm-social-post.png",
+  "width": 1080
+ },
+ {
+  "svg": "templates/presentation/rcm-slide-cover.svg",
+  "png": "templates/png/presentation/rcm-slide-cover.png",
+  "width": 1920
+ },
+ {
+  "svg": "templates/presentation/rcm-slide-divider.svg",
+  "png": "templates/png/presentation/rcm-slide-divider.png",
+  "width": 1920
+ },
+ {
+  "svg": "templates/presentation/rcm-slide-content.svg",
+  "png": "templates/png/presentation/rcm-slide-content.png",
+  "width": 1920
+ },
+ {
+  "svg": "templates/signage/rcm-signage-reception-elevation.svg",
+  "png": "templates/png/signage/rcm-signage-reception-elevation.png",
+  "width": 2400
+ }
+]

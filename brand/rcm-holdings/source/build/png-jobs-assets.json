@@ -1,0 +1,47 @@
+[
+ {
+  "svg": "color/rcm-palette.svg",
+  "png": "color/rcm-palette.png",
+  "width": 1500
+ },
+ {
+  "svg": "graphics/rcm-graphic-global-connections.svg",
+  "png": "graphics/png/rcm-graphic-global-connections.png",
+  "width": 1600
+ },
+ {
+  "svg": "graphics/rcm-graphic-direction.svg",
+  "png": "graphics/png/rcm-graphic-direction.png",
+  "width": 1600
+ },
+ {
+  "svg": "graphics/rcm-graphic-structure.svg",
+  "png": "graphics/png/rcm-graphic-structure.png",
+  "width": 1600
+ },
+ {
+  "svg": "graphics/rcm-graphic-intelligent-logistics.svg",
+  "png": "graphics/png/rcm-graphic-intelligent-logistics.png",
+  "width": 1600
+ },
+ {
+  "svg": "graphics/rcm-graphic-speed.svg",
+  "png": "graphics/png/rcm-graphic-speed.png",
+  "width": 1600
+ },
+ {
+  "svg": "graphics/rcm-pattern-lattice-light.svg",
+  "png": "graphics/png/rcm-pattern-lattice-light.png",
+  "width": 1600
+ },
+ {
+  "svg": "graphics/rcm-pattern-lattice-navy.svg",
+  "png": "graphics/png/rcm-pattern-lattice-navy.png",
+  "width": 1600
+ },
+ {
+  "svg": "icons/rcm-icon-sheet.svg",
+  "png": "icons/rcm-icon-sheet.png",
+  "width": 1200
+ }
+]

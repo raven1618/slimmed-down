@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RCM Holdings — Commercial Invoice</title>
+<!--
+  Branded commercial invoice template (US Letter; switch @page size to A4 if required).
+  Every value shown is SAMPLE DATA — replace it before use. Print to PDF from any browser.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: 8.5in 11in; margin: 0; }
+  :root { --navy:#0B1D3A; --graphite:#2B2F36; --stone:#E6E7E9; --orange:#FF4A00; --muted:#606368; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #E6E7E9; }
+  body { font-family: 'Aktiv Grotesk', Inter, 'Helvetica Neue', Arial, sans-serif; color: var(--graphite); font-size: 8.4pt; }
+  .sheet { width: 8.5in; height: 11in; margin: 24px auto; background: #fff; padding: 0.55in 0.6in 0.5in; position: relative; overflow: hidden; }
+  @media print { .sheet { margin: 0; } html, body { background: #fff; } }
+  header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px solid var(--stone); position: relative; }
+  header::after { content: ""; position: absolute; left: 0; bottom: -1px; width: 44px; height: 2px; background: var(--orange); }
+  header img { width: 2.05in; display: block; }
+  .doc-title { text-align: right; }
+  .doc-title h1 { margin: 0; font-size: 17pt; letter-spacing: .02em; color: var(--navy); font-weight: 700; }
+  .doc-title .meta { margin-top: 6px; display: grid; grid-template-columns: auto auto; gap: 2px 14px; justify-content: end; font-size: 7.8pt; }
+  .label { font-size: 6.4pt; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .doc-title .meta b { color: var(--navy); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--stone); margin-top: 18px; }
+  .grid > div { padding: 9px 11px; border-right: 1px solid var(--stone); border-bottom: 1px solid var(--stone); min-height: 74px; line-height: 1.45; }
+  .grid > div:nth-child(3n) { border-right: 0; }
+  .grid > div.short { min-height: 0; }
+  .grid .label { display: block; margin-bottom: 4px; }
+  .grid strong { color: var(--navy); font-weight: 600; }
+  .grid.last > div { border-bottom: 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+  thead th { background: var(--navy); color: #fff; font-size: 6.4pt; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; text-align: left; padding: 7px 8px; }
+  thead th.num, td.num { text-align: right; }
+  tbody td { padding: 7px 8px; border-bottom: 1px solid var(--stone); vertical-align: top; }
+  tbody tr:nth-child(even) td { background: #F7F7F8; }
+  tfoot td { padding: 6px 8px; }
+  tfoot tr.total td { border-top: 2px solid var(--navy); font-size: 9.5pt; font-weight: 700; color: var(--navy); }
+  tfoot tr.total td:last-child { color: var(--orange); }
+  .bottom { display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; margin-top: 18px; }
+  .decl { line-height: 1.5; }
+  .sign { border-top: 1px solid var(--graphite); margin-top: 46px; padding-top: 5px; display: flex; justify-content: space-between; }
+  footer { position: absolute; left: 0.6in; right: 1.55in; bottom: 0.38in; display: flex; justify-content: space-between; font-size: 6.4pt; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--stone); padding-top: 8px; }
+  footer b { color: var(--navy); }
+  .corner { position: absolute; right: 0; bottom: 0; width: 1.7in; height: 1in; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header>
+    <img src="../../logos/horizontal/rcm-logo-horizontal-fullcolor.svg" alt="RCM Holdings">
+    <div class="doc-title">
+      <h1>COMMERCIAL INVOICE</h1>
+      <div class="meta">
+        <span class="label">Invoice no.</span><b>RCM-CI-2026-04812</b>
+        <span class="label">Date</span><b>10 Nov 2026</b>
+        <span class="label">Shipment ref.</span><b>NYC-RTM-118204</b>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div><span class="label">Exporter / Shipper</span><strong>Atlas Precision Components Inc.</strong><br>480 Industrial Parkway<br>Newark, NJ 07105 · USA<br>EIN 00-0000000</div>
+    <div><span class="label">Consignee</span><strong>Northwind Industrial Supply B.V.</strong><br>Waalhaven Oostzijde 12<br>3087 BM Rotterdam · Netherlands<br>EORI NL000000000</div>
+    <div><span class="label">Notify party</span><strong>RCM Holdings — Customs Brokerage</strong><br>123 Harbor Boulevard, Suite 400<br>New York, NY 10004 · USA<br>+1 212 555 0100</div>
+    <div class="short"><span class="label">Country of origin</span><strong>United States</strong></div>
+    <div class="short"><span class="label">Country of destination</span><strong>Netherlands</strong></div>
+    <div class="short"><span class="label">Incoterms® 2020</span><strong>FCA Newark, NJ</strong></div>
+    <div class="short"><span class="label">Port of loading</span><strong>Port Newark, USNWK</strong></div>
+    <div class="short"><span class="label">Port of discharge</span><strong>Rotterdam, NLRTM</strong></div>
+    <div class="short"><span class="label">Vessel / Voyage</span><strong>MSC SAMPLE · 046E</strong></div>
+  </div>
+  <div class="grid last" style="margin-top:-1px">
+    <div class="short"><span class="label">Bill of lading</span><strong>RCMU2026118204</strong></div>
+    <div class="short"><span class="label">Packages / Gross weight</span><strong>14 pallets · 6,420 kg</strong></div>
+    <div class="short"><span class="label">Currency / Terms</span><strong>USD · Net 30</strong></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th style="width:4%">#</th><th style="width:13%">HS code</th><th>Description of goods</th><th class="num" style="width:9%">Qty</th><th style="width:7%">Unit</th><th class="num" style="width:12%">Unit value</th><th class="num" style="width:13%">Total (USD)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>8483.10.30</td><td>Precision drive shafts, alloy steel</td><td class="num">1,200</td><td>PCS</td><td class="num">42.50</td><td class="num">51,000.00</td></tr>
+      <tr><td>2</td><td>8482.10.50</td><td>Radial ball bearings, 40 mm</td><td class="num">8,000</td><td>PCS</td><td class="num">3.85</td><td class="num">30,800.00</td></tr>
+      <tr><td>3</td><td>8484.10.00</td><td>Metal gaskets, assorted sizes</td><td class="num">5,500</td><td>PCS</td><td class="num">1.20</td><td class="num">6,600.00</td></tr>
+      <tr><td>4</td><td>7318.15.20</td><td>Hex bolts, stainless, M12</td><td class="num">20,000</td><td>PCS</td><td class="num">0.38</td><td class="num">7,600.00</td></tr>
+      <tr><td>5</td><td>3926.90.99</td><td>Protective polymer end caps</td><td class="num">9,200</td><td>PCS</td><td class="num">0.22</td><td class="num">2,024.00</td></tr>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="6" class="num"><span class="label">Subtotal</span></td><td class="num">98,024.00</td></tr>
+      <tr><td colspan="6" class="num"><span class="label">Freight &amp; insurance</span></td><td class="num">0.00</td></tr>
+      <tr class="total"><td colspan="6" class="num">TOTAL INVOICE VALUE (USD)</td><td class="num">98,024.00</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="bottom">
+    <div class="decl">
+      <span class="label">Declaration</span><br>
+      I hereby certify that the information on this invoice is true and correct and that the contents
+      of this shipment are as stated above. These commodities, technology or software were exported
+      from the United States in accordance with the Export Administration Regulations.
+      <div class="sign"><span class="label">Authorised signature</span><span class="label">Name / Title / Date</span></div>
+    </div>
+    <div class="decl">
+      <span class="label">Remarks</span><br>
+      Sample data for template illustration only. Marks &amp; numbers: NW/RTM/01–14.
+      Reason for export: Sale.
+    </div>
+  </div>
+
+  <footer><span><b>RCM Holdings</b> · Global freight forwarding &amp; customs brokerage</span><span><b>rcmholdings.com</b></span></footer>
+  <svg class="corner" viewBox="0 0 170 100" preserveAspectRatio="none"><polygon points="60,100 170,30 170,100" fill="#0B1D3A"/><line x1="25" y1="100" x2="170" y2="8" stroke="#FF4A00" stroke-width="1.6"/></svg>
+</div>
+</body>
+</html>
