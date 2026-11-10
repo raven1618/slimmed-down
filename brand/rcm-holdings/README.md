@@ -10,15 +10,18 @@ The complete visual identity system for **RCM Holdings**, built from the origina
 | **Brand manual (PDF)** | [`RCM-Holdings-Brand-Manual.pdf`](RCM-Holdings-Brand-Manual.pdf): 28 pages, A4 landscape |
 | **Brand manual (HTML)** | [`manual/index.html`](manual/index.html): open in a browser; print to PDF with background graphics on |
 | **Page previews** | [`manual/previews/`](manual/previews) |
+| **Spanish edition / Edición en español** | [`RCM-Holdings-Manual-de-Marca.pdf`](RCM-Holdings-Manual-de-Marca.pdf) · [`manual/index.es.html`](manual/index.es.html) · [`README.es.md`](README.es.md) |
 
 ## What's inside
 
 ```
 rcm-holdings/
 ├── RCM-Holdings-Brand-Manual.pdf
+├── RCM-Holdings-Manual-de-Marca.pdf   Spanish edition
 ├── logos/
 │   ├── horizontal/            primary logo
 │   ├── horizontal-tagline/    signature lockup with "Global trade. Intelligently connected."
+│   │                          (-es: "Comercio global. Conectado con inteligencia.")
 │   ├── stacked/               symbol above wordmark
 │   ├── wordmark/              RCM + HOLDINGS only
 │   ├── symbol/                the diamond symbol
@@ -28,7 +31,7 @@ rcm-holdings/
 ├── color/                     CSS · SCSS · JSON design tokens · Tailwind preset · .ase (Adobe) · .gpl (GIMP/Inkscape/Affinity)
 ├── graphics/                  visual-language illustrations, diamond-lattice patterns, symbol explorations (+ png/)
 ├── icons/                     12 service icons: svg/ · svg-reverse/ · svg-mono/ · contact sheet
-├── templates/
+├── templates/                 every template in English and Spanish (files suffixed -es)
 │   ├── print/                 business card front/back (with bleed) · letterhead US Letter + A4 · #10 envelope · folder
 │   ├── digital/               LinkedIn banner · social post · HTML email signature
 │   ├── presentation/          cover · section divider · content slide (1920 × 1080)

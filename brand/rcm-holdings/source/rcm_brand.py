@@ -455,7 +455,11 @@ RULE_W = 1.4
 TAG_BASE = 274.0
 
 _DESC = None
-_TAG = None
+TAGLINES = {
+    "en": "GLOBAL TRADE. INTELLIGENTLY CONNECTED.",
+    "es": "COMERCIO GLOBAL. CONECTADO CON INTELIGENCIA.",
+}
+_TAG = {}
 
 
 def desc_path():
@@ -465,11 +469,10 @@ def desc_path():
     return _DESC
 
 
-def tag_path():
-    global _TAG
-    if _TAG is None:
-        _TAG = outline_text("GLOBAL TRADE. INTELLIGENTLY CONNECTED.", TAG_CAP, "Medium", fit_width=WORDMARK_W)[0]
-    return _TAG
+def tag_path(lang="en"):
+    if lang not in _TAG:
+        _TAG[lang] = outline_text(TAGLINES[lang], TAG_CAP, "Medium", fit_width=WORDMARK_W)[0]
+    return _TAG[lang]
 
 
 _RCM = None
@@ -492,7 +495,7 @@ def wordmark_block(sc: Scheme, x, y, scale=1.0) -> str:
     )
 
 
-def lockup_horizontal(scheme="fullcolor", tagline=False) -> Art:
+def lockup_horizontal(scheme="fullcolor", tagline=False, lang="en") -> Art:
     sc = SCHEMES[scheme]
     text_x = SYMBOL_SIZE + SYMBOL_GAP
     block_h = CAP + DESC_GAP + DESC_CAP
@@ -501,7 +504,7 @@ def lockup_horizontal(scheme="fullcolor", tagline=False) -> Art:
     h = SYMBOL_SIZE
     if tagline:
         body += f'<rect fill="{sc.rule}" x="{n(text_x)}" y="{n(RULE_Y)}" width="{n(WORDMARK_W)}" height="{n(RULE_W)}"/>'
-        body += f'<path fill="{sc.tag}" transform="translate({n(text_x)} {n(TAG_BASE)})" d="{tag_path()}"/>'
+        body += f'<path fill="{sc.tag}" transform="translate({n(text_x)} {n(TAG_BASE)})" d="{tag_path(lang)}"/>'
         h = TAG_BASE + 0.5
     return Art(body, text_x + WORDMARK_W, h)
 

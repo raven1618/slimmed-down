@@ -30,6 +30,21 @@
   "width": 2400
  },
  {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-es-fullcolor.svg",
+  "png": "logos/png/rcm-logo-tagline-es-fullcolor@600w.png",
+  "width": 600
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-es-fullcolor.svg",
+  "png": "logos/png/rcm-logo-tagline-es-fullcolor@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-es-fullcolor.svg",
+  "png": "logos/png/rcm-logo-tagline-es-fullcolor@2400w.png",
+  "width": 2400
+ },
+ {
   "svg": "logos/stacked/rcm-logo-stacked-fullcolor.svg",
   "png": "logos/png/rcm-logo-stacked-fullcolor@600w.png",
   "width": 600
@@ -95,6 +110,21 @@
   "width": 2400
  },
  {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-es-reverse.svg",
+  "png": "logos/png/rcm-logo-tagline-es-reverse@600w.png",
+  "width": 600
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-es-reverse.svg",
+  "png": "logos/png/rcm-logo-tagline-es-reverse@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-es-reverse.svg",
+  "png": "logos/png/rcm-logo-tagline-es-reverse@2400w.png",
+  "width": 2400
+ },
+ {
   "svg": "logos/stacked/rcm-logo-stacked-reverse.svg",
   "png": "logos/png/rcm-logo-stacked-reverse@600w.png",
   "width": 600
@@ -140,6 +170,11 @@
   "width": 1200
  },
  {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-es-navy.svg",
+  "png": "logos/png/rcm-logo-tagline-es-navy@1200w.png",
+  "width": 1200
+ },
+ {
   "svg": "logos/stacked/rcm-logo-stacked-navy.svg",
   "png": "logos/png/rcm-logo-stacked-navy@1200w.png",
   "width": 1200
@@ -175,6 +210,11 @@
   "width": 1200
  },
  {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-es-white.svg",
+  "png": "logos/png/rcm-logo-tagline-es-white@1200w.png",
+  "width": 1200
+ },
+ {
   "svg": "logos/stacked/rcm-logo-stacked-white.svg",
   "png": "logos/png/rcm-logo-stacked-white@1200w.png",
   "width": 1200
@@ -207,6 +247,11 @@
  {
   "svg": "logos/horizontal-tagline/rcm-logo-tagline-black.svg",
   "png": "logos/png/rcm-logo-tagline-black@1200w.png",
+  "width": 1200
+ },
+ {
+  "svg": "logos/horizontal-tagline/rcm-logo-tagline-es-black.svg",
+  "png": "logos/png/rcm-logo-tagline-es-black@1200w.png",
   "width": 1200
  },
  {

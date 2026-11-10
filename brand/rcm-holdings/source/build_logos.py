@@ -15,6 +15,14 @@ SCHEME_LABEL = {
     "black": "One colour Black",
 }
 
+SCHEME_LABEL_ES = {
+    "fullcolor": "a todo color",
+    "reverse": "en negativo (sobre Azul Marino)",
+    "navy": "a una tinta Azul Marino",
+    "white": "a una tinta blanco",
+    "black": "a una tinta negro",
+}
+
 png_jobs = []  # consumed by render.cjs
 
 
@@ -32,6 +40,9 @@ def main():
              b.lockup_horizontal(scheme), f"RCM Holdings logo — horizontal, {label}", widths)
         emit(f"logos/horizontal-tagline/rcm-logo-tagline-{scheme}.svg",
              b.lockup_horizontal(scheme, tagline=True), f"RCM Holdings logo with tagline — {label}", widths)
+        emit(f"logos/horizontal-tagline/rcm-logo-tagline-es-{scheme}.svg",
+             b.lockup_horizontal(scheme, tagline=True, lang="es"),
+             f"RCM Holdings — logotipo con eslogan en español, {SCHEME_LABEL_ES[scheme]}", widths)
         emit(f"logos/stacked/rcm-logo-stacked-{scheme}.svg",
              b.lockup_stacked(scheme), f"RCM Holdings logo — stacked, {label}", widths)
         emit(f"logos/wordmark/rcm-wordmark-{scheme}.svg",

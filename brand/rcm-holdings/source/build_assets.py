@@ -37,6 +37,31 @@ def tint_scale():
     return {k: {str(s): b.mix(base[k], b.WHITE, s / 100) for s in v} for k, v in scales.items()}
 
 
+COLOUR_NAMES_ES = {"navy": "Azul Marino", "graphite": "Grafito", "stone": "Piedra",
+                   "orange": "Rojo Anaranjado", "white": "Blanco"}
+
+
+def palette_sheet(lang="en"):
+    W, H = 1500, 560
+    body = [f'<rect width="{W}" height="{H}" fill="#FFFFFF"/>']
+    sw = (W - 120) / 5
+    for i, s in enumerate(b.PALETTE):
+        x = 60 + i * sw
+        txt = b.WHITE if s.key in ("navy", "graphite", "orange") else b.NAVY
+        stroke = ' stroke="#E6E7E9"' if s.key == "white" else ""
+        r, g, bl = b.hex_to_rgb(s.hex)
+        c, m, y, k = s.cmyk
+        name = COLOUR_NAMES_ES[s.key] if lang == "es" else s.name
+        body.append(f'<rect x="{n(x)}" y="60" width="{n(sw)}" height="300" fill="{s.hex}"{stroke}/>')
+        body.append(f'<text x="{n(x + 24)}" y="300" fill="{txt}" font-family="{FONT}" font-size="15" font-weight="600" letter-spacing="2.4">{name.upper()}</text>')
+        body.append(f'<text x="{n(x + 24)}" y="326" fill="{txt}" font-family="{FONT}" font-size="15" letter-spacing="2.4" opacity=".85">{s.hex}</text>')
+        lines = [f"RGB {r} {g} {bl}", f"CMYK {c} {m} {y} {k}", s.pantone, f"{s.ral}"]
+        for j, line in enumerate(lines):
+            body.append(f'<text x="{n(x + 2)}" y="{400 + j * 26}" fill="{b.GRAPHITE}" font-family="{FONT}" font-size="15">{line}</text>')
+    title = "RCM Holdings — Paleta de color" if lang == "es" else "RCM Holdings colour palette"
+    return svg_doc(W, H, "".join(body), title)
+
+
 def build_colour():
     tints = tint_scale()
     core = {s.key: s for s in b.PALETTE}
@@ -169,24 +194,10 @@ def build_colour():
                 f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36"><title>{s_.name} {s_.hex}</title>'
                 f'<rect x=".5" y=".5" width="35" height="35" fill="{s_.hex}"{stroke}/></svg>\n')
 
-    # Visual swatch sheet
-    W, H = 1500, 560
-    body = [f'<rect width="{W}" height="{H}" fill="#FFFFFF"/>']
-    sw = (W - 120) / 5
-    for i, s in enumerate(b.PALETTE):
-        x = 60 + i * sw
-        txt = b.WHITE if s.key in ("navy", "graphite", "orange") else b.NAVY
-        stroke = ' stroke="#E6E7E9"' if s.key == "white" else ""
-        r, g, bl = b.hex_to_rgb(s.hex)
-        c, m, y, k = s.cmyk
-        body.append(f'<rect x="{n(x)}" y="60" width="{n(sw)}" height="300" fill="{s.hex}"{stroke}/>')
-        body.append(f'<text x="{n(x + 24)}" y="300" fill="{txt}" font-family="{FONT}" font-size="15" font-weight="600" letter-spacing="2.4">{s.name.upper()}</text>')
-        body.append(f'<text x="{n(x + 24)}" y="326" fill="{txt}" font-family="{FONT}" font-size="15" letter-spacing="2.4" opacity=".85">{s.hex}</text>')
-        lines = [f"RGB {r} {g} {bl}", f"CMYK {c} {m} {y} {k}", s.pantone, f"{s.ral}"]
-        for j, line in enumerate(lines):
-            body.append(f'<text x="{n(x + 2)}" y="{400 + j * 26}" fill="{b.GRAPHITE}" font-family="{FONT}" font-size="15">{line}</text>')
-    b.write("color/rcm-palette.svg", svg_doc(W, H, "".join(body), "RCM Holdings colour palette"))
-    png_jobs.append({"svg": "color/rcm-palette.svg", "png": "color/rcm-palette.png", "width": 1500})
+    # Visual swatch sheets
+    for lang, rel in (("en", "color/rcm-palette.svg"), ("es", "color/rcm-palette-es.svg")):
+        b.write(rel, palette_sheet(lang))
+        png_jobs.append({"svg": rel, "png": rel.replace(".svg", ".png"), "width": 1500})
 
 
 # ==========================================================================
@@ -256,7 +267,10 @@ class Globe:
         return pts
 
 
-def globe_layer(g: Globe, dot_colour="#FFFFFF", route_op=0.9, labels=False, step=3.2, dot=1.9):
+HUB_ES = {"New York": "Nueva York", "Rotterdam": "Róterdam", "Dubai": "Dubái"}
+
+
+def globe_layer(g: Globe, dot_colour="#FFFFFF", route_op=0.9, labels=False, step=3.2, dot=1.9, lang="en"):
     parts = [g.dots(step=step, dot=dot, colour=dot_colour)]
     for a, c, main in ROUTES:
         pts = g.arc(HUBS[a], HUBS[c])
@@ -271,11 +285,11 @@ def globe_layer(g: Globe, dot_colour="#FFFFFF", route_op=0.9, labels=False, step
             parts.append(f'<circle cx="{n(x)}" cy="{n(y)}" r="9" fill="{b.ORANGE}" fill-opacity=".18"/>'
                          f'<circle cx="{n(x)}" cy="{n(y)}" r="3.6" fill="{b.ORANGE}"/>')
             if labels and name not in ("Felixstowe", "Hamburg", "Algeciras"):
-                parts.append(f'<text x="{n(x + 12)}" y="{n(y + 4)}" fill="#FFFFFF" fill-opacity=".75" font-family="{FONT}" font-size="12" letter-spacing="1.5">{name.upper()}</text>')
+                parts.append(f'<text x="{n(x + 12)}" y="{n(y + 4)}" fill="#FFFFFF" fill-opacity=".75" font-family="{FONT}" font-size="12" letter-spacing="1.5">{(HUB_ES.get(name, name) if lang == "es" else name).upper()}</text>')
     return "".join(parts)
 
 
-def graphic_global(W=1600, H=1000):
+def graphic_global(W=1600, H=1000, lang="en"):
     defs = (f'<radialGradient id="gg" cx="62%" cy="45%" r="70%"><stop offset="0" stop-color="#16305A"/>'
             f'<stop offset="1" stop-color="{b.NAVY}"/></radialGradient>'
             f'<radialGradient id="halo" cx="50%" cy="50%" r="50%"><stop offset=".8" stop-color="#2A4A7F" stop-opacity="0"/>'
@@ -283,8 +297,9 @@ def graphic_global(W=1600, H=1000):
     g = Globe(W * 0.6, H * 0.56, H * 0.62)
     body = (f'<rect width="{W}" height="{H}" fill="url(#gg)"/>'
             f'<circle cx="{n(g.cx)}" cy="{n(g.cy)}" r="{n(g.r * 1.08)}" fill="url(#halo)"/>'
-            + globe_layer(g, labels=True))
-    return svg_doc(W, H, body, "RCM Holdings — Global connections graphic", defs)
+            + globe_layer(g, labels=True, lang=lang))
+    title = "RCM Holdings — Conexiones globales" if lang == "es" else "RCM Holdings — Global connections graphic"
+    return svg_doc(W, H, body, title, defs)
 
 
 def graphic_direction(W=1600, H=1000):
@@ -337,7 +352,24 @@ def graphic_speed(W=1600, H=1000, seed=7):
     return svg_doc(W, H, body, "RCM Holdings — Speed and efficiency graphic", "".join(defs))
 
 
-def graphic_dashboard(W=1600, H=1000):
+DASH = {
+    "en": dict(tower="CONTROL TOWER", nav=["OVERVIEW", "SHIPMENTS", "CUSTOMS", "ANALYTICS"],
+               kpis=[("SHIPMENTS IN TRANSIT", "1,284", "+6.2% vs last week"), ("ON-TIME DELIVERY", "98.2%", "Target 97.0%"),
+                     ("CUSTOMS CLEARED · 24H", "342", "Avg. 6.4 h clearance"), ("ACTIVE TRADE LANES", "57", "18 countries")],
+               net="GLOBAL SHIPMENT NETWORK", vol="WEEKLY VOLUME · TEU", comp="CUSTOMS COMPLIANCE",
+               items=[("Filings accepted", "1,947"), ("Holds resolved", "11"), ("Avg. duty saved", "4.8%")],
+               title="RCM Holdings — Intelligent logistics dashboard illustration"),
+    "es": dict(tower="TORRE DE CONTROL", nav=["RESUMEN", "ENVÍOS", "ADUANAS", "ANALÍTICA"],
+               kpis=[("ENVÍOS EN TRÁNSITO", "1,284", "+6.2% vs. semana anterior"), ("ENTREGAS A TIEMPO", "98.2%", "Meta 97.0%"),
+                     ("DESPACHOS ADUANEROS · 24 H", "342", "Promedio 6.4 h por despacho"), ("RUTAS COMERCIALES ACTIVAS", "57", "18 países")],
+               net="RED GLOBAL DE ENVÍOS", vol="VOLUMEN SEMANAL · TEU", comp="CUMPLIMIENTO ADUANERO",
+               items=[("Declaraciones aceptadas", "1,947"), ("Retenciones resueltas", "11"), ("Ahorro arancelario prom.", "4.8%")],
+               title="RCM Holdings — Ilustración de panel de logística inteligente"),
+}
+
+
+def graphic_dashboard(W=1600, H=1000, lang="en"):
+    D = DASH[lang]
     panel = "#13284A"
     line = "#22385E"
     muted = "#8C9AB2"
@@ -351,28 +383,27 @@ def graphic_dashboard(W=1600, H=1000):
     p.append(f'<rect width="{W}" height="76" fill="{b.NAVY}"/><line x1="0" y1="76" x2="{W}" y2="76" stroke="{line}"/>')
     p.append(b.symbol_svg(34, 32, 21, b.WHITE, b.ORANGE))
     p.append(f'<text x="84" y="46" fill="#FFFFFF" font-family="{FONT}" font-size="18" font-weight="700" letter-spacing="3">RCM</text>'
-             f'<text x="138" y="46" fill="{muted}" font-family="{FONT}" font-size="15" letter-spacing="2">CONTROL TOWER</text>')
-    for i, t in enumerate(["OVERVIEW", "SHIPMENTS", "CUSTOMS", "ANALYTICS"]):
+             f'<text x="138" y="46" fill="{muted}" font-family="{FONT}" font-size="15" letter-spacing="2">{D["tower"]}</text>')
+    for i, t in enumerate(D["nav"]):
         x = 560 + i * 150
         col = "#FFFFFF" if i == 0 else muted
         p.append(f'<text x="{x}" y="45" fill="{col}" font-family="{FONT}" font-size="13" font-weight="600" letter-spacing="2">{t}</text>')
     p.append(f'<rect x="560" y="72" width="88" height="4" fill="{b.ORANGE}"/>')
     p.append(f'<circle cx="{W - 52}" cy="38" r="18" fill="{line}"/><text x="{W - 52}" y="43" text-anchor="middle" fill="#FFFFFF" font-family="{FONT}" font-size="13" font-weight="600">JA</text>')
     # KPIs
-    kpis = [("SHIPMENTS IN TRANSIT", "1,284", "+6.2% vs last week"), ("ON-TIME DELIVERY", "98.2%", "Target 97.0%"),
-            ("CUSTOMS CLEARED · 24H", "342", "Avg. 6.4 h clearance"), ("ACTIVE TRADE LANES", "57", "18 countries")]
+    kpis = D["kpis"]
     for i, (lab, val, sub) in enumerate(kpis):
         x = 40 + i * 385
         p.append(card(x, 108, 360, 150, lab))
         p.append(f'<text x="{x + 24}" y="{108 + 100}" fill="#FFFFFF" font-family="{FONT}" font-size="46" font-weight="700">{val}</text>')
         p.append(f'<text x="{x + 24}" y="{108 + 130}" fill="{b.ORANGE if i == 0 else muted}" font-family="{FONT}" font-size="14">{sub}</text>')
     # globe map card
-    p.append(card(40, 282, 940, 678, "GLOBAL SHIPMENT NETWORK"))
+    p.append(card(40, 282, 940, 678, D["net"]))
     p.append('<clipPath id="mapclip"><rect x="41" y="330" width="938" height="629" rx="10"/></clipPath>')
     g = Globe(510, 690, 380, lon0=-30, tilt=24)
-    p.append(f'<g clip-path="url(#mapclip)">{globe_layer(g, dot_colour="#7F96BE", labels=True, step=3.6, dot=1.5)}</g>')
+    p.append(f'<g clip-path="url(#mapclip)">{globe_layer(g, dot_colour="#7F96BE", labels=True, step=3.6, dot=1.5, lang=lang)}</g>')
     # chart card
-    p.append(card(1005, 282, 555, 330, "WEEKLY VOLUME · TEU"))
+    p.append(card(1005, 282, 555, 330, D["vol"]))
     vals = [42, 48, 45, 53, 58, 55, 61, 66, 63, 71, 74, 79]
     cx0, cy0, cw, ch = 1035, 560, 495, 200
     for k in range(5):
@@ -384,18 +415,18 @@ def graphic_dashboard(W=1600, H=1000):
         col = b.ORANGE if i == len(vals) - 1 else "#3A5684"
         p.append(f'<rect x="{n(cx0 + i * bw + 8)}" y="{n(cy0 - h)}" width="{n(bw - 16)}" height="{n(h)}" rx="3" fill="{col}"/>')
     # donut card
-    p.append(card(1005, 636, 555, 324, "CUSTOMS COMPLIANCE"))
+    p.append(card(1005, 636, 555, 324, D["comp"]))
     r = 92
     circ = 2 * math.pi * r
     p.append(f'<circle cx="1150" cy="815" r="{r}" fill="none" stroke="{line}" stroke-width="22"/>'
              f'<circle cx="1150" cy="815" r="{r}" fill="none" stroke="{b.ORANGE}" stroke-width="22" '
              f'stroke-dasharray="{n(circ * 0.994)} {n(circ)}" transform="rotate(-90 1150 815)"/>'
              f'<text x="1150" y="827" text-anchor="middle" fill="#FFFFFF" font-family="{FONT}" font-size="38" font-weight="700">99.4%</text>')
-    for i, (lab, val) in enumerate([("Filings accepted", "1,947"), ("Holds resolved", "11"), ("Avg. duty saved", "4.8%")]):
+    for i, (lab, val) in enumerate(D["items"]):
         y = 760 + i * 52
         p.append(f'<text x="1300" y="{y}" fill="{muted}" font-family="{FONT}" font-size="14">{lab}</text>'
                  f'<text x="1300" y="{y + 24}" fill="#FFFFFF" font-family="{FONT}" font-size="20" font-weight="600">{val}</text>')
-    return svg_doc(W, H, "".join(p), "RCM Holdings — Intelligent logistics dashboard illustration")
+    return svg_doc(W, H, "".join(p), D["title"])
 
 
 def pattern_diamond(W=1600, H=1000, cell=120, colour=b.NAVY, bg=None, op=0.08):
@@ -414,6 +445,8 @@ def build_graphics():
         "graphics/rcm-graphic-direction.svg": graphic_direction(),
         "graphics/rcm-graphic-structure.svg": graphic_structure(),
         "graphics/rcm-graphic-intelligent-logistics.svg": graphic_dashboard(),
+        "graphics/rcm-graphic-global-connections-es.svg": graphic_global(lang="es"),
+        "graphics/rcm-graphic-intelligent-logistics-es.svg": graphic_dashboard(lang="es"),
         "graphics/rcm-graphic-speed.svg": graphic_speed(),
         "graphics/rcm-pattern-lattice-light.svg": pattern_diamond(bg="#FFFFFF"),
         "graphics/rcm-pattern-lattice-navy.svg": pattern_diamond(colour="#FFFFFF", bg=b.NAVY, op=0.09),
@@ -474,13 +507,15 @@ def icon_svg(name, stroke=b.NAVY, accent=b.ORANGE, size=24, sw=1.75):
             f'<path stroke="{stroke}" d="{main}"/><path stroke="{accent}" d="{acc}"/></svg>\n')
 
 
-def build_icons():
-    names = list(ICONS)
-    for nm in names:
-        b.write(f"icons/svg/rcm-icon-{nm}.svg", icon_svg(nm))
-        b.write(f"icons/svg-reverse/rcm-icon-{nm}-reverse.svg", icon_svg(nm, stroke=b.WHITE))
-        b.write(f"icons/svg-mono/rcm-icon-{nm}-mono.svg", icon_svg(nm, accent=b.NAVY))
-    # contact sheet
+ICON_NAMES_ES = {
+    "ocean-freight": "Carga marítima", "air-freight": "Carga aérea", "road-freight": "Carga terrestre",
+    "customs-brokerage": "Despacho aduanero", "warehousing": "Almacenaje", "global-network": "Red global",
+    "container": "Contenedor", "analytics": "Analítica", "shipment-tracking": "Rastreo de envíos",
+    "compliance": "Cumplimiento", "connectivity": "Conectividad", "speed": "Rapidez",
+}
+
+
+def icon_sheet(names, lang="en"):
     cols, cell = 6, 200
     rows = math.ceil(len(names) / cols)
     W, H = cols * cell, rows * (cell + 30)
@@ -489,12 +524,25 @@ def build_icons():
         cx = (i % cols) * cell
         cy = (i // cols) * (cell + 30)
         main, acc = ICONS[nm]
+        label = ICON_NAMES_ES[nm] if lang == "es" else nm.replace("-", " ")
         parts.append(f'<rect x="{cx + 20}" y="{cy + 20}" width="{cell - 40}" height="{cell - 40}" rx="12" fill="#F7F7F8"/>')
         parts.append(f'<g transform="translate({cx + 52} {cy + 52}) scale(4)" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'
                      f'<path stroke="{b.NAVY}" d="{main}"/><path stroke="{b.ORANGE}" d="{acc}"/></g>')
-        parts.append(f'<text x="{cx + cell / 2}" y="{cy + cell + 12}" text-anchor="middle" fill="{b.GRAPHITE}" font-family="{FONT}" font-size="13" letter-spacing="1.6">{nm.replace("-", " ").upper()}</text>')
-    b.write("icons/rcm-icon-sheet.svg", svg_doc(W, H, "".join(parts), "RCM Holdings icon set"))
+        parts.append(f'<text x="{cx + cell / 2}" y="{cy + cell + 12}" text-anchor="middle" fill="{b.GRAPHITE}" font-family="{FONT}" font-size="13" letter-spacing="1.6">{label.upper()}</text>')
+    title = "RCM Holdings — Set de íconos" if lang == "es" else "RCM Holdings icon set"
+    return svg_doc(W, H, "".join(parts), title)
+
+
+def build_icons():
+    names = list(ICONS)
+    for nm in names:
+        b.write(f"icons/svg/rcm-icon-{nm}.svg", icon_svg(nm))
+        b.write(f"icons/svg-reverse/rcm-icon-{nm}-reverse.svg", icon_svg(nm, stroke=b.WHITE))
+        b.write(f"icons/svg-mono/rcm-icon-{nm}-mono.svg", icon_svg(nm, accent=b.NAVY))
+    b.write("icons/rcm-icon-sheet.svg", icon_sheet(names))
+    b.write("icons/rcm-icon-sheet-es.svg", icon_sheet(names, "es"))
     png_jobs.append({"svg": "icons/rcm-icon-sheet.svg", "png": "icons/rcm-icon-sheet.png", "width": 1200})
+    png_jobs.append({"svg": "icons/rcm-icon-sheet-es.svg", "png": "icons/rcm-icon-sheet-es.png", "width": 1200})
 
 
 # ==========================================================================

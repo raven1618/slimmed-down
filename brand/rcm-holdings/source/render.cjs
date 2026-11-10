@@ -2,8 +2,8 @@
  * Render PNG exports and the PDF manual with headless Chromium (Playwright).
  *
  *   node brand/rcm-holdings/source/render.cjs png      # all PNG exports
- *   node brand/rcm-holdings/source/render.cjs pdf      # RCM-Holdings-Brand-Manual.pdf
- *   node brand/rcm-holdings/source/render.cjs pages <outDir> [scale]  # page previews
+ *   node brand/rcm-holdings/source/render.cjs pdf [en|es]   # RCM-Holdings-Brand-Manual.pdf / RCM-Holdings-Manual-de-Marca.pdf
+ *   node brand/rcm-holdings/source/render.cjs pages <outDir> [scale] [en|es]  # page previews
  *   node brand/rcm-holdings/source/render.cjs shot <file.html> <selector> <out.png> [scale]
  *   node brand/rcm-holdings/source/render.cjs htmlpdf <file.html> <out.pdf>
  */
@@ -34,23 +34,28 @@ async function renderPngs(browser) {
   console.log(`rendered ${jobs.length} PNGs`);
 }
 
-async function openManual(browser, scale = 1) {
+const MANUAL = {
+  en: { html: 'index.html', pdf: 'RCM-Holdings-Brand-Manual.pdf' },
+  es: { html: 'index.es.html', pdf: 'RCM-Holdings-Manual-de-Marca.pdf' },
+};
+
+async function openManual(browser, scale = 1, lang = 'en') {
   const page = await browser.newPage({ deviceScaleFactor: scale });
-  await page.goto('file://' + path.join(ROOT, 'manual', 'index.html'), { waitUntil: 'networkidle' });
+  await page.goto('file://' + path.join(ROOT, 'manual', MANUAL[lang].html), { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
   return page;
 }
 
-async function renderPdf(browser) {
-  const page = await openManual(browser);
+async function renderPdf(browser, lang = 'en') {
+  const page = await openManual(browser, 1, lang);
   await page.emulateMedia({ media: 'print' });
-  const out = path.join(ROOT, 'RCM-Holdings-Brand-Manual.pdf');
+  const out = path.join(ROOT, MANUAL[lang].pdf);
   await page.pdf({ path: out, preferCSSPageSize: true, printBackground: true });
   console.log('wrote', out);
 }
 
-async function renderPages(browser, outDir, scale) {
-  const page = await openManual(browser, scale);
+async function renderPages(browser, outDir, scale, lang = 'en') {
+  const page = await openManual(browser, scale, lang);
   await page.emulateMedia({ media: 'print' });
   await page.setViewportSize({ width: 1123, height: 794 });
   const pages = await page.$$('section.page');
@@ -81,8 +86,8 @@ async function htmlPdf(browser, file, out) {
   const browser = await chromium.launch();
   try {
     if (mode === 'png') await renderPngs(browser);
-    else if (mode === 'pdf') await renderPdf(browser);
-    else if (mode === 'pages') await renderPages(browser, path.resolve(a), Number(b || 1));
+    else if (mode === 'pdf') await renderPdf(browser, a || 'en');
+    else if (mode === 'pages') await renderPages(browser, path.resolve(a), Number(b || 1), c || 'en');
     else if (mode === 'shot') await shot(browser, a, b, c, Number(d || 1));
     else if (mode === 'htmlpdf') await htmlPdf(browser, a, b);
     else throw new Error('usage: render.cjs png|pdf|pages <dir> [scale]');
