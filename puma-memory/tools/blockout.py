@@ -1,5 +1,5 @@
 """Blender headless blockout -> perspective-correct reference frame.
-Usage: bvenv/bin/python tools/blockout.py scene.json out_prefix [--draft]
+Usage: bvenv/bin/python tools/blockout.py scene.json out_prefix [--draft] [--lenses 15,24,35] [--viewer] [--allow-floating]
 Scene JSON (metres, Z up):
   camera : {"pos":[x,y,z], "look_at":[x,y,z], "lens":24, "roll":0}
   night  : true/false            (dark sky + emissive floodlights, or daylight)
@@ -77,11 +77,13 @@ def stand(o):
     for i in range(n):
         box((L, tr, ri * (i + 1) + 1.0), (0, tr * (i + 0.5), (ri * (i + 1) + 1.0) / 2), 0.30 if i % 2 else 0.36, M)
     D = n * tr; Ht = n * ri + 1.0
-    for x in range(int(-L / 2) + 8, int(L / 2), 16): box((1.6, D, 0.05), (x, D / 2, Ht / 2 + 0.6), 0.5, M @ Matrix.Rotation(math.atan2(ri, tr), 4, "X"))  # aisles
+    for x in range(int(-L / 2) + 8, int(L / 2), 16):                         # aisles: a ramp resting on the tier noses
+        box((1.6, math.hypot(D, n * ri), 0.06), (0, 0, 0), 0.5, M @ Matrix.Translation((x, D / 2, 1.0 + ri * (n + 1) / 2 + 0.05)) @ Matrix.Rotation(math.atan2(ri, tr), 4, "X"))
     box((L, 1.0, Ht + 6), (0, D + 0.5, (Ht + 6) / 2), 0.22, M)              # back wall
     if o.get("roof", True):
         rz = Ht + 6; box((L, D + 4, 0.5), (0, D / 2 - 1.5, rz), 0.42, M)    # roof slab, front edge overhangs
         for x in range(int(-L / 2), int(L / 2) + 1, 12): box((0.5, 0.5, rz), (x, D + 0.2, rz / 2), 0.3, M)
+        for x in (-L / 2 + 0.4, L / 2 - 0.4): box((0.6, D + 3, rz), (x, D / 2 - 1.0, rz / 2), 0.26, M)   # end walls carry the roof
         k = o.get("lights", 0)
         for j in range(k):
             x = -L / 2 + (j + 0.5) * L / k
@@ -134,28 +136,54 @@ BUILD = dict(pitch=pitch, goal=goal, stand=stand, tunnel=tunnel, lockers=lockers
              cyl=lambda o: limb(o["pos"], (o["pos"][0], o["pos"][1], o["pos"][2] + o["h"]), o["r"], o.get("tone", 0.5)))
 for ob in C["objects"]: BUILD[ob["type"]](ob)
 
+# ---- RULE: everything is grounded. Objects are grouped by touching bounding boxes; every group must reach the ground.
+def grounding():
+    obs = [o for o in sc.objects if o.type in ("MESH", "FONT")]; bb = []
+    for o in obs:
+        cs = [o.matrix_world @ Vector(c) for c in o.bound_box]
+        bb.append((min(c.x for c in cs) - .06, min(c.y for c in cs) - .06, min(c.z for c in cs) - .06, max(c.x for c in cs) + .06, max(c.y for c in cs) + .06, max(c.z for c in cs) + .06))
+    par = list(range(len(obs)))
+    def f(i):
+        while par[i] != i: par[i] = par[par[i]]; i = par[i]
+        return i
+    order = sorted(range(len(obs)), key=lambda i: bb[i][0])
+    for ii, i in enumerate(order):
+        for j in order[ii + 1:]:
+            if bb[j][0] > bb[i][3]: break
+            if bb[i][1] <= bb[j][4] and bb[j][1] <= bb[i][4] and bb[i][2] <= bb[j][5] and bb[j][2] <= bb[i][5]: par[f(i)] = f(j)
+    low = {}
+    for i in range(len(obs)): low[f(i)] = min(low.get(f(i), 9e9), bb[i][2])
+    bad = [obs[i].name for i in range(len(obs)) if low[f(i)] > 0.15 and f(i) == i]
+    print("GROUNDING: OK - every object rests on the ground or on another object" if not bad else f"GROUNDING FAILED: {len(bad)} floating group(s): {bad[:8]}")
+    return not bad
+GROUNDED = grounding()
+if not GROUNDED and "--allow-floating" not in sys.argv: sys.exit(2)
 # camera
 cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam")); sc.collection.objects.link(cam); sc.camera = cam
-cc = C["camera"]; cam.location = cc["pos"]; cam.data.lens = cc.get("lens", 24); cam.data.sensor_width = 36; cam.data.clip_end = 2000
+cc = C["camera"]; cam.location = cc["pos"]; cam.data.sensor_width = 36; cam.data.clip_end = 2000
+if cc["pos"][2] < 0.3: print("RULE WARNING: camera lower than 0.3 m")
 d = Vector(cc["look_at"]) - Vector(cc["pos"]); cam.rotation_euler = d.to_track_quat("-Z", "Y").to_euler(); cam.rotation_euler.rotate_axis("Z", math.radians(cc.get("roll", 0)))
-# light
 night = C.get("night", False); w = bpy.data.worlds.new("w"); sc.world = w; w.use_nodes = True
 bg = w.node_tree.nodes["Background"]; bg.inputs[0].default_value = (0.02, 0.03, 0.05, 1) if night else (0.8, 0.85, 0.95, 1); bg.inputs[1].default_value = 1.0 if night else 0.9
 sun = bpy.data.objects.new("sun", bpy.data.lights.new("sun", "SUN")); sc.collection.objects.link(sun); el, az = C.get("sun", [55, 30])
 sun.rotation_euler = (math.radians(90 - el), 0, math.radians(az)); sun.data.energy = 1.2 if night else 3.0; sun.data.angle = math.radians(8)
-# render
 sc.render.engine = "CYCLES"; sc.cycles.device = "CPU"; sc.cycles.samples = 12 if DRAFT else 48
 try: sc.cycles.use_denoising = True
 except Exception: pass
 k = 0.4 if DRAFT else 1.0; sc.render.resolution_x = int(3360 * k); sc.render.resolution_y = int(1440 * k); sc.render.resolution_percentage = 100
-sc.view_settings.view_transform = "Standard"; sc.render.filepath = prefix + "_render.png"; sc.render.image_settings.file_format = "PNG"
-bpy.ops.render.render(write_still=True)
-# LED strip preview (rows 408-1031 of 1440, die-cut applied)
-try:
-    import numpy as np
-    img = bpy.data.images.load(prefix + "_render.png"); Wp, Hp = img.size; a = (np.array(img.pixels[:]).reshape(Hp, Wp, 4)[::-1, :, :3] * 255).astype(np.uint8)
-    st = a[int(Hp * 408 / 1440):int(Hp * 1031 / 1440)]
-    out = bpy.data.images.new("strip", st.shape[1], st.shape[0]); px = np.ones((st.shape[0], st.shape[1], 4), np.float32); px[..., :3] = st[::-1] / 255.0
-    out.pixels = px.ravel(); out.filepath_raw = prefix + "_strip.png"; out.file_format = "PNG"; out.save()
-except Exception as e: print("strip preview skipped:", e)
+sc.view_settings.view_transform = "Standard"; sc.render.image_settings.file_format = "PNG"
+import numpy as np
+LENSES = [float(v) for v in sys.argv[sys.argv.index("--lenses") + 1].split(",")] if "--lenses" in sys.argv else [cc.get("lens", 24)]
+for lens in LENSES:
+    cam.data.lens = lens; tag = prefix + (f"_L{lens:g}" if len(LENSES) > 1 else "")
+    sc.render.filepath = tag + "_render.png"; bpy.ops.render.render(write_still=True)
+    img = bpy.data.images.load(tag + "_render.png"); Wp, Hp = img.size; a_ = np.array(img.pixels[:], np.float32).reshape(Hp, Wp, 4)
+    st = a_[int(Hp * (1 - 1031 / 1440)):int(Hp * (1 - 408 / 1440))]      # LED strip = rows 408-1031 of 1440 (pixels are stored bottom-up)
+    out = bpy.data.images.new("strip", st.shape[1], st.shape[0]); out.pixels = st.ravel(); out.filepath_raw = tag + "_strip.png"; out.file_format = "PNG"; out.save()
+if "--viewer" in sys.argv:                                                  # walk-around viewer + .blend for Blender itself
+    import base64
+    cam.data.lens = cc.get("lens", 24); bpy.ops.wm.save_as_mainfile(filepath=prefix + ".blend")
+    bpy.ops.export_scene.gltf(filepath=prefix + ".glb", export_format="GLB", export_cameras=False, export_lights=False)
+    html = open(S + "tools/blockout_viewer.html").read().replace("__GLB__", base64.b64encode(open(prefix + ".glb", "rb").read()).decode()).replace("__CAM__", json.dumps(cc)).replace("__NIGHT__", "true" if night else "false").replace("__NAME__", prefix.split("/")[-1])
+    open(prefix + "_viewer.html", "w").write(html)
 print("ok", prefix)

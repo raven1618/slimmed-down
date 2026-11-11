@@ -71,3 +71,10 @@ Approved with Andrés Silva (v8 → v23). **Read this before starting any speake
 - **Use:** the render is the image reference for GPT Image 2.6 (it replaces the manga guide where perspective matters). The prompt keeps "COMPOSITION (locked)" and says the grey blocks are a 3D layout guide.
 - **Install note:** pip's download of the 428 MB bpy wheel stalls here; fetch it in parallel ranges and install from the file (`_bpy/dl.py`).
 - **First scene:** `blockout/CEP1_cancha.json` (4 stands around the pitch, camera 1.7 m high, 15 mm). Draft render 17 s.
+- **Blockout rules (enforced by the tool):**
+  - Grounding: every object must rest on the ground or touch another object. The tool groups objects by contact and refuses to render if any group floats (`GROUNDING FAILED`).
+  - Real sizes only: pitch 105 × 68 m, goal 7.32 × 2.44 m, people 1.8 m, tiers 0.85 m deep × 0.45 m high. No scaling a block to "fit the frame"; move the camera or change the lens instead.
+  - Camera at a height a real camera could be (≥ 0.3 m), level horizon unless a roll is asked for.
+  - Roofs are carried by columns and end walls; lights are mounted on a structure.
+- **Lens variants:** `--lenses 15,24,35` renders one frame per lens from the same camera position.
+- **Walk-around viewer:** `--viewer` writes `<SCENE>_viewer.html` (self-contained, opens offline in any browser: drag to look, WASD to move, lens slider, LED strip overlay, Save PNG, Copy camera) and `<SCENE>.blend` for Blender itself. The user pastes the copied camera JSON back and the final frame is rendered from it.
