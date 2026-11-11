@@ -1,0 +1,5 @@
+@Image1 as first frame. Use the camera movement and timing from @Video1. Keep both players, their kits and the stadium of @Image1. No text, no logos, no music: sound effects only.
+
+Shot 1 (0:00-0:07): Resolving from a left-to-right whip pan, in a packed stadium at golden hour a player pulls his teammate up from the grass by the hand. Low-angle crane up, slow motion at 50% speed, warm backlight flaring. Sound: crowd roar building, cleats on grass, a firm hand grip.
+Shot 2 (0:07-0:09.8): Close-up of the clasped hands rising as the teammate stands, the two players face to face. Slow push-in. Sound: the crowd erupts.
+Shot 3 (0:09.8-0:11.2): Green backlight swells behind them and blooms into a full green-white flash. Sound: rising whoosh into a soft impact.

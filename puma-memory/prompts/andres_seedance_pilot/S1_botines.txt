@@ -1,0 +1,5 @@
+@Image1 as first frame. Use the camera movement and timing from @Video1. Keep the boot, hands, kit colours and tunnel of @Image1. No text, no logos, no music: sound effects only.
+
+Shot 1 (0:00-0:06): A footballer's hands tighten the laces of a black boot in a dark stadium tunnel, wet concrete gleaming, teammates in green kits walking toward the bright pitch at the far end. Slow push-in with a gentle drift right. Sound: tunnel echo, lace friction and a sharp pull, distant muffled crowd.
+Shot 2 (0:06-0:09.5): Cut to macro close-up of the laces snapping tight, then the boot plants hard on the concrete as the player stands. Shallow depth of field. Sound: studs stomping on concrete, echo.
+Shot 3 (0:09.5-0:10.1): Fast whip pan left to right as a neon-green light streak flashes across frame. Sound: whoosh.

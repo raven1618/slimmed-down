@@ -1,0 +1,18 @@
+Hola, ¿cómo están? Les escribimos por los videos para la Convención de Operadores de Puma Energy (2 de diciembre, Sheraton Asunción). Antes de entregar los masters necesitamos confirmar estos puntos técnicos de las pantallas:
+
+PANTALLA PRINCIPAL (19 × 3,5 m, 7296 × 1344 px)
+1. Plantilla de píxeles oficial (pixel map) con el troquelado: los dos paneles laterales en V y el panel central. Hoy trabajamos con una máscara medida del piloto; necesitamos la oficial para que nada quede cortado en los bordes.
+2. Resolución de entrega: ¿les sirve 3840 × 708 (misma proporción, ustedes escalan) o prefieren el nativo 7296 × 1344?
+3. Cuadros por segundo del sistema de reproducción: ¿25, 30, 50 o 60 fps? Nuestro material está generado a 30 fps.
+4. Formato y códec: ¿MP4 H.264, H.265 o ProRes? ¿Bitrate máximo?
+5. ¿Qué servidor o software de reproducción usan (Resolume, Watchout, Pixera, otro)?
+
+ESFERA (Ø 2 m)
+6. Plantilla de mapeo de la esfera y resolución de entrega (tenemos 2688 × 1296 de referencia; preparamos un master equirectangular 3840 × 1920).
+
+AUDIO
+7. ¿El sistema de sonido es estéreo o mono? ¿Algún nivel de referencia (por ejemplo −16 LUFS)?
+
+8. Fecha límite para entregar los archivos y si podemos hacer una prueba en la pantalla antes del evento.
+
+¡Muchas gracias!
