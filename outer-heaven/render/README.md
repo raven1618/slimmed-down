@@ -25,3 +25,19 @@ blender-env/bin/python build.py assets work hero.png 1920 1080 96
 - **Light:** a clear evening sky panorama, plus a warm sun 30° up in the east-south-east, as in the web model.
 
 Change the camera with `CAM, TGT` in `build.py` (local metres: x east, z south).
+
+## The walkable site (the Walk the site tab)
+
+The same scene, made walkable in the browser. Blender does the expensive part once; three.js draws the rest live.
+
+```sh
+blender-env/bin/python build.py assets work /dev/null 4096 4096 24 bake    # light on the ground, about 20 minutes
+blender-env/bin/python build.py assets work /dev/null 4096 2048 8 sky      # the sky alone, in linear light
+blender-env/bin/python impostors.py assets work/web 512 24                 # each tree species from eight sides
+python3 web_export.py work assets ../data/walk                             # about 7 MB for the web
+```
+
+- **Ground light:** Cycles bakes the sun and sky light falling on the ground, with the shadows of the real tree models and the cabins, into a 4096² map (about 9 cm a pixel). The browser multiplies it with the same tiled textures and ground-type mix as the render.
+- **Trees:** every tree is a card that turns to face you and shows the real model as seen from the nearest of eight sides, so the forest of almost 18,000 trees costs little to draw.
+- **Live:** grass blades that bend in the wind and around your feet, the lagoon (it mirrors the scene on bigger screens and the sky on phones), the cabins with a lit room drawn behind the glass, haze toward the horizon, and the same film grade as the rest of the site.
+- **Colour:** both sides use AgX tone mapping with +0.5 exposure, so the browser matches Blender.

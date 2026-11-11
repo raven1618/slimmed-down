@@ -7,7 +7,7 @@ from mathutils import Matrix, Vector
 
 A, SITE, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 W, H, SPP = int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6])
-VIEW = sys.argv[7] if len(sys.argv) > 7 else 'hero'      # hero, or a 360° panorama: lagoon, deck
+VIEW = sys.argv[7] if len(sys.argv) > 7 else 'hero'      # hero, a 360° panorama (lagoon, deck), or for the web world: bake, sky
 # 360° viewpoints, local metres; eye height above the ground (or the deck); bearing at the centre of the panorama.
 PANOS = {'lagoon': ((384.2, 860.4), 1.7, 280), 'deck': None}                  # the deck view is placed from cabin 4 below
 t0 = time.time()
@@ -252,7 +252,7 @@ px = px.reshape(env.image.size[1], env.image.size[0], 4); lum = px[..., :3].sum(
 vy, ux = np.unravel_index(np.argmax(lum), lum.shape)
 u, v = (ux + 0.5) / env.image.size[0], (vy + 0.5) / env.image.size[1]
 a_sun, el = 2 * math.pi * (u - 0.5), math.pi * (v - 0.5)
-hdri_ang = math.atan2(math.sin(a_sun), -math.cos(a_sun))                    # sun azimuth in the panorama, as an XY angle
+hdri_ang = -a_sun                                                          # sun azimuth in the panorama, as an XY angle (checked against a render of the sky)
 want = math.atan2(-0.41, 0.86)                                             # east-south-east, as in the web model
 tco, mp = WN.new('ShaderNodeTexCoord'), WN.new('ShaderNodeMapping')
 mp.inputs['Rotation'].default_value = (0, 0, hdri_ang - want)
@@ -262,6 +262,61 @@ sun = bpy.data.objects.new('sun', bpy.data.lights.new('sun', 'SUN')); sc.collect
 hd_ = Vector((0.86, -0.41, 0)).normalized(); e = math.radians(30); sd = Vector((hd_.x * math.cos(e), hd_.y * math.cos(e), math.sin(e)))
 sun.rotation_euler = (-sd).to_track_quat('-Z', 'Y').to_euler(); sun.data.energy = 7.5; sun.data.color = (1.0, 0.72, 0.48); sun.data.angle = math.radians(0.8)
 print(f'sun in panorama at {math.degrees(el):.1f} deg elevation', flush=True)
+
+# ---------------------------------------------------------------- the sky alone, in linear light, for the web world's background, haze and reflections
+if VIEW == 'sky':
+    import os
+    WEB = os.path.join(SITE, 'web'); os.makedirs(WEB, exist_ok=True)
+    for ob in sc.objects: ob.hide_render = True
+    sky = bpy.data.objects.new('skycam', bpy.data.cameras.new('skycam')); sc.collection.objects.link(sky); sc.camera = sky
+    sky.data.type = 'PANO'
+    try: sky.data.panorama_type = 'EQUIRECTANGULAR'
+    except Exception: sky.data.cycles.panorama_type = 'EQUIRECTANGULAR'
+    sky.rotation_euler = (math.pi / 2, 0, 0)                      # centre of the image = north
+    sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.cycles.samples = 8; sc.render.resolution_x, sc.render.resolution_y = W, H
+    sc.view_settings.view_transform = 'Standard'; sc.view_settings.exposure = 0
+    sc.render.image_settings.file_format = 'OPEN_EXR'; sc.render.image_settings.color_depth = '16'
+    f = os.path.join(WEB, 'sky.exr'); sc.render.filepath = f; bpy.ops.render.render(write_still=True)
+    im = bpy.data.images.load(f); px = np.empty(W * H * 4, np.float32); im.pixels.foreach_get(px)
+    np.save(os.path.join(WEB, 'sky.npy'), px.reshape(H, W, 4)[::-1, :, :3].astype(np.float16))    # rows top first
+    print('sky done', flush=True); sys.exit(0)
+
+# ---------------------------------------------------------------- bake: the light on the ground, for the walkable web world
+if VIEW == 'bake':
+    import json, os
+    WEB = os.path.join(SITE, 'web'); os.makedirs(WEB, exist_ok=True)
+    for ob in list(sc.objects):                                   # grass is drawn live on the web; it only slows the bake
+        for md in list(ob.modifiers):
+            if md.type == 'NODES' and md.node_group and md.node_group.name in ('grass_gn', 'roof_gn'): ob.modifiers.remove(md)
+    lm = bpy.data.images.new('lightmap', W, H, float_buffer=True)
+    gm = ground.data.materials[0]; nd = gm.node_tree.nodes.new('ShaderNodeTexImage'); nd.image = lm
+    for n in gm.node_tree.nodes: n.select = False
+    nd.select = True; gm.node_tree.nodes.active = nd
+    gm.node_tree.links.new(uvn.outputs['UV'], nd.inputs['Vector'])
+    for ob in sc.objects: ob.select_set(False)
+    ground.select_set(True); bpy.context.view_layer.objects.active = ground
+    sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.cycles.samples = SPP; sc.cycles.transparent_max_bounces = 24
+    sc.render.bake.margin = 4; sc.render.bake.use_pass_color = False; sc.render.bake.use_pass_direct = True; sc.render.bake.use_pass_indirect = True
+    t1 = time.time()
+    bpy.ops.object.bake(type='DIFFUSE', pass_filter={'DIRECT', 'INDIRECT'}, use_clear=True, margin=4)
+    print(f'baked {W}x{H} @ {SPP} spp in {time.time() - t1:.0f} s', flush=True)
+    px = np.empty(W * H * 4, np.float32); lm.pixels.foreach_get(px); px = px.reshape(H, W, 4)[..., :3]
+    np.save(os.path.join(WEB, 'lightmap.npy'), px.astype(np.float16))        # row 0 = UV v 0 = the north edge
+    # The sky as seen from the site, as a plain panorama for the web's background and reflections.
+    for ob in sc.objects: ob.hide_render = True
+    sky = bpy.data.objects.new('skycam', bpy.data.cameras.new('skycam')); sc.collection.objects.link(sky); sc.camera = sky
+    sky.data.type = 'PANO'
+    try: sky.data.panorama_type = 'EQUIRECTANGULAR'
+    except Exception: sky.data.cycles.panorama_type = 'EQUIRECTANGULAR'
+    sky.rotation_euler = (math.pi / 2, 0, 0)                      # centre of the image = north
+    sc.cycles.samples = 4; sc.render.resolution_x, sc.render.resolution_y = 4096, 2048
+    vs = sc.view_settings; vs.view_transform = 'AgX'
+    try: vs.look = 'AgX - Punchy'
+    except Exception: pass
+    vs.exposure = 0.5; sc.render.filepath = os.path.join(WEB, 'sky.png'); bpy.ops.render.render(write_still=True)
+    json.dump({'region': [float(dx0), float(dz0), float(dx0 + nx - 1), float(dz0 + nz - 1)], 'sun': [float(v) for v in sd], 'sky_centre_bearing': 0,
+               'lagoon': [float(v) for v in D['lagoon']], 'cabins': [[float(v) for v in c] for c in D['cabins']]}, open(os.path.join(WEB, 'bake.json'), 'w'))
+    print('bake done', flush=True); sys.exit(0)
 
 # ---------------------------------------------------------------- camera and render
 cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam')); sc.collection.objects.link(cam); sc.camera = cam
