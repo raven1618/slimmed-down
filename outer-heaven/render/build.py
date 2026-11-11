@@ -228,8 +228,9 @@ for i, (x, z, floor, rot, w, d) in enumerate(D['cabins']):
     bpy.ops.mesh.primitive_grid_add(x_subdivisions=18, y_subdivisions=14, size=1, location=at(0, 0.4, Hh + 0.31)); rf = bpy.context.active_object
     rf.data.transform(Matrix.Diagonal((w - 0.8, d - 0.2, 1, 1)))   # inside the roof edge; size baked in so the tufts keep their shape; rf.rotation_euler = (0, 0, yaw); rf.data.materials.append(roofg)
     add_attr(rf, 'grass', 'FLOAT', np.ones(len(rf.data.vertices), np.float32))
-    rm = rf.modifiers.new('roofgrass', 'NODES')
-    rm.node_group = bpy.data.node_groups.get('roof_gn') or scatter_tree('roof_gn', grasslib, density_attr='grass', density=14.0, scale_rand=(0.7, 1.2))
+    if not (VIEW == 'deck' and i == 3):               # standing under that eave, its tufts would seem to float in the sky
+        rm = rf.modifiers.new('roofgrass', 'NODES')
+        rm.node_group = bpy.data.node_groups.get('roof_gn') or scatter_tree('roof_gn', grasslib, density_attr='grass', density=14.0, scale_rand=(0.7, 1.2))
     lamp = bpy.data.objects.new(f'lamp{i}', bpy.data.lights.new(f'lamp{i}', 'POINT')); sc.collection.objects.link(lamp)
     lamp.location = at(0, 0.6, 2.2); lamp.data.energy = 120; lamp.data.color = (1.0, 0.72, 0.45); lamp.data.shadow_soft_size = 0.4
 
