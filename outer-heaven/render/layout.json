@@ -1,0 +1,155 @@
+[
+ {
+  "op": "set",
+  "collection": "notes",
+  "doc_id": "ncabin1",
+  "data": {
+   "kind": "cabin",
+   "name": "Cabin 1",
+   "E": 487945.17,
+   "N": 7199907.13,
+   "rot": 115,
+   "w": 9.0,
+   "d": 6.5,
+   "by": null,
+   "updated": 0,
+   "text": "Dug into the old quarry wall: the back of the cabin is the wall, and the green roof sits level with the top of it, so you can walk off the roof into the forest. Glass and deck face the lagoon and the valley. First phase (2027): one of the first four cabins."
+  }
+ },
+ {
+  "op": "set",
+  "collection": "notes",
+  "doc_id": "ncabin2",
+  "data": {
+   "kind": "cabin",
+   "name": "Cabin 2",
+   "E": 487936.32,
+   "N": 7199889.26,
+   "rot": 115,
+   "w": 9.0,
+   "d": 6.5,
+   "by": null,
+   "updated": 0,
+   "text": "Dug into the old quarry wall: the back of the cabin is the wall, and the green roof sits level with the top of it, so you can walk off the roof into the forest. Glass and deck face the lagoon and the valley. First phase (2027): one of the first four cabins."
+  }
+ },
+ {
+  "op": "set",
+  "collection": "notes",
+  "doc_id": "ncabin3",
+  "data": {
+   "kind": "cabin",
+   "name": "Cabin 3",
+   "E": 487927.47,
+   "N": 7199871.38,
+   "rot": 115,
+   "w": 9.0,
+   "d": 6.5,
+   "by": null,
+   "updated": 0,
+   "text": "Dug into the old quarry wall: the back of the cabin is the wall, and the green roof sits level with the top of it, so you can walk off the roof into the forest. Glass and deck face the lagoon and the valley. First phase (2027): one of the first four cabins."
+  }
+ },
+ {
+  "op": "set",
+  "collection": "notes",
+  "doc_id": "ncabin4",
+  "data": {
+   "kind": "cabin",
+   "name": "Cabin 4",
+   "E": 487918.62,
+   "N": 7199853.51,
+   "rot": 115,
+   "w": 9.0,
+   "d": 6.5,
+   "by": null,
+   "updated": 0,
+   "text": "Dug into the old quarry wall: the back of the cabin is the wall, and the green roof sits level with the top of it, so you can walk off the roof into the forest. Glass and deck face the lagoon and the valley. First phase (2027): one of the first four cabins."
+  }
+ },
+ {
+  "op": "set",
+  "collection": "notes",
+  "doc_id": "ncabin5",
+  "data": {
+   "kind": "cabin",
+   "name": "Cabin 5",
+   "E": 487914.57,
+   "N": 7199838.52,
+   "rot": 90,
+   "w": 9.0,
+   "d": 6.5,
+   "by": null,
+   "updated": 0,
+   "text": "Dug into the old quarry wall: the back of the cabin is the wall, and the green roof sits level with the top of it, so you can walk off the roof into the forest. Glass and deck face the lagoon and the valley. Second phase (2027–28), once bookings prove out."
+  }
+ },
+ {
+  "op": "set",
+  "collection": "notes",
+  "doc_id": "ncabin6",
+  "data": {
+   "kind": "cabin",
+   "name": "Cabin 6",
+   "E": 487914.62,
+   "N": 7199823.35,
+   "rot": 90,
+   "w": 9.0,
+   "d": 6.5,
+   "by": null,
+   "updated": 0,
+   "text": "Dug into the old quarry wall: the back of the cabin is the wall, and the green roof sits level with the top of it, so you can walk off the roof into the forest. Glass and deck face the lagoon and the valley. Second phase (2027–28), once bookings prove out."
+  }
+ },
+ {
+  "op": "set",
+  "collection": "notes",
+  "doc_id": "ncabin7",
+  "data": {
+   "kind": "cabin",
+   "name": "Cabin 7",
+   "E": 487914.67,
+   "N": 7199808.17,
+   "rot": 90,
+   "w": 9.0,
+   "d": 6.5,
+   "by": null,
+   "updated": 0,
+   "text": "Dug into the old quarry wall: the back of the cabin is the wall, and the green roof sits level with the top of it, so you can walk off the roof into the forest. Glass and deck face the lagoon and the valley. Second phase (2027–28), once bookings prove out. The dirt track runs through here today; it would move a few metres east."
+  }
+ },
+ {
+  "op": "set",
+  "collection": "notes",
+  "doc_id": "ncabin8",
+  "data": {
+   "kind": "cabin",
+   "name": "Cabin 8",
+   "E": 487914.72,
+   "N": 7199793.0,
+   "rot": 90,
+   "w": 9.0,
+   "d": 6.5,
+   "by": null,
+   "updated": 0,
+   "text": "Dug into the old quarry wall: the back of the cabin is the wall, and the green roof sits level with the top of it, so you can walk off the roof into the forest. Glass and deck face the lagoon and the valley. Second phase (2027–28), once bookings prove out. The dirt track runs through here today; it would move a few metres east."
+  }
+ },
+ {
+  "op": "set",
+  "collection": "notes",
+  "doc_id": "nlagoon",
+  "data": {
+   "kind": "pond",
+   "name": "Natural lagoon",
+   "E": 487947.0,
+   "N": 7199863.0,
+   "rot": 25,
+   "w": 11,
+   "d": 28,
+   "by": null,
+   "updated": 0,
+   "text": "Natural swimming lagoon on the quarry floor, cleaned by plants: a planted regeneration zone at the shallow end, no chlorine. It sits below the cabin decks; the dirt track runs along its far shore."
+  }
+ }
+]
