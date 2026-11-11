@@ -1,17 +1,19 @@
 """Pack the baked site for the walkable web world (index.html, the Walk view): heights, baked light, ground types,
 sky, tree sprites and positions, web-sized textures, and one description file.
    python web_export.py WORK ASSETS ../data/walk"""
-import json, math, os, sys
+import base64, json, math, os, sys
 import numpy as np
 from PIL import Image
 from scipy import ndimage
 WORK, A, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 WEB = os.path.join(WORK, 'web'); os.makedirs(os.path.join(OUT, 'tex'), exist_ok=True)
+def f32(name, a):                       # float32 arrays as base64 in JSON: the host serves .json, not .bin
+    json.dump(base64.b64encode(np.ascontiguousarray(a, np.float32).tobytes()).decode(), open(os.path.join(OUT, name), 'w'))
 D = np.load(os.path.join(WORK, 'site.npz'))
 Hd, Hc = D['Hd'].astype(np.float32), D['Hc'].astype(np.float32)
 dx0, dz0 = (float(v) for v in D['dorig']); nz, nx = Hd.shape
 cx0, cz0, cx1, cz1 = (float(v) for v in D['corig'])
-Hd.tofile(os.path.join(OUT, 'heights.bin')); Hc.tofile(os.path.join(OUT, 'far.bin'))          # rows run north to south
+f32('heights.json', Hd); f32('far.json', Hc)          # rows run north to south
 Image.open(os.path.join(WORK, 'far.png')).convert('RGB').save(os.path.join(OUT, 'far.jpg'), quality=85)
 
 # Ground types, north at the top, and where live grass grows: not in the lagoon, not at the cabins.
@@ -53,7 +55,7 @@ T = D['trees'].astype(np.float32)
 T = T[(np.hypot(T[:, 0] - 390.0, T[:, 1] - 836.0) > 28) & (np.hypot(T[:, 0] - 384.2, T[:, 1] - 860.4) > 15)]
 h = T[:, 3]; r = np.random.default_rng(7).random(len(T))
 spc = np.where(h >= 14, 1, np.where(h >= 8, np.where(r < 0.5, 1, 2), np.where(h >= 4.5, np.where(r < 0.6, 3, 2), 4))) - 1
-np.column_stack([T[:, 0], T[:, 1], T[:, 2] - 0.2, h, spc]).astype(np.float32).tofile(os.path.join(OUT, 'trees.bin'))
+f32('trees.json', np.column_stack([T[:, 0], T[:, 1], T[:, 2] - 0.2, h, spc]))     # x, z, base, height, species
 
 for name, src in (('grass', 'leafy_grass'), ('soil', 'cracked_red_ground'), ('litter', 'forest_leaves_02'), ('wall', 'excavated_soil_wall'), ('plaster', 'clay_plaster'), ('planks', 'brown_planks_05')):
     Image.open(os.path.join(A, 'tex', src, 'diff.jpg')).convert('RGB').resize((1024, 1024), Image.LANCZOS).save(os.path.join(OUT, 'tex', name + '.jpg'), quality=85)
