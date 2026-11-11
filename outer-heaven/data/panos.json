@@ -1,6 +1,20 @@
 [
-  {"id": "lagoon", "name": "Lagoon shore", "x": 384.2, "z": 860.4, "bearing": 280, "file": "pano-lagoon.jpg",
-   "text": "The east shore of the natural lagoon at golden hour. Ahead, the cabins dug into the old quarry wall, with the forest of Cerro Kavaju behind them."},
-  {"id": "deck", "name": "Cabin deck", "x": 352.9, "z": 868.5, "bearing": 115, "file": "pano-deck.jpg",
-   "text": "On the deck of cabin 4, looking out over the lagoon and the valley. Turn around for the glass front and the quarry wall the cabin is set into."}
+  {
+    "id": "lagoon",
+    "name": "Lagoon shore",
+    "x": 384.2,
+    "z": 860.4,
+    "bearing": 280,
+    "file": "pano-lagoon.jpg",
+    "text": "The east shore of the natural lagoon at golden hour. Ahead, the cabins dug into the old quarry wall, with the forest of Cerro Kavaju behind them."
+  },
+  {
+    "id": "deck",
+    "name": "Cabin deck",
+    "x": 353.9,
+    "z": 869.0,
+    "bearing": 63,
+    "file": "pano-deck.jpg",
+    "text": "On the deck of cabin 4, looking across the lawn to the lagoon. Turn around for the glass front and the living roof, set into the old quarry wall."
+  }
 ]

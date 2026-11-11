@@ -95,7 +95,7 @@ tgt = np.array([350.0, 0, 902.0]); tgt[1] = height(tgt[[0]], tgt[[2]], 1)[0] - 1
 near = np.max([np.clip(1 - (np.hypot(X - vx, Z - vz) - 110) / 50, 0, 1) for vx, vz in ((390, 836), (384, 860), (353, 868))], axis=0)
 grass = np.clip(1 - splat[..., 2] * 1.5, 0, 1) * near
 grass *= np.clip(q - 1.2, 0, 1)                                    # none in the water or on the quarry floor
-for x, z, *_ in cab: grass *= np.clip((np.hypot(X - x, Z - z) - 7) / 3, 0, 1)
+for x, z, *_ in cab: grass *= np.clip((np.hypot(X - x, Z - z) - 10) / 3, 0, 1)      # clear under the cabins and their decks
 
 # Coarse terrain for the distance, 10 m, over 2.4 km around the shot.
 CX0, CX1, CZ0, CZ1 = -800, 1600, -400, 2000

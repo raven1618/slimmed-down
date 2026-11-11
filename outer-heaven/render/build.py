@@ -3,13 +3,13 @@
 import glob, math, sys, time
 import numpy as np
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 A, SITE, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 W, H, SPP = int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6])
 VIEW = sys.argv[7] if len(sys.argv) > 7 else 'hero'      # hero, or a 360° panorama: lagoon, deck
 # 360° viewpoints, local metres; eye height above the ground (or the deck); bearing at the centre of the panorama.
-PANOS = {'lagoon': ((384.2, 860.4), 1.7, 280), 'deck': ((352.9, 868.5), 1.76, 115)}
+PANOS = {'lagoon': ((384.2, 860.4), 1.7, 280), 'deck': None}                  # the deck view is placed from cabin 4 below
 t0 = time.time()
 bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene
@@ -189,7 +189,7 @@ for o in grasslib.all_objects:                     # the scanned grass is dry: g
                 mx.inputs[7].default_value = (0.6, 0.92, 0.42, 1); dst_ = lk.to_socket
                 m_.node_tree.links.new(im_.outputs['Color'], mx.inputs[6]); m_.node_tree.links.new(mx.outputs[2], dst_)
         m_['greened'] = True
-gmod = ground.modifiers.new('grass', 'NODES'); gmod.node_group = scatter_tree('grass_gn', grasslib, density_attr='grass', density=14.0, scale_rand=(1.6, 2.8))
+gmod = ground.modifiers.new('grass', 'NODES'); gmod.node_group = scatter_tree('grass_gn', grasslib, density_attr='grass', density=14.0, scale_rand=(1.0, 1.8))     # a mown meadow
 
 # ---------------------------------------------------------------- cabins: rammed earth, glass, steel, deck, living roof
 def box(name, size, at, rot, m, parent_list):
@@ -226,9 +226,10 @@ for i, (x, z, floor, rot, w, d) in enumerate(D['cabins']):
     box(f'fascia{i}', (w + 0.84, 0.06, 0.34), at(0, d / 2 + 1.22, Hh + 0.15), yaw, steel, parts_)
     box(f'deck{i}', (w, 3.0, 0.16), at(0, d / 2 + 1.5, 0.08), yaw, deck, parts_)
     bpy.ops.mesh.primitive_grid_add(x_subdivisions=18, y_subdivisions=14, size=1, location=at(0, 0.4, Hh + 0.31)); rf = bpy.context.active_object
-    rf.scale = (w + 0.6, d + 1.4, 1); rf.rotation_euler = (0, 0, yaw); rf.data.materials.append(roofg)
+    rf.data.transform(Matrix.Diagonal((w - 0.8, d - 0.2, 1, 1)))   # inside the roof edge; size baked in so the tufts keep their shape; rf.rotation_euler = (0, 0, yaw); rf.data.materials.append(roofg)
     add_attr(rf, 'grass', 'FLOAT', np.ones(len(rf.data.vertices), np.float32))
-    rm = rf.modifiers.new('roofgrass', 'NODES'); rm.node_group = bpy.data.node_groups['grass_gn']
+    rm = rf.modifiers.new('roofgrass', 'NODES')
+    rm.node_group = bpy.data.node_groups.get('roof_gn') or scatter_tree('roof_gn', grasslib, density_attr='grass', density=14.0, scale_rand=(0.7, 1.2))
     lamp = bpy.data.objects.new(f'lamp{i}', bpy.data.lights.new(f'lamp{i}', 'POINT')); sc.collection.objects.link(lamp)
     lamp.location = at(0, 0.6, 2.2); lamp.data.energy = 120; lamp.data.color = (1.0, 0.72, 0.45); lamp.data.shadow_soft_size = 0.4
 
@@ -271,8 +272,15 @@ cam.location = bl(CAM[0], CAM[1], ground_at(*CAM) + 2.8)
 look = Vector(bl(TGT[0], TGT[1], ground_at(*TGT) + 4.5)) - cam.location
 cam.rotation_euler = look.to_track_quat('-Z', 'Y').to_euler(); cam.data.lens = 24; cam.data.clip_end = 8000
 if VIEW in PANOS:
-    (px_, pz_), eye, brg = PANOS[VIEW]
-    base = D['cabins'][3][2] + 0.16 if VIEW == 'deck' else ground_at(px_, pz_)       # cabin 4's deck, or the shore
+    if VIEW == 'deck':                                    # front edge of cabin 4's deck, looking at the lagoon
+        cx_, cz_, fl_, rot_, w_, d_ = D['cabins'][3]; off = d_ / 2 + 2.6; th_ = math.radians(rot_)
+        px_, pz_ = cx_ + math.sin(th_) * off, cz_ - math.cos(th_) * off
+        eye, base = 1.65, fl_ + 0.16
+        brg = math.degrees(math.atan2(D['lagoon'][0] - px_, -(D['lagoon'][1] - pz_))) % 360
+        print(f'deck view at ({px_:.1f}, {pz_:.1f}), facing {brg:.0f}', flush=True)
+    else:
+        (px_, pz_), eye, brg = PANOS[VIEW]
+        base = ground_at(px_, pz_)
     cam.location = bl(px_, pz_, base + eye)
     cam.rotation_euler = (math.pi / 2, 0, -math.radians(brg))                         # level, centre of the image toward the bearing
     cam.data.type = 'PANO'
