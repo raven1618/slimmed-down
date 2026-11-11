@@ -1,0 +1,47 @@
+[
+ {
+  "svg": "mockups/higgsfield/elements/svg/rcm-el-01-logo-fullcolor-on-white.svg",
+  "png": "mockups/higgsfield/elements/rcm-el-01-logo-fullcolor-on-white.png",
+  "width": 2400
+ },
+ {
+  "svg": "mockups/higgsfield/elements/svg/rcm-el-02-logo-reverse-on-navy.svg",
+  "png": "mockups/higgsfield/elements/rcm-el-02-logo-reverse-on-navy.png",
+  "width": 2400
+ },
+ {
+  "svg": "mockups/higgsfield/elements/svg/rcm-el-03-symbol-fullcolor-on-white.svg",
+  "png": "mockups/higgsfield/elements/rcm-el-03-symbol-fullcolor-on-white.png",
+  "width": 1024
+ },
+ {
+  "svg": "mockups/higgsfield/elements/svg/rcm-el-04-tanker-livery.svg",
+  "png": "mockups/higgsfield/elements/rcm-el-04-tanker-livery.png",
+  "width": 3000
+ },
+ {
+  "svg": "mockups/higgsfield/elements/svg/rcm-el-05-container-side-navy.svg",
+  "png": "mockups/higgsfield/elements/rcm-el-05-container-side-navy.png",
+  "width": 2400
+ },
+ {
+  "svg": "mockups/higgsfield/elements/svg/rcm-el-06-container-side-orange.svg",
+  "png": "mockups/higgsfield/elements/rcm-el-06-container-side-orange.png",
+  "width": 2400
+ },
+ {
+  "svg": "mockups/higgsfield/elements/svg/rcm-el-07-container-doors.svg",
+  "png": "mockups/higgsfield/elements/rcm-el-07-container-doors.png",
+  "width": 1000
+ },
+ {
+  "svg": "mockups/higgsfield/elements/svg/rcm-el-08-trailer-side.svg",
+  "png": "mockups/higgsfield/elements/rcm-el-08-trailer-side.png",
+  "width": 2400
+ },
+ {
+  "svg": "mockups/higgsfield/elements/svg/rcm-el-08-trailer-side-es.svg",
+  "png": "mockups/higgsfield/elements/rcm-el-08-trailer-side-es.png",
+  "width": 2400
+ }
+]

@@ -1,7 +1,7 @@
 /*
  * Render PNG exports and the PDF manual with headless Chromium (Playwright).
  *
- *   node brand/rcm-holdings/source/render.cjs png      # all PNG exports
+ *   node brand/rcm-holdings/source/render.cjs png [set]  # all PNG exports, or one job set (e.g. higgsfield)
  *   node brand/rcm-holdings/source/render.cjs pdf [en|es]   # RCM-Holdings-Brand-Manual.pdf / RCM-Holdings-Manual-de-Marca.pdf
  *   node brand/rcm-holdings/source/render.cjs pages <outDir> [scale] [en|es]  # page previews
  *   node brand/rcm-holdings/source/render.cjs shot <file.html> <selector> <out.png> [scale]
@@ -14,9 +14,9 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const BUILD = path.join(__dirname, 'build');
 
-async function renderPngs(browser) {
+async function renderPngs(browser, only) {
   const jobs = fs.readdirSync(BUILD)
-    .filter((f) => f.startsWith('png-jobs-') && f.endsWith('.json'))
+    .filter((f) => f.startsWith('png-jobs-' + (only || '')) && f.endsWith('.json'))
     .flatMap((f) => JSON.parse(fs.readFileSync(path.join(BUILD, f), 'utf8')));
   const page = await browser.newPage({ deviceScaleFactor: 1 });
   for (const job of jobs) {
@@ -85,7 +85,7 @@ async function htmlPdf(browser, file, out) {
   const [mode, a, b, c, d] = process.argv.slice(2);
   const browser = await chromium.launch();
   try {
-    if (mode === 'png') await renderPngs(browser);
+    if (mode === 'png') await renderPngs(browser, a);
     else if (mode === 'pdf') await renderPdf(browser, a || 'en');
     else if (mode === 'pages') await renderPages(browser, path.resolve(a), Number(b || 1), c || 'en');
     else if (mode === 'shot') await shot(browser, a, b, c, Number(d || 1));
