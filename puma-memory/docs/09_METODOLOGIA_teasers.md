@@ -63,3 +63,11 @@ Approved with Andrés Silva (v8 → v23). **Read this before starting any speake
 - **4 placas:** 1.6 / 7.48 / 12.48 / 17.48 s, close at 23.6 s.
 - **5 placas:** 1.6 / 6.0 / 10.4 / 14.8 / 19.2 s, close at 23.6 s.
 - Voice lines start about 1.0–1.3 s into each placa. "Con ustedes..." at 24.3 s, name at 25.35 s.
+
+## 6 · Blender blockout (reference frames with correct perspective) — added Nov 11
+- **Tool:** `tools/blockout.py`, run with the Blender Python module (bpy 5.3, in `bvenv`): `bvenv/bin/python tools/blockout.py blockout/<SCENE>.json blockout/<SCENE> [--draft]`.
+- **Scene file:** a small JSON in metres: camera (`pos`, `look_at`, `lens` mm), `night`, and a list of objects. Building blocks: `pitch`, `goal`, `stand` (tiers, roof, floodlights), `tunnel`, `lockers`, `board`, `ball`, `box`, `cyl`, and `person` with poses `stand / run / kick / kneel / sit / arms_up / point` plus a squad number.
+- **Outputs:** `<SCENE>_render.png` (3360×1440 grey clay render) and `<SCENE>_strip.png` (the rows that reach the LED).
+- **Use:** the render is the image reference for GPT Image 2.6 (it replaces the manga guide where perspective matters). The prompt keeps "COMPOSITION (locked)" and says the grey blocks are a 3D layout guide.
+- **Install note:** pip's download of the 428 MB bpy wheel stalls here; fetch it in parallel ranges and install from the file (`_bpy/dl.py`).
+- **First scene:** `blockout/CEP1_cancha.json` (4 stands around the pitch, camera 1.7 m high, 15 mm). Draft render 17 s.

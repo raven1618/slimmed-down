@@ -1,0 +1,14 @@
+{
+ "night": true,
+ "sun": [50, 20],
+ "camera": {"pos": [4, -31, 1.7], "look_at": [0, 42, 10.5], "lens": 15},
+ "objects": [
+  {"type": "pitch"},
+  {"type": "goal", "pos": [52.5, 0, 0], "rot": 180},
+  {"type": "goal", "pos": [-52.5, 0, 0], "rot": 0},
+  {"type": "stand", "pos": [0, 42, 0], "rot": 0, "length": 121, "rows": 28, "lights": 9},
+  {"type": "stand", "pos": [0, -42, 0], "rot": 180, "length": 121, "rows": 28, "lights": 9},
+  {"type": "stand", "pos": [60.5, 0, 0], "rot": -90, "length": 84, "rows": 28, "lights": 6},
+  {"type": "stand", "pos": [-60.5, 0, 0], "rot": 90, "length": 84, "rows": 28, "lights": 6}
+ ]
+}
