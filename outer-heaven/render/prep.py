@@ -91,7 +91,9 @@ Image.fromarray((splat[::-1] * 255).astype(np.uint8)).save(f'{OUT}/splat.png')  
 # Camera: north-east of the row, looking south-west along the cabins with the lagoon in the middle distance.
 cam = np.array([424.0, 0, 792.0]); cam[1] = height(cam[[0]], cam[[2]], 1)[0] + 7.5
 tgt = np.array([350.0, 0, 902.0]); tgt[1] = height(tgt[[0]], tgt[[2]], 1)[0] - 1.0
-grass = np.clip(1 - splat[..., 2] * 1.5, 0, 1) * np.clip(1 - (np.hypot(X - 390, Z - 836) - 110) / 50, 0, 1)
+# Grass within reach of every viewpoint: the hero camera, and the 360° views from the lagoon shore and a cabin deck.
+near = np.max([np.clip(1 - (np.hypot(X - vx, Z - vz) - 110) / 50, 0, 1) for vx, vz in ((390, 836), (384, 860), (353, 868))], axis=0)
+grass = np.clip(1 - splat[..., 2] * 1.5, 0, 1) * near
 grass *= np.clip(q - 1.2, 0, 1)                                    # none in the water or on the quarry floor
 for x, z, *_ in cab: grass *= np.clip((np.hypot(X - x, Z - z) - 7) / 3, 0, 1)
 

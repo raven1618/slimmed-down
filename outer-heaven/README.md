@@ -21,7 +21,11 @@ To preview locally, run `npx serve outer-heaven` or `python3 -m http.server -d o
 
 ## Links to individual views
 
-Add `#cabin`, `#residence`, `#trail` or `#plan` to the URL to open that view directly.
+Add `#cabin`, `#residence`, `#trail` or `#plan` to the URL to open that view directly. `#pano-lagoon` and `#pano-deck` open the 360° views.
+
+## 360° photoreal views
+
+Panoramas rendered in Blender (see `render/README.md`) at the quality of the stills, because nothing is drawn live: each is one 4096×2048 image on the inside of a sphere. They are listed in `data/panos.json` (position in local metres, the bearing at the centre of the image, a caption), appear on the hill as **360°** markers and under **360° views** in the bar, and open full screen: drag to look around, scroll or pinch to zoom. Render another with `build.py … 4096 2048 32 <view>` after adding the viewpoint to `PANOS` in `render/build.py`.
 
 ## The trail: Mala Visión, playable
 

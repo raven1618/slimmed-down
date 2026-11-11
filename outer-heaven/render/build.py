@@ -7,6 +7,9 @@ from mathutils import Vector
 
 A, SITE, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 W, H, SPP = int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6])
+VIEW = sys.argv[7] if len(sys.argv) > 7 else 'hero'      # hero, or a 360° panorama: lagoon, deck
+# 360° viewpoints, local metres; eye height above the ground (or the deck); bearing at the centre of the panorama.
+PANOS = {'lagoon': ((384.2, 860.4), 1.7, 280), 'deck': ((352.9, 868.5), 1.76, 115)}
 t0 = time.time()
 bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene
@@ -164,7 +167,7 @@ for child, model, pick in SPECIES:
     ps = load_parts(model, pick); parts.append((child, ps))
     native.append(max((o.matrix_world @ Vector(c)).z for o in ps for c in o.bound_box))
 treelib = library('treelib', parts)
-T = D['trees']; T = T[np.hypot(T[:, 0] - 390.0, T[:, 1] - 836.0) > 28]; h = T[:, 3]
+T = D['trees']; T = T[(np.hypot(T[:, 0] - 390.0, T[:, 1] - 836.0) > 28) & (np.hypot(T[:, 0] - 384.2, T[:, 1] - 860.4) > 15)]; h = T[:, 3]
 rng = np.random.default_rng(7); r = rng.random(len(T))
 sp = np.where(h >= 14, 1, np.where(h >= 8, np.where(r < 0.5, 1, 2), np.where(h >= 4.5, np.where(r < 0.6, 3, 2), 4))).astype(np.int32)
 scale = (h / np.array(native)[sp]).astype(np.float32)
@@ -267,6 +270,15 @@ CAM, TGT = (390.0, 836.0), (350.0, 892.0)          # north-east of the lagoon, l
 cam.location = bl(CAM[0], CAM[1], ground_at(*CAM) + 2.8)
 look = Vector(bl(TGT[0], TGT[1], ground_at(*TGT) + 4.5)) - cam.location
 cam.rotation_euler = look.to_track_quat('-Z', 'Y').to_euler(); cam.data.lens = 24; cam.data.clip_end = 8000
+if VIEW in PANOS:
+    (px_, pz_), eye, brg = PANOS[VIEW]
+    base = D['cabins'][3][2] + 0.16 if VIEW == 'deck' else ground_at(px_, pz_)       # cabin 4's deck, or the shore
+    cam.location = bl(px_, pz_, base + eye)
+    cam.rotation_euler = (math.pi / 2, 0, -math.radians(brg))                         # level, centre of the image toward the bearing
+    cam.data.type = 'PANO'
+    try: cam.data.panorama_type = 'EQUIRECTANGULAR'
+    except Exception: cam.data.cycles.panorama_type = 'EQUIRECTANGULAR'
+    cam.data.clip_start = 0.05
 sc.render.engine = 'CYCLES'; c_ = sc.cycles; c_.device = 'CPU'; c_.samples = SPP; c_.use_adaptive_sampling = True; c_.use_denoising = True
 c_.max_bounces = 8; c_.diffuse_bounces = 3; c_.glossy_bounces = 3; c_.transmission_bounces = 6; c_.transparent_max_bounces = 24
 c_.blur_glossy = 1.0

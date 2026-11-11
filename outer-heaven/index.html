@@ -446,6 +446,26 @@ ul.plain b { color: var(--sand); font-weight: 600; }
   .track span { animation: none; width: 100%; }
 }
 
+/* ---------- 360° views: photoreal panoramas ---------- */
+.pano { position: fixed; inset: 0; z-index: 36; background: #000; overflow: hidden; user-select: none; -webkit-user-select: none; }
+.pano-stage { position: absolute; inset: 0; }
+.pano-stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.pano-stage canvas:active { cursor: grabbing; }
+.pano-head { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) var(--gutter-r) 30px var(--gutter-l); background: linear-gradient(to bottom, rgb(0 0 0 / 0.6), rgb(0 0 0 / 0)); pointer-events: none; }
+.pano-head h2 { margin: 3px 0 0; font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(1.4rem, 3.2vw, 2.2rem); line-height: 0.95; text-shadow: 0 1px 14px rgb(0 0 0 / 0.5); }
+.pano-status { display: flex; align-items: center; gap: 12px; pointer-events: auto; }
+.pano-facing { font: 500 0.75rem var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--sand); text-shadow: 0 1px 8px #000; }
+.pano-loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; margin: 0; font: 500 0.75rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.pano-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: grid; justify-items: center; gap: 10px; text-align: center;
+  padding: 40px var(--gutter-r) calc(env(safe-area-inset-bottom, 0px) + 18px) var(--gutter-l); background: linear-gradient(to top, rgb(0 0 0 / 0.65), rgb(0 0 0 / 0)); pointer-events: none; }
+.pano-foot p { margin: 0; max-width: 44rem; color: var(--sand); font-size: 0.9375rem; text-shadow: 0 1px 10px #000; text-wrap: balance; }
+.pano-foot .pano-hint { font: 500 0.6875rem var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.pano-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; pointer-events: auto; }
+.pano-tabs button { border: 1px solid rgb(241 233 219 / 0.3); background: var(--glass); color: var(--sand); border-radius: 999px; padding: 9px 14px; font-size: 0.8125rem; font-weight: 600; cursor: pointer; }
+.pano-tabs button[aria-current="true"] { background: var(--sand); color: var(--night); }
+@media (max-width: 760px) { .pano-head .eyebrow { display: none; } .pano-foot p:first-child { font-size: 0.875rem; } }
+
 /* ---------- the trail: Mala Visión, playable ---------- */
 .trail { position: fixed; inset: 0; z-index: 35; background: #020405; overflow: hidden; user-select: none; -webkit-user-select: none; }
 .tr-stage { position: absolute; inset: 0; }
@@ -581,6 +601,21 @@ ul.plain b { color: var(--sand); font-weight: 600; }
     <div class="track"><span></span></div>
     <p id="loader-text">Raising Cerro Kavaju</p>
     <button class="btn" id="loader-plan" type="button" hidden>Open the plan</button>
+  </div>
+</div>
+
+<!-- ======================= 360° VIEWS ======================= -->
+<div class="pano" id="pano" hidden>
+  <div class="pano-stage" id="pano-stage"></div>
+  <div class="pano-head">
+    <div><p class="eyebrow">Photoreal 360° view · rendered in Blender</p><h2 id="pano-title"></h2></div>
+    <div class="pano-status"><span class="pano-facing" id="pano-facing"></span><button class="btn ghost" id="pano-close" type="button">Back to 3D</button></div>
+  </div>
+  <p class="pano-loading" id="pano-loading">Loading the view</p>
+  <div class="pano-foot">
+    <p id="pano-text"></p>
+    <div class="pano-tabs" id="pano-tabs" role="group" aria-label="360° views"></div>
+    <p class="pano-hint">Drag to look around · scroll or pinch to zoom</p>
   </div>
 </div>
 
@@ -2533,6 +2568,7 @@ async function buildHill() {
     getJSON('data/meta.json'), getJSON('data/terrain.json'), getJSON('data/trees.json'), getJSON('data/context.json'),
     getJSON('data/layers.geojson').catch(() => ({ features: [] })), loadImage('data/imagery.jpg'),
     getJSON('data/basemaps.json').catch(() => ({})), loadSites(), getJSON('data/objects.json').catch(() => ({ objects: [] })),
+    getJSON('data/panos.json').then((p) => (PANOS = p)).catch(() => []),
   ]);
   LEGENDS = legends; SITES = sites; OBJECTS = objects;
   prepCuts();
@@ -4323,14 +4359,14 @@ function pill(label, pressed, onClick, cls = '') {
 /* ------------------------------------------------- what the map shows -- */
 const DISPLAY_DEFAULT = {
   base: 'satellite',
-  propLabels: true, propArea: true, site: true, notes: true, summit: false, lodging: false, places: false,
+  propLabels: true, propArea: true, site: true, notes: true, panos: true, summit: false, lodging: false, places: false,
   trees: true, buildings: true, roads: true, contours: false, grid: false, relief: false, sitePhoto: true, trail: true,
   title: true, compass: true, hint: true, legend: true, effects: true,
 };
 const display = { ...DISPLAY_DEFAULT };
 try { Object.assign(display, JSON.parse(localStorage.getItem('oh-display-v1') || '{}')); } catch (e) {}
 const DISPLAY_GROUPS = [
-  ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['site', 'Homestead buildings', 'var(--sand)'], ['notes', 'Notes and planned cabins', '#7fb3e3'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
+  ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['site', 'Homestead buildings', 'var(--sand)'], ['notes', 'Notes and planned cabins', '#7fb3e3'], ['panos', '360° photoreal views', 'var(--gold)'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
   ['Map', [['trees', 'Trees'], ['buildings', 'Buildings'], ['roads', 'Roads'], ['contours', 'Contour lines (10 m)'], ['grid', 'UTM grid (500 m)'], ['relief', 'Relief ×2'], ['sitePhoto', 'Site photos (satellite map only)'], ['trail', 'Trail between checkpoints']]],
   ['Screen', [['title', 'Title and description'], ['compass', 'Compass'], ['hint', 'Hints'], ['legend', 'Map legend'], ['effects', 'Cinematic effects (shading, glow, film look)']]],
 ];
@@ -4466,6 +4502,7 @@ function buildBar() {
     const db = pill('Display', null, () => toggleDisplay(displayEl.hidden));
     db.dataset.display = '1'; db.setAttribute('aria-expanded', 'false'); db.setAttribute('aria-controls', 'display');
     pill('Property limits', null, () => { toggleDisplay(false); openLimits(); }, 'accent');
+    if (PANOS.length) pill('360° views', null, () => openPano(PANOS[0].id), 'accent');
     pill('Data sources', null, () => openSources());
   } else {
     const sc = scenes[mode];
@@ -4486,6 +4523,7 @@ function buildChips() {
       return l;
     });
     noteChips();
+    panoChips();
     for (const l of hill.labels) l.chip = makeChip(l, '', () => {
       document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('is-on', c === l.chip));
       if (l.site) { flyAround(l.x, l.z, 70); showStructure(l.site); return; }
@@ -4503,6 +4541,7 @@ tabs.forEach((t) => t.addEventListener('click', () => (t.dataset.go === 'plan' ?
 
 function openPlan(section) {
   if (!trailEl.hidden) closeTrail();
+  if (!panoEl.hidden) closePano();
   planEl.hidden = false;
   markTab('plan');
   try { history.replaceState(null, '', '#plan'); } catch (e) {}
@@ -4529,6 +4568,7 @@ let HOME;
 function setMode(m) {
   if (!planEl.hidden) closePlan();
   if (!trailEl.hidden) closeTrail();
+  if (!panoEl.hidden) closePano();
   if (m !== 'cerro' && !scenes[m]) {
     try { scenes[m] = buildHouseScene(m); fitCamera(scenes[m].camera); }
     catch (err) { console.error(err); return; }
@@ -4601,7 +4641,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
 });
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  if (!trailEl.hidden) closeTrail();
+  if (!panoEl.hidden) closePano();
+  else if (!trailEl.hidden) closeTrail();
   else if (!displayEl.hidden) toggleDisplay(false);
   else if (!planEl.hidden) closePlan();
   else if (notes.placing || notes.moving) { const back = notes.moving; notes.placing = notes.moving = null; notes.open = back; drawerCollapsed = false; renderNotes(); }
@@ -4615,6 +4656,108 @@ addEventListener('resize', () => {
   Object.values(scenes).forEach((s) => fitCamera(s.camera));
 });
 
+/* ------------------------------------------------------------ 360° views -- */
+/* Photoreal panoramas rendered in Blender (render/), at render quality because nothing is drawn live:
+   each is one image on the inside of a sphere. They sit on the hill as markers and open full screen. */
+let PANOS = [], panoLabels = [];
+const panoEl = $('pano');
+const pano = { built: false, p: null, yaw: 0, pitch: 0, fov: 70, tex: {} };
+function panoChips() {
+  panoLabels = PANOS.map((p) => {
+    const l = { name: '360° · ' + p.name, sub: 'Photoreal view', c: 'var(--gold)', anchor: new THREE.Vector3(p.x, yAt(p.x, p.z) + 8, p.z) };
+    l.chip = makeChip(l, '', () => openPano(p.id));
+    return l;
+  });
+}
+function openPano(id) {
+  const p = PANOS.find((q) => q.id === id) || PANOS[0];
+  if (!p) return;
+  if (!planEl.hidden) closePlan();
+  if (!trailEl.hidden) closeTrail();
+  closeDrawer();
+  panoEl.hidden = false;
+  try { history.replaceState(null, '', '#pano-' + p.id); } catch (e) {}
+  if (!pano.built) buildPano();
+  pano.size();
+  showPano(p);
+  $('pano-close').focus({ preventScroll: true });
+}
+function closePano() {
+  if (panoEl.hidden) return;
+  panoEl.hidden = true;
+  try { history.replaceState(null, '', '#' + mode); } catch (e) {}
+}
+$('pano-close').addEventListener('click', closePano);
+function buildPano() {
+  pano.built = true;
+  const R = new THREE.WebGLRenderer({ antialias: true });
+  R.setPixelRatio(Math.min(devicePixelRatio, 2));
+  $('pano-stage').appendChild(R.domElement);
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(70, 1, 0.1, 1100);
+  cam.rotation.order = 'YXZ';
+  const geo = new THREE.SphereGeometry(500, 96, 48); geo.scale(-1, 1, 1);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x0d1310 }));
+  mesh.rotation.y = -Math.PI / 2;            // the centre of the panorama straight ahead
+  scene.add(mesh);
+  Object.assign(pano, { R, scene, cam, mesh });
+  pano.draw = () => {
+    cam.fov = pano.fov; cam.updateProjectionMatrix();
+    cam.rotation.set(pano.pitch, pano.yaw, 0);
+    R.render(scene, cam);
+    if (pano.p) $('pano-facing').textContent = 'Facing ' + windOf((((pano.p.bearing - (pano.yaw * 180) / Math.PI) % 360) + 360) % 360);
+  };
+  pano.size = () => { R.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; pano.draw(); };
+  addEventListener('resize', () => { if (!panoEl.hidden) pano.size(); });
+  const zoom = (f) => { pano.fov = clamp(pano.fov * f, 30, 95); };
+  const ptrs = new Map();
+  let pinch = 0;
+  R.domElement.addEventListener('pointerdown', (e) => { ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { R.domElement.setPointerCapture(e.pointerId); } catch (err) {} });
+  R.domElement.addEventListener('pointermove', (e) => {
+    const p0 = ptrs.get(e.pointerId);
+    if (!p0) return;
+    if (ptrs.size === 1) {
+      const k = ((cam.fov * Math.PI) / 180) / innerHeight;
+      pano.yaw += (e.clientX - p0.x) * k; pano.pitch = clamp(pano.pitch + (e.clientY - p0.y) * k, -1.45, 1.45);
+    }
+    p0.x = e.clientX; p0.y = e.clientY;
+    if (ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinch) zoom(pinch / d);
+      pinch = d;
+    }
+    pano.draw();
+  });
+  const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = 0; };
+  R.domElement.addEventListener('pointerup', up); R.domElement.addEventListener('pointercancel', up);
+  R.domElement.addEventListener('wheel', (e) => { e.preventDefault(); zoom(Math.exp(e.deltaY * 0.001)); pano.draw(); }, { passive: false });
+  addEventListener('keydown', (e) => {
+    if (panoEl.hidden) return;
+    const step = { ArrowLeft: [0.08, 0], ArrowRight: [-0.08, 0], ArrowUp: [0, 0.06], ArrowDown: [0, -0.06] }[e.key];
+    if (step) { e.preventDefault(); pano.yaw += step[0]; pano.pitch = clamp(pano.pitch + step[1], -1.45, 1.45); pano.draw(); }
+  });
+}
+function showPano(p) {
+  pano.p = p; pano.yaw = 0; pano.pitch = 0; pano.fov = innerWidth < innerHeight ? 85 : 70;
+  $('pano-title').textContent = p.name;
+  $('pano-text').textContent = p.text || '';
+  const tabsEl = $('pano-tabs');
+  tabsEl.innerHTML = '';
+  if (PANOS.length > 1) PANOS.forEach((q) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = q.name; b.setAttribute('aria-current', String(q === p));
+    b.addEventListener('click', () => { try { history.replaceState(null, '', '#pano-' + q.id); } catch (e) {} showPano(q); });
+    tabsEl.appendChild(b);
+  });
+  const set = (t) => { pano.mesh.material.dispose(); pano.mesh.material = new THREE.MeshBasicMaterial({ map: t }); $('pano-loading').hidden = true; pano.draw(); };
+  if (pano.tex[p.id]) { set(pano.tex[p.id]); return; }
+  $('pano-loading').hidden = false; $('pano-loading').textContent = 'Loading the view';
+  new THREE.TextureLoader().load('data/' + p.file, (t) => {
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, pano.R.capabilities.getMaxAnisotropy());
+    pano.tex[p.id] = t;
+    if (pano.p === p) set(t);
+  }, undefined, () => { $('pano-loading').textContent = 'This view did not load. Try again in a moment.'; });
+  pano.draw();
+}
+
 /* ------------------------------------------------------------ the trail -- */
 /* Mala Visión, the fight at the trail's midpoint, playable in the browser. On the trail it runs on the
    phone's camera, motion sensors and flash; here the view is dragged and buttons stand in for them.
@@ -4623,6 +4766,7 @@ const trailEl = $('trail');
 const fight = { built: false, open: false };
 function openTrail() {
   if (!planEl.hidden) closePlan();
+  if (!panoEl.hidden) closePano();
   closeDrawer();
   trailEl.hidden = false;
   markTab('trail');
@@ -5602,7 +5746,7 @@ const v3 = new THREE.Vector3();
 let elapsed = 0, first = true;
 function tick() {
   requestAnimationFrame(tick);
-  if (!active || (!first && (!planEl.hidden || !trailEl.hidden || document.hidden))) return;
+  if (!active || (!first && (!planEl.hidden || !trailEl.hidden || !panoEl.hidden || document.hidden))) return;
   const dt = Math.min(clock.getDelta(), 0.05);
   elapsed += dt;
   FOL.uTime.value = elapsed;
@@ -5628,6 +5772,7 @@ function tick() {
     for (const l of hill.labels) place(l.chip, l.anchor, cam, !display[l.cat] || cam.position.distanceTo(l.anchor) > l.far || !!limits.drawing || !!limits.editing, true);
     for (const l of limitLabels) place(l.chip, l.anchor, cam, !display.propLabels || !!limits.editing || !!limits.drawing, true);
     for (const l of notes.chips) place(l.chip, l.anchor, cam, !display.notes || !!limits.editing || !!limits.drawing || !!notes.placing || !!notes.moving, true);
+    for (const l of panoLabels) place(l.chip, l.anchor, cam, !display.panos || !!limits.editing || !!limits.drawing, true);
     declutter();
     for (const h of handleGroup.children) h.scale.setScalar(Math.max(0.6, cam.position.distanceTo(h.position) * 0.011 * h.userData.s));
   } else {
@@ -5703,6 +5848,7 @@ async function boot() {
   setMode(want === 'cabin' || want === 'residence' ? want : 'cerro');
   if (want === 'plan') openPlan();
   if (want === 'trail') openTrail();
+  if (want.startsWith('pano-')) openPano(want.slice(5));
   requestAnimationFrame(tick);
   initLimits().catch((err) => console.error(err));
   initNotes().catch((err) => console.error(err));
