@@ -1,0 +1,145 @@
+{
+ "night": true,
+ "sun": [
+  50,
+  20
+ ],
+ "camera": {
+  "pos": [
+   0.4,
+   -52.6,
+   0.75
+  ],
+  "look_at": [
+   0.3,
+   -30,
+   3.2
+  ],
+  "lens": 20
+ },
+ "objects": [
+  {
+   "type": "pitch"
+  },
+  {
+   "type": "stand",
+   "pos": [
+    0,
+    42,
+    0
+   ],
+   "rot": 0,
+   "length": 121,
+   "rows": 28,
+   "lights": 9
+  },
+  {
+   "type": "stand",
+   "pos": [
+    60.5,
+    0,
+    0
+   ],
+   "rot": -90,
+   "length": 84,
+   "rows": 28,
+   "lights": 6
+  },
+  {
+   "type": "stand",
+   "pos": [
+    -60.5,
+    0,
+    0
+   ],
+   "rot": 90,
+   "length": 84,
+   "rows": 28,
+   "lights": 6
+  },
+  {
+   "type": "tunnel",
+   "pos": [
+    0,
+    -54,
+    0
+   ],
+   "rot": 0,
+   "length": 12,
+   "width": 6,
+   "height": 3.1
+  },
+  {
+   "type": "person",
+   "pos": [
+    -1.55,
+    -48.9,
+    0
+   ],
+   "facing": 0,
+   "pose": "run",
+   "tone": 0.22,
+   "num": "11"
+  },
+  {
+   "type": "person",
+   "pos": [
+    -0.55,
+    -48.2,
+    0
+   ],
+   "facing": 0,
+   "pose": "run",
+   "tone": 0.22,
+   "num": "6"
+  },
+  {
+   "type": "person",
+   "pos": [
+    0.15,
+    -45.6,
+    0
+   ],
+   "facing": 0,
+   "pose": "run",
+   "tone": 0.22,
+   "num": "4"
+  },
+  {
+   "type": "person",
+   "pos": [
+    0.85,
+    -49.6,
+    0
+   ],
+   "facing": 0,
+   "pose": "fist",
+   "tone": 0.22,
+   "num": "9"
+  },
+  {
+   "type": "person",
+   "pos": [
+    1.95,
+    -47.6,
+    0
+   ],
+   "facing": 0,
+   "pose": "run",
+   "tone": 0.22,
+   "num": "8"
+  },
+  {
+   "type": "person",
+   "pos": [
+    1.75,
+    -51.0,
+    0
+   ],
+   "facing": 0,
+   "pose": "run",
+   "tone": 0.22
+  }
+ ],
+ "ambient": 6.0
+}

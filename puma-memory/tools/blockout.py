@@ -13,7 +13,7 @@ Scene JSON (metres, Z up):
     {"type":"tunnel","pos":[..],"rot":deg,"length":L,"width":w,"height":h}                opening along local +Y
     {"type":"lockers","pos":[..],"rot":deg,"count":n}
     {"type":"board","pos":[..],"rot":deg}              tactics whiteboard on a stand
-    {"type":"person","pos":[x,y,0],"facing":deg,"pose":"stand|run|kick|kneel|sit|arms_up|point","height":1.8,"tone":0.3,"num":"9"}
+    {"type":"person","pos":[x,y,0],"facing":deg,"pose":"stand|run|fist|kick|kneel|sit|arms_up|point","height":1.8,"tone":0.3,"num":"9"}
     {"type":"ball","pos":[x,y,z]}
 Outputs: <prefix>_render.png (3360x1440 clay render), <prefix>_strip.jpg (what reaches the LED, die-cut applied)."""
 import sys, json, math
@@ -94,7 +94,7 @@ def tunnel(o):
     for s in (-1, 1):
         box((0.4, L, h + 1), (s * (w / 2 + 0.2), L / 2, (h + 1) / 2), 0.4, M)
         for y in range(2, int(L), 3): box((0.44, 0.06, h + 1), (s * (w / 2 + 0.2), y, (h + 1) / 2), 0.25, M)   # panel joints
-        sphere(0.14, (s * (w / 2 - 0.05), L * 0.45, 1.5), 1.0, M, emit=8.0)                                        # wall lamps
+        sphere(0.1, (s * (w / 2 - 0.05), L * 0.6, 0.9), 1.0, M, emit=3.0)                                        # wall lamps
     box((w + 0.8, L, 0.4), (0, L / 2, h + 0.2), 0.35, M)
 def lockers(o):
     M = T(o["pos"], o.get("rot", 0)); n = o.get("count", 8)
@@ -112,6 +112,7 @@ def ball(o): sphere(0.11, o["pos"], 0.95)
 POSES = {  # joint positions for a 1.8 m figure facing +Y: hip, chest, head, L/R shoulder, elbow, hand, knee, foot
  "stand":   dict(hip=(0, 0, .95), chest=(0, 0, 1.42), head=(0, .01, 1.68), lsh=(-.2, 0, 1.45), rsh=(.2, 0, 1.45), lel=(-.25, 0, 1.15), rel=(.25, 0, 1.15), lha=(-.25, .05, .88), rha=(.25, .05, .88), lkn=(-.1, .02, .5), rkn=(.1, .02, .5), lft=(-.1, 0, .05), rft=(.1, 0, .05)),
  "run":     dict(hip=(0, 0, .95), chest=(0, .12, 1.40), head=(0, .2, 1.65), lsh=(-.2, .1, 1.43), rsh=(.2, .1, 1.43), lel=(-.26, .32, 1.22), rel=(.26, -.15, 1.2), lha=(-.22, .5, 1.38), rha=(.24, -.35, 1.05), lkn=(-.1, .38, .62), rkn=(.1, -.15, .5), lft=(-.1, .2, .2), rft=(.1, -.6, .35)),
+ "fist":    dict(hip=(0, 0, .95), chest=(0, .12, 1.40), head=(0, .2, 1.65), lsh=(-.2, .1, 1.43), rsh=(.2, .1, 1.43), lel=(-.26, .32, 1.22), rel=(.34, .12, 1.72), lha=(-.22, .5, 1.38), rha=(.3, .16, 2.05), lkn=(-.1, .38, .62), rkn=(.1, -.15, .5), lft=(-.1, .2, .2), rft=(.1, -.6, .35)),
  "kick":    dict(hip=(0, 0, .93), chest=(0, -.05, 1.38), head=(0, 0, 1.63), lsh=(-.2, -.03, 1.42), rsh=(.2, -.03, 1.42), lel=(-.5, .0, 1.3), rel=(.42, -.2, 1.2), lha=(-.75, .1, 1.25), rha=(.5, -.4, 1.0), lkn=(-.12, .1, .48), rkn=(.12, -.3, .55), lft=(-.12, .05, .05), rft=(.14, -.75, .5)),
  "kneel":   dict(hip=(0, 0, .55), chest=(0, -.08, 1.02), head=(0, -.12, 1.28), lsh=(-.2, -.08, 1.05), rsh=(.2, -.08, 1.05), lel=(-.42, .1, .95), rel=(.42, .1, .95), lha=(-.36, .25, 1.18), rha=(.36, .25, 1.18), lkn=(-.18, .35, .08), rkn=(.18, .35, .08), lft=(-.18, -.2, .08), rft=(.18, -.2, .08)),
  "sit":     dict(hip=(0, 0, .5), chest=(0, .1, .95), head=(0, .2, 1.18), lsh=(-.2, .1, .98), rsh=(.2, .1, .98), lel=(-.22, .3, .72), rel=(.22, .3, .72), lha=(-.1, .45, .6), rha=(.1, .45, .6), lkn=(-.12, .45, .5), rkn=(.12, .45, .5), lft=(-.12, .5, .05), rft=(.12, .5, .05)),
@@ -128,8 +129,8 @@ def person(o):
         limb(hp, J[s + "kn"], 0.085, t * 0.8, M); limb(J[s + "kn"], J[s + "ft"], 0.06, skin if o.get("shorts", True) else t, M)
         box((0.1, 0.27, 0.09), (J[s + "ft"][0], J[s + "ft"][1] + 0.07, J[s + "ft"][2]), 0.05, M)
     if o.get("num"):                                                        # squad number on the back
-        bpy.ops.object.text_add(); tx = bpy.context.object; tx.data.body = str(o["num"]); tx.data.align_x = "CENTER"; tx.data.size = 0.3; tx.data.extrude = 0.005
-        c = Vector(J["chest"]); tx.matrix_world = M @ Matrix.Translation((c.x, c.y - 0.2, c.z - 0.22)) @ Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Rotation(math.radians(180), 4, "Y")
+        bpy.ops.object.text_add(); tx = bpy.context.object; tx.data.body = str(o["num"]); tx.data.align_x = "CENTER"; tx.data.size = 0.34; tx.data.extrude = 0.005
+        c = Vector(J["chest"]); tx.matrix_world = M @ Matrix.Translation((c.x, c.y - 0.2, c.z - 0.22)) @ Matrix.Rotation(math.radians(90), 4, "X")
         tx.data.materials.append(mat(0.95))
 BUILD = dict(pitch=pitch, goal=goal, stand=stand, tunnel=tunnel, lockers=lockers, board=board, ball=ball, person=person,
              box=lambda o: box(o["size"], o["pos"], o.get("tone", 0.5), T((0, 0, 0), 0) if not o.get("rot") else T(o["pos"], o["rot"]) @ Matrix.Translation(-Vector(o["pos"])), o.get("emit", 0.0)),
@@ -164,7 +165,7 @@ cc = C["camera"]; cam.location = cc["pos"]; cam.data.sensor_width = 36; cam.data
 if cc["pos"][2] < 0.3: print("RULE WARNING: camera lower than 0.3 m")
 d = Vector(cc["look_at"]) - Vector(cc["pos"]); cam.rotation_euler = d.to_track_quat("-Z", "Y").to_euler(); cam.rotation_euler.rotate_axis("Z", math.radians(cc.get("roll", 0)))
 night = C.get("night", False); w = bpy.data.worlds.new("w"); sc.world = w; w.use_nodes = True
-bg = w.node_tree.nodes["Background"]; bg.inputs[0].default_value = (0.02, 0.03, 0.05, 1) if night else (0.8, 0.85, 0.95, 1); bg.inputs[1].default_value = 1.0 if night else 0.9
+bg = w.node_tree.nodes["Background"]; bg.inputs[0].default_value = (0.10, 0.13, 0.20, 1) if night else (0.8, 0.85, 0.95, 1); bg.inputs[1].default_value = C.get("ambient", 1.0 if night else 0.9)
 sun = bpy.data.objects.new("sun", bpy.data.lights.new("sun", "SUN")); sc.collection.objects.link(sun); el, az = C.get("sun", [55, 30])
 sun.rotation_euler = (math.radians(90 - el), 0, math.radians(az)); sun.data.energy = 1.2 if night else 3.0; sun.data.angle = math.radians(8)
 sc.render.engine = "CYCLES"; sc.cycles.device = "CPU"; sc.cycles.samples = 12 if DRAFT else 48
