@@ -2,7 +2,7 @@
 
 An AI crew for marketing, content, sales, community, bookkeeping, legal prep and business advice, wrapped in an interactive 3D world.
 
-**Status:** early plumbing only. The world concept, visual style and brand are still being defined, so the station names, crew names and metaphors in `shared/stations.ts` are placeholders.
+**Status:** early plumbing only. The concept and brand are being defined in [docs/CONCEPT.md](docs/CONCEPT.md); until those decisions are made, the station names, crew names and metaphors in `shared/stations.ts` are placeholders.
 
 What exists so far:
 - `shared/schema.ts`: the Brand Core (business context every crew reads) and the shape of crew output (deliverables, review flags, hand-offs to other crews).
