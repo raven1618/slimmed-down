@@ -157,3 +157,4 @@ Everything we know about this project, indexed by source. Each new piece of cont
   - Transitions: slit, beam, hex iris, sweep, mirrored sweep, then ball + flash into the close.
   - Close: placeholder cut-out from the deck's stage photo (`cepede/anim`), name card ANDRÉS CEPEDE · DIRECTOR COMERCIAL.
   - Sound: `tools/sfx_v24.py` (room tones from the config), music + effects only. No Cepede voice-over exists yet.
+- **Nov 12:** Cepede v3: the close now uses his real animated clip (Seedance + Topaz 3840×1648, 7 s: turns, walks in, hand in pocket), keyed with `tools/speaker_key_cepede.py` into `cepede/anim4k`. It replaces the placeholder from the deck's stage photo.

@@ -913,8 +913,8 @@
  "out_fps": 30,
  "beam_y": 0.965,
  "andres_anim": {
-  "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/anim",
-  "frames": 1
+  "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/anim4k",
+  "frames": 210
  },
  "text_groups": [
   {
