@@ -174,6 +174,22 @@ except Exception: pass
 k = 0.4 if DRAFT else 1.0; sc.render.resolution_x = int(3360 * k); sc.render.resolution_y = int(1440 * k); sc.render.resolution_percentage = 100
 sc.view_settings.view_transform = "Standard"; sc.render.image_settings.file_format = "PNG"
 import numpy as np
+if "--anim" in sys.argv:                                                    # animated storyboard: camera keys [{t,pos,look_at,lens}] in C["camera_path"]
+    import os, subprocess
+    K = C["camera_path"]; fps = 24; dur = K[-1]["t"]; N = int(round(dur * fps)); fd = prefix + "_anim"; os.makedirs(fd, exist_ok=True)
+    sc.render.resolution_x, sc.render.resolution_y = 896, 384; sc.cycles.samples = 6
+    def at(t):
+        for a_, b_ in zip(K, K[1:]):
+            if a_["t"] <= t <= b_["t"]:
+                u = (t - a_["t"]) / (b_["t"] - a_["t"]); L = lambda k: (Vector(a_[k]) * (1 - u) + Vector(b_[k]) * u)
+                return L("pos"), L("look_at"), a_.get("lens", 24) * (1 - u) + b_.get("lens", 24) * u
+        return Vector(K[-1]["pos"]), Vector(K[-1]["look_at"]), K[-1].get("lens", 24)
+    for i in range(N):
+        pos, la, ln = at(i / fps); cam.location = pos; cam.data.lens = ln; cam.rotation_euler = (la - pos).to_track_quat("-Z", "Y").to_euler()
+        sc.render.filepath = f"{fd}/f{i:04d}.png"; bpy.ops.render.render(write_still=True)
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-framerate", str(fps), "-i", fd + "/f%04d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "16", prefix + "_previs.mp4"])
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", prefix + "_previs.mp4", "-vf", "drawbox=y=ih*0.2833:h=2:w=iw:color=0x7fff00:t=fill,drawbox=y=ih*0.716:h=2:w=iw:color=0x7fff00:t=fill", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "16", prefix + "_previs_LED.mp4"])
+    print("ok anim", prefix); sys.exit(0)
 LENSES = [float(v) for v in sys.argv[sys.argv.index("--lenses") + 1].split(",")] if "--lenses" in sys.argv else [cc.get("lens", 24)]
 for lens in LENSES:
     cam.data.lens = lens; tag = prefix + (f"_L{lens:g}" if len(LENSES) > 1 else "")
