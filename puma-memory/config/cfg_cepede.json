@@ -358,7 +358,7 @@
   {
    "id": "B5",
    "impact": 512,
-   "out": 578,
+   "out": 548,
    "from": [
     "abs",
     960,
@@ -817,8 +817,8 @@
    ],
    "y_hit": 170,
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/clips_in/v4.mp4",
-   "clip_off": 0.0,
-   "speed": 0.88,
+   "clip_off": 0.6,
+   "speed": 1.0,
    "dy_keys": [
     [
      0,
@@ -980,7 +980,7 @@
     287.5
    ],
    "f_in": 506,
-   "f_out": 587
+   "f_out": 557
   }
  ],
  "rooms": [
