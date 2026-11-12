@@ -669,9 +669,23 @@
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/clips_in/v3.mp4",
    "clip_off": 0.0,
    "speed": 0.88,
-   "strip_dy": [
-    -0.05,
-    -0.05
+   "dy_keys": [
+    [
+     0,
+     -0.1
+    ],
+    [
+     2.5,
+     -0.09
+    ],
+    [
+     4.5,
+     -0.04
+    ],
+    [
+     5,
+     -0.04
+    ]
    ]
   },
   {
@@ -741,9 +755,35 @@
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/clips_in/v5.mp4",
    "clip_off": 0.0,
    "speed": 0.88,
-   "strip_dy": [
-    0.0,
-    -0.13
+   "dy_keys": [
+    [
+     0,
+     -0.06
+    ],
+    [
+     2.5,
+     -0.08
+    ],
+    [
+     3,
+     -0.13
+    ],
+    [
+     3.5,
+     -0.17
+    ],
+    [
+     4,
+     -0.23
+    ],
+    [
+     4.5,
+     -0.28
+    ],
+    [
+     5,
+     -0.283
+    ]
    ]
   },
   {
@@ -779,9 +819,47 @@
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/clips_in/v4.mp4",
    "clip_off": 0.0,
    "speed": 0.88,
-   "strip_dy": [
-    -0.13,
-    -0.1
+   "dy_keys": [
+    [
+     0,
+     -0.21
+    ],
+    [
+     1,
+     -0.25
+    ],
+    [
+     1.5,
+     -0.2
+    ],
+    [
+     2,
+     -0.19
+    ],
+    [
+     2.5,
+     -0.26
+    ],
+    [
+     3,
+     -0.25
+    ],
+    [
+     3.5,
+     -0.18
+    ],
+    [
+     4,
+     -0.13
+    ],
+    [
+     4.5,
+     -0.05
+    ],
+    [
+     5,
+     -0.03
+    ]
    ]
   },
   {

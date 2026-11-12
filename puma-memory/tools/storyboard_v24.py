@@ -158,7 +158,8 @@ def pano(sl, f):
     if "clip" in sl:
         c = CLIPS[sl["id"]]; tt = sl.get("clip_off", 0.0) + (f - sl["f0"]) / FPS * sl.get("speed", 1.0)
         q = sb.prog(f, sl["f0"], sl["f1"], sb.eio); P_ = lambda k, d: sb.lerp(*sl.get(k, [d, d]), q)
-        v, vi = c.strip(int(round(tt * c.fps)), P_("strip_dy", 0.0), P_("zoom", 1.0), P_("cx", 0.5))
+        dy_ = float(np.interp(tt, [k_[0] for k_ in sl["dy_keys"]], [k_[1] for k_ in sl["dy_keys"]])) if "dy_keys" in sl else P_("strip_dy", 0.0)   # head tracking: strip follows the subject
+        v, vi = c.strip(int(round(tt * c.fps)), dy_, P_("zoom", 1.0), P_("cx", 0.5))
         return v, vi, _Shape(c.H, c.W)
     p = sb.prog(f, sl["f0"], sl["f1"], sb.eio); img = sb.IMG[sl["img"]]
     v, vi = sb.view(img, (0, 0, W, H), sb.lerp(*sl["s"], p), sb.lerp(sl["c"][0][0], sl["c"][1][0], p), sb.lerp(sl["c"][0][1], sl["c"][1][1], p))
