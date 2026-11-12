@@ -151,3 +151,9 @@ Everything we know about this project, indexed by source. Each new piece of cont
 - **Nov 11:** CEP1 guide v3 inked from the user's full stadium render with `tools/manga_full.py` (CLAHE 24×24 local contrast, fine XDoG ink, screentone), the same as the Andrés S3/S4 technique of inking a full frame.
 - **Nov 11:** CEP1 switched to the client's own stadium photo cropped to 21:9 (`frames_screen/speakers/CEP1_crop_21x9.png`, centre at ref row 0.50), with no generation or extension, after the generated stadiums came back structurally incoherent. Brands and colours are to be fixed with an edit-only pass that keeps the geometry locked. Local recolour/inpaint was tried and rejected (JPEG blocks, smears). Trade-off: on the LED strip the crop shows the floodlights, roof and upper stands, but no pitch.
 - **Nov 11:** Blender headless blockout tool built (`tools/blockout.py`, bpy 5.3). First scene CEP1 renders with correct perspective. See method doc 09, section 6.
+- **Nov 12:** Andrés Cepede teaser v1 (`production/andres_cepede_v1/`): first full edit to the v21–v23 standards.
+  - Picture: 5 Seedance + Topaz clips (stadium drone, tunnel, penalty, coach, celebration; from Higgsfield job IDs, the Drive copies are private), 5-placa grid (40/150/260/370/480, close 590), clips at 0.88× so they cover the transitions.
+  - Renderer `tools/storyboard_v24.py` (v21 + per-slide clip speed + mirrored sweep), config `tools/cfg_cepede.json`, lockups `tools/text_layout_cepede.py`.
+  - Transitions: slit, beam, hex iris, sweep, mirrored sweep, then ball + flash into the close.
+  - Close: placeholder cut-out from the deck's stage photo (`cepede/anim`), name card ANDRÉS CEPEDE · DIRECTOR COMERCIAL.
+  - Sound: `tools/sfx_v24.py` (room tones from the config), music + effects only. No Cepede voice-over exists yet.
