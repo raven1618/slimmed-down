@@ -130,7 +130,7 @@ def person(o):
         box((0.1, 0.27, 0.09), (J[s + "ft"][0], J[s + "ft"][1] + 0.07, J[s + "ft"][2]), 0.05, M)
     if o.get("num"):                                                        # squad number on the back
         bpy.ops.object.text_add(); tx = bpy.context.object; tx.data.body = str(o["num"]); tx.data.align_x = "CENTER"; tx.data.size = 0.34; tx.data.extrude = 0.005
-        c = Vector(J["chest"]); tx.matrix_world = M @ Matrix.Translation((c.x, c.y - 0.2, c.z - 0.22)) @ Matrix.Rotation(math.radians(90), 4, "X")
+        c = Vector(J["chest"]); tx.matrix_world = M @ Matrix.Translation((c.x, c.y - 0.2, c.z - 0.22)) @ Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Scale(-1, 4, (1, 0, 0))
         tx.data.materials.append(mat(0.95))
 BUILD = dict(pitch=pitch, goal=goal, stand=stand, tunnel=tunnel, lockers=lockers, board=board, ball=ball, person=person,
              box=lambda o: box(o["size"], o["pos"], o.get("tone", 0.5), T((0, 0, 0), 0) if not o.get("rot") else T(o["pos"], o["rot"]) @ Matrix.Translation(-Vector(o["pos"])), o.get("emit", 0.0)),
