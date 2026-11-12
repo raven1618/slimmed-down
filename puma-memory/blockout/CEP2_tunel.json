@@ -79,7 +79,7 @@
    "facing": 0,
    "pose": "run",
    "tone": 0.22,
-   "num": "11"
+   "label": "11"
   },
   {
    "type": "person",
@@ -91,7 +91,7 @@
    "facing": 0,
    "pose": "run",
    "tone": 0.22,
-   "num": "6"
+   "label": "6"
   },
   {
    "type": "person",
@@ -103,7 +103,7 @@
    "facing": 0,
    "pose": "run",
    "tone": 0.22,
-   "num": "4"
+   "label": "4"
   },
   {
    "type": "person",
@@ -115,7 +115,7 @@
    "facing": 0,
    "pose": "fist",
    "tone": 0.22,
-   "num": "9"
+   "label": "9"
   },
   {
    "type": "person",
@@ -127,7 +127,7 @@
    "facing": 0,
    "pose": "run",
    "tone": 0.22,
-   "num": "8"
+   "label": "8"
   },
   {
    "type": "person",
