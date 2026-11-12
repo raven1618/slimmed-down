@@ -78,3 +78,30 @@ Approved with Andrés Silva (v8 → v23). **Read this before starting any speake
   - Roofs are carried by columns and end walls; lights are mounted on a structure.
 - **Lens variants:** `--lenses 15,24,35` renders one frame per lens from the same camera position.
 - **Walk-around viewer:** `--viewer` writes `<SCENE>_viewer.html` (self-contained, opens offline in any browser: drag to look, WASD to move, lens slider, LED strip overlay, Save PNG, Copy camera) and `<SCENE>.blend` for Blender itself. The user pastes the copied camera JSON back and the final frame is rendered from it.
+
+## 7 · Learned on Cepede and Carolina (Nov 12) — binding from now on
+**Getting the clips**
+- Drive uploads are private, so download them directly fails. Every Higgsfield file name contains its job ID (`hf_<date>_<time>_<job-id>.mp4`), and `jobs_wait` with that ID returns the CloudFront URL.
+- Some clips come back 16:9 (3840×2160). Centre-crop them to 21:9 (3840×1648) before editing: `crop=3840:1648:0:256`.
+- Every Seedance/Topaz clip and light plate has a black border about 28 px wide down both sides. `storyboard_v24.py` skips 32 px on each side. Without this, a dark strip shows at both outer edges of the screen.
+
+**Framing on the LED (renderer `tools/storyboard_v24.py`, per slide)**
+- `dy_keys`, `cx_keys`, `zoom_keys`: lists of [clip-second, value]. The crop follows the action over time: heads inside the strip, the camera "with" the player or the ball.
+- `cx` only works when `zoom` is above 1. Each 0.1 of zoom narrows the strip height by about 7%, so a jump plus the ball needs zoom 1.25 or less.
+- Keep the subject left or right of the centre text block (x 735–1185 of 1920) while the text is up.
+- `speed` (clip playback rate, usually 0.88), `clip_off` (clip start offset) and `grade` (LAB fix for hazy clips: `k` contrast, `Loff`, `sat`, `da`/`db` tint).
+- Measure each clip's speed-ramp time (frame-difference motion) and put that slide's text impact right after it. Text impact and out are set per beat in the config.
+
+**Text**: `tools/text_layout_<speaker>.py` builds the 5 lockups. Small lines carry the rules, at 0.30–0.40 of the first big line; keep the smallest line at 20 px or more.
+
+**Speaker close**
+- The cut-out uses BiRefNet (`tools/matte_birefnet.py` with the lite ONNX model; the full fp16 model runs out of memory here) and `tools/speaker_key_v3.py`.
+- The end frame is cut with BiRefNet, placed on flat chroma green #00B140, 21:9 3840×1648, and checked at full size, whole frame, before sending. The Seedance prompt says green background, no floor line, no shadows, no green spill.
+- Full-body walk-in: start with the back to camera, about 4 m away, turn, walk in and settle into the photo pose.
+
+**Prompts (Seedance)**
+- Camera moves must be small relative to the start frame. Big dives or pushes make the model abandon the frame.
+- Lock the grade in words and say "no fog/haze": hazy grey-teal fog is a recurring model bug.
+- State real-world sizes: goal 7.32 × 2.44 m, net mesh about 12 cm, ball 22 cm.
+- With an end frame, describe the state before the action too. For example, a flat, still net before the ball arrives, otherwise the model bends it from the first frame.
+- Brand checks on every clip: balls (logos), kits (three stripes, swoosh), boards. The fix is an image edit of the frame, then re-animating.
