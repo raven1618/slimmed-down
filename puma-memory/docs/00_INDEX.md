@@ -158,3 +158,4 @@ Everything we know about this project, indexed by source. Each new piece of cont
   - Close: placeholder cut-out from the deck's stage photo (`cepede/anim`), name card ANDRÉS CEPEDE · DIRECTOR COMERCIAL.
   - Sound: `tools/sfx_v24.py` (room tones from the config), music + effects only. No Cepede voice-over exists yet.
 - **Nov 12:** Cepede v3: the close now uses his real animated clip (Seedance + Topaz 3840×1648, 7 s: turns, walks in, hand in pocket), keyed with `tools/speaker_key_cepede.py` into `cepede/anim4k`. It replaces the placeholder from the deck's stage photo.
+- **Nov 12:** Cepede v4: speaker cut-out redone with `tools/speaker_key_v2.py` (seg on a crop around the person + difference matte against the estimated studio background, warped from the 4K frame). The v3 key was soft and haloed: the mask came from a 320 px model pass over the whole 21:9 frame, light jacket on a light wall. Use v2 keying for all speakers.
