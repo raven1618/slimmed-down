@@ -35,9 +35,9 @@ class Clip:
         if len(self.cache) > 6: self.cache.pop(next(iter(self.cache)))
         self.cache[i] = fr; return fr
     def strip(self, i, dy, z=1.0, cx=0.5):
-        fr = self.frame(i); hh = self.H * 623 / 1440 / z; ww = self.W / z
+        fr = self.frame(i); IN = 32; hh = self.H * 623 / 1440 / z; ww = (self.W - 2 * IN) / z   # skip the black side border Seedance/Topaz leave
         yc = self.H * (408 + 623 / 2) / 1440 + dy * self.H
-        x0 = min(max(cx * self.W - ww / 2, 0), self.W - ww); y0 = min(max(yc - hh / 2, 0), self.H - hh)
+        x0 = min(max(cx * self.W - ww / 2, IN), self.W - IN - ww); y0 = min(max(yc - hh / 2, 0), self.H - hh)
         M = np.float32([[ww / W, 0, x0], [0, hh / H, y0]])
         st = cv2.warpAffine(fr, M, (W, H), flags=cv2.INTER_AREA | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
         return cv2.cvtColor(st, cv2.COLOR_BGR2RGB).astype(np.float32), (x0 + ww / 2, y0 + hh / 2, ww, hh)
@@ -49,7 +49,7 @@ sb.LOGO, sb.LOGO_A = sb.LOGO[:, :_cols.max() + 2], sb.LOGO_A[:, :_cols.max() + 2
 import subprocess as _sp
 sys.path.insert(0, "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/tools"); from kv_grade import kv_grade, mirror_right
 def _load(name, w, h, strip=False):
-    vf = (f"crop=3840:713:0:467,scale={w}:{h}" if strip else f"scale={w}:{h}")
+    vf = (f"crop=3776:713:32:467,scale={w}:{h}" if strip else f"crop=iw-64:ih:32:0,scale={w}:{h}")   # drop the black side border of the plates
     raw = _sp.run(["ffmpeg", "-loglevel", "error", "-i", C["plates"] + f"/{name}.mp4", "-vf", vf, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True).stdout
     a = np.frombuffer(raw, np.uint8).reshape(-1, h, w, 3).astype(np.int32)
     return kv_grade(np.clip((a - 6) * 255 // 249, 0, 255).astype(np.uint8))
