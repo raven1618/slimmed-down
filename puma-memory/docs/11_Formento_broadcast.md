@@ -91,3 +91,13 @@ Media logos (La Nación, Ámbito) are not reproduced: section tags + dates only.
   - a thin green edge line follows the V (a graphic, with no glow, and it never touches the text).
 - Headlines are retyped from the screenshots, key words in green, with section tag + date. No outlet logos.
 - Mock: `formento/mock_F1_wings.jpg`. The old `news_cards.py` (rectangular cards) is superseded.
+
+## 4 · Centre broadcast package (user, Nov 13): mocked
+- **`tools/news_broadcast.py`:** a generic news look with no channel or outlet brand, clipped to the centre trapezoid between the V's.
+  - **Ticker bar:** at the bottom (master y 622–708) with a green top rule.
+  - **LIVE block:** "EN VIVO", red with a pulsing dot, plus a running clock.
+  - **Crawl:** headlines and market quotes crawl at 240 px/s, with ▲ drawn as green triangles because Gotham has no glyph for it.
+  - **Section tab:** above the bar at the left ("ÚLTIMO MOMENTO | <tema>"), wiping in.
+- **Lockup:** moved up (top at about y 90 master) so it clears the tab and ticker.
+- **Wings:** a uniform translucent wash over the whole wing (0.58). The user rejected the patchy shadow behind the text.
+- **Mock:** `formento/mock_F1_broadcast.mp4`, from `tools/formento_mock_anim.py`.

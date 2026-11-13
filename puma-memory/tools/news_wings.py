@@ -52,13 +52,9 @@ def layout(d, side, sp):
     return f, size, ytop, lines
 def wing(sp, side):
     img = Image.fromarray(photo(sp, side)).convert("RGBA")
-    # local wash: dark only behind the text block (blurred), light elsewhere so the photo reads
+    # uniform translucent wash over the whole wing (user, Nov 13: no patchy shadows behind the text)
     d0 = ImageDraw.Draw(img); f, size, ytop, lines = layout(d0, side, sp)
-    tm = np.zeros((H, W), np.float32)
-    for ln, y in lines + [([("X", 0)], ytop - 20)]:
-        x0, x1 = avail(side, y, y + size); tm[int(max(0, y - 10)):int(min(H, y + size + 18)), x0 - 30:x1 + 30] = 1
-    tm = cv2.GaussianBlur(tm, (0, 0), 45); tm = np.clip(tm / max(tm.max(), 1e-6) * 1.3, 0, 1)
-    a = ((0.12 + 0.62 * tm) * 255).astype(np.uint8)
+    a = np.full((H, W), int(255 * sp.get("wash", 0.58)), np.uint8)
     img = Image.alpha_composite(img, Image.fromarray(np.dstack([np.zeros((H, W, 3), np.uint8), a]), "RGBA"))
     d = ImageDraw.Draw(img); f, size, ytop, lines = layout(d, side, sp)
     ft = font("medium", 34); x0, x1 = avail(side, ytop, ytop + 40)
