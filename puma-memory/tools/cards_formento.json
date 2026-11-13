@@ -1,0 +1,4 @@
+{"F1_L1": {"fx": 0.25, "src": "n05.png", "box": [0, 520, 2370, 1488], "tag": "INTERNACIONAL · 12 JUL 2026", "head": "Irán anunció el cierre del *estrecho de Ormuz*"},
+ "F1_L2": {"src": "n03.png", "box": [33, 703, 1575, 1230], "tag": "INTERNACIONAL · OCT 2026", "head": "Los ataques a barcos cerca de Ormuz alcanzan un *máximo histórico*"},
+ "F1_R1": {"src": "n04.png", "box": [53, 336, 1588, 1333], "tag": "ECONOMÍA · 14 JUL 2026", "head": "El mercado internacional del petróleo *volvió a moverse*"},
+ "F1_R2": {"src": "n07.png", "box": [0, 346, 2192, 1537], "tag": "CONFLICTOS · 10 SEP 2026", "head": "Precio del petróleo supera *USD 100* por ataques en Ormuz"}}

@@ -80,3 +80,14 @@ Media logos (La Nación, Ámbito) are not reproduced: section tags + dates only.
   - "Para avanzar con claridad... en medio de la complejidad."
   - "Con ustedes... Daniel Formento."
 - **Sound.** Kolomna as with the others, plus a subtle news-ident pulse on the stingers and soft data ticks under the price board, both under the music.
+
+## 3 · Wing headline panels (user, Nov 13): proposal, layout mocked
+- The news moves to the side wings: each wing shows 2 real headlines per placa (swap at the mid-point). F4 has no cards.
+- `tools/news_wings.py` + `tools/cards_formento.json`:
+  - each panel fills the wing's chevron shape (read from the die-cut mask) with a full-bleed photo;
+  - the headline is wrapped line by line to the width the chevron allows at that height, centred on the tip;
+  - the left wing is left-aligned and the right wing right-aligned;
+  - the dark wash sits only behind the text;
+  - a thin green edge line follows the V (a graphic, with no glow, and it never touches the text).
+- Headlines are retyped from the screenshots, key words in green, with section tag + date. No outlet logos.
+- Mock: `formento/mock_F1_wings.jpg`. The old `news_cards.py` (rectangular cards) is superseded.
