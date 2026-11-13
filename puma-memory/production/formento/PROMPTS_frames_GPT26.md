@@ -17,12 +17,12 @@ SCENE: Gulf waters at late afternoon, low hard sun from the left raking the arid
 LENS & LOOK: 400 mm telephoto broadcast camera, compressed perspective, heat shimmer only at the waterline, crisp, documentary colour. Clear air, no fog or haze.
 FIXES: no ship names, flags, funnel logos or hull lettering; no text of any kind.
 
-### FOR2 · buque atacado
-Turn the attached reference into a photorealistic 21:9 news-footage frame of a tanker hit in the Gulf of Oman.
-COMPOSITION (locked): keep the reference — the stern superstructure and bridge wings across the frame, deck crane and orange lifeboat on the left, ladders and railings on the right, a dense column of black-grey smoke rising through the centre. No zoom, crop or reframe.
-SCENE: thick smoke pouring up from behind the bridge, small orange fire glow at deck level on the left, a fireboat's white water-cannon arcs entering from the right; bright daylight sky behind the smoke (dense, local smoke, clear air around it — not fog).
-LENS & LOOK: 300 mm telephoto news camera, real exposure, gritty documentary colour, sharp steel, rust and rivets.
-FIXES: no ship name, hull lettering, flags or logos; no captions, no text.
+### FOR2 · buque atacado  (ref v2 from client n02: whole tanker at sea; logo and lettering greyed out)
+Turn the attached reference into a photorealistic 21:9 news-camera frame of an oil tanker hit at sea in the Gulf of Oman.
+COMPOSITION (locked): keep the reference exactly — the tanker seen from its stern quarter in the centre, white accommodation block with wide bridge wings, a tall funnel pouring black smoke, white smoke and spray around the superstructure, water cascading down the dark hull, a firefighting tug on the right against the hull spraying, open blue sea in the foreground with the waterline just above the bottom of the photo. Extend the sky, the sea and the horizon contextually into all grey areas. No zoom, crop or reframe of the ship.
+SCENE: bright late-morning daylight, deep blue choppy sea, clear sky; black funnel smoke and white firefighting spray are dense and local, the air around them is clear (not fog); real scale (tanker 330 m, tug 30 m).
+LENS & LOOK: 300 mm telephoto news camera from a boat, slight compression, crisp detail on steel, rust and spray, documentary colour.
+FIXES: no ship names, hull lettering, flags or logos; no captions, no text of any kind.
 
 ### FOR3 · Hidrovía
 Turn the attached reference into a photorealistic 21:9 aerial news frame of the Paraguay river (Hidrovía).
@@ -48,10 +48,10 @@ Universal rules: single shot, no cuts; subject motion about 80% (slight slow mot
 风格：真实新闻纪实摄影，午后硬光从左侧照亮赭色山崖，空气清澈，无雾无霾，色彩自然。无文字、无标志、无船名、无旗帜、无音乐。
 
 ### FOR2
-@image1（首帧）。单镜头，6秒，21:9 新闻长焦画面，构图与首帧完全一致。
-0-6秒：300mm长焦，轻微手持呼吸感，镜头极缓慢向上微摇（约3度）跟随烟柱。浓黑灰色烟柱从舰桥后方翻滚上升，烟雾体积感强、边缘清晰；左侧甲板处小团橙色火光闪动；右侧消防船的白色水炮水柱呈抛物线喷入画面，水花在阳光下飞散。
-动作约80%速度（轻微慢动作），摄影机真实速度。烟雾只在局部，周围空气清澈，不是雾。
-风格：真实新闻纪实，自然曝光，钢铁锈迹细节清晰。无文字、无标志、无船名、无字幕、无音乐。
+@image1（首帧）。单镜头，6秒，21:9 新闻长焦画面，构图与首帧完全一致，油轮始终完整在画面中。
+0-6秒：300mm长焦，从船上拍摄，轻微随浪起伏的手持感，镜头极缓慢推近（总共约4%）。烟囱持续冒出浓黑烟柱向右上方飘散；右侧消防拖船的水炮喷出白色水柱打在船体上，水花飞溅；白色水流沿深色船壳倾泻入海；海面波浪翻动，阳光反光闪烁。
+动作约80%速度（轻微慢动作），摄影机真实速度。黑烟和水雾只在局部，周围空气清澈，不是雾。真实比例：油轮330米，拖船30米。
+风格：真实新闻纪实，上午明亮日光，海水深蓝，色彩自然。无文字、无船名、无标志、无旗帜、无字幕、无音乐。
 
 ### FOR3
 @image1（首帧）。单镜头，6秒，21:9 无人机新闻航拍，构图与首帧完全一致。
