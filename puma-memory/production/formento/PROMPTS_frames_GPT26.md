@@ -95,3 +95,19 @@ FIXES: no ship names, no container logos or lettering, no flags, no text of any 
 0-6秒：400mm长焦，从船上拍摄，轻微随浪起伏的手持感，镜头极缓慢向右平移并略微推近（总共约4%）。左侧码头上的橙色岸桥缓慢移动，吊具吊起一个集装箱缓缓上升；一艘小型拖船从画面左下方低速驶入，留下细白尾浪；海面波光闪烁，航道浮标随浪轻摆。
 动作约80%速度（轻微慢动作），摄影机真实速度。真实比例：岸桥约70米，船长约300米。
 风格：真实新闻纪实，午后清澈阳光，空气通透，无雾无霾，无烟无火。无文字、无标志、无船名、无集装箱字母、无旗帜、无音乐。
+
+## FOR2c · flota en el estrecho — REPLACES FOR2/FOR2b (client pick, Nov 13: n07 "Las exportaciones de petróleo de Oriente Medio superan los niveles anteriores…")
+Wing F2_L2 photo → n04 (port).
+
+### Frame (GPT Image 2.6 · 21:9 · 4K · High · upload FOR2c_estrecho_REF_21x9.png only)
+Turn the attached reference into a photorealistic 21:9 elevated news-camera frame of the Strait of Hormuz.
+COMPOSITION (locked): keep the reference exactly — high vantage point looking out over the open strait, the pale rocky coastline along the horizon in the upper part of the frame, dozens of small cargo vessels and wooden dhows scattered across the dark-blue water, two larger dhows in the near foreground at lower centre. Extend the sea, the scattered vessels, the coastline and the sky contextually into all grey areas. No zoom, crop or reframe.
+SCENE: late-afternoon light, deep blue sea with fine ripples and glints, a couple of fast boats leaving thin white wakes, realistic vessel scale (dhows 20–30 m). Clear air: the coastline is visible and crisp — no haze, no fog.
+LENS & LOOK: 200 mm telephoto from a clifftop, slightly compressed, crisp detail, documentary colour.
+FIXES: no vessel names, flags, logos or text of any kind.
+
+### Seedance 2.5 (@image1 首帧 · 21:9 · 6 s)
+@image1（首帧）。单镜头，6秒，21:9 新闻长焦画面，从海岸高处俯瞰，构图与首帧完全一致。
+0-6秒：200mm长焦，三脚架上极缓慢向右平移并略微推近（总共约4%），稳定无抖动。海面上分散的小货船和木制单桅帆船随浪轻轻起伏，几艘缓慢前行；两艘快艇在中景拉出细长白色尾浪；前景两艘较大的帆船缓缓转向；海面波光闪烁。
+动作约80%速度（轻微慢动作），摄影机真实速度。真实比例：帆船20–30米。
+风格：真实新闻纪实，午后清澈阳光，海岸线清晰，空气通透，无雾无霾，无烟无火。无文字、无标志、无船名、无旗帜、无音乐。
