@@ -31,12 +31,12 @@ SCENE: clear late-afternoon light, café-con-leche water with current lines, eac
 LENS & LOOK: drone 24 mm, 120 m altitude, crisp, natural saturated colour, warm sun, long soft shadows. Clear air, no fog or haze.
 FIXES: no text, no logos, no vessel names.
 
-### FOR4 · estación Puma
+### FOR4 · estación Puma  (ref v2: deck frame cropped above the placa text, no hole; grey = extend)
 Turn the attached reference into a photorealistic 21:9 frame of a clean, modern Puma Energy service station.
-COMPOSITION (locked): attendant at the pumps on the left third, canopy and red-green Puma sign in the centre background, white car on the right third with a hand inserting the blue nozzle into the filler. Extend the forecourt, car, pump island and sky contextually into all grey areas (the grey box is missing scene). No zoom or reframe of the existing content.
-SCENE: smiling young attendant in the Puma uniform (green cap, red-and-green polo, dark work trousers with reflective stripes), bright clean forecourt, trees, blue sky; calm and ordered.
-LENS & LOOK: 35 mm, bright natural daylight, crisp commercial realism.
-FIXES: remove the green light lines and the chalk drawing; 5 fingers per hand on their own arms; Puma Energy brand only, no other brands or text.
+COMPOSITION (locked): keep the reference exactly — fuel pumps at the far left, the smiling attendant in the left third (waist-up, head in the upper middle of the frame) holding a small grey handheld card-payment terminal, the canopy with ceiling lights and the red-green Puma sign in the centre background, the white car on the right with the driver's hand holding the blue nozzle in the filler. Extend contextually into the grey: canopy roof and sky above; the attendant's legs, the pump island and the clean forecourt floor below; more of the car on the right and pumps on the left. No zoom or reframe of the existing content.
+SCENE: young attendant in the Puma uniform (green cap, red polo with green sleeves and collar, dark work trousers), bright clean forecourt, green trees, blue sky; calm, ordered, clear.
+LENS & LOOK: 35 mm, bright natural daylight, crisp commercial realism, natural skin.
+FIXES: remove the green light streaks; the attendant holds only the payment terminal (no nozzle in his hand); 5 fingers per hand on their own arms; Puma Energy brand only, no other brands, no text, no lettering on the nozzle.
 
 ## Seedance 2.5 · @image1 = approved frame (首帧) · 21:9 · 6 s · 480p draft → Topaz 3840×1648 30 fps
 Universal rules: single shot, no cuts; subject motion about 80% (slight slow motion), camera in real time and never stops; small camera moves only; key action in the middle 43% band, left/right of centre; no fog, no light FX, no text/logos/captions, no music.
@@ -59,11 +59,11 @@ Universal rules: single shot, no cuts; subject motion about 80% (slight slow mot
 物体动作约80%速度，摄影机真实速度。真实比例：每节驳船约60米。
 风格：真实新闻航拍，午后暖阳，空气清澈，无雾无霾，色彩自然饱和。无文字、无标志、无船名、无音乐。
 
-### FOR4 (v2: more attendant motion)
-@image1（首帧）。单镜头，6秒，21:9，构图与首帧完全一致，服务员始终在画面左三分之一，头部保持在画面垂直中部。
+### FOR4 (v3: attendant motion, matches ref v2)
+@image1（首帧）。单镜头，6秒，21:9，构图与首帧完全一致，服务员始终在画面左三分之一，头部保持在画面垂直中上部。
 0-6秒：35mm，摄影机极缓慢向前推轨（约0.3米/秒），保持水平，不跟随人物。
-0-1.5秒：左侧Puma服务员把手中的加油枪挂回油泵枪座，枪身轻轻晃动。
-1.5-3.5秒：他转身朝右侧车辆迈出一小步，抬头看向车主，露出自然真诚的笑容，右手抬起做一个轻松的问候手势（挥手），左手自然下垂。
-3.5-6秒：他停下脚步，轻轻点头，双手自然放回身侧，身体微微放松；同时右侧的手把蓝色加油枪插入加油口并按下扳机，油枪轻微震动。背景树叶轻摆，前场干净明亮。
-人物动作约80%速度（轻微慢动作，流畅自然），摄影机真实速度。动作幅度小，人物不离开左三分之一区域。手部：每只手5根手指，属于正确的手臂；制服、帽子、Puma标志保持不变。
+0-2秒：左侧Puma服务员手持小型刷卡机，抬头看向右侧车主，露出自然真诚的笑容。
+2-4秒：他朝车辆方向迈出一小步，左手把刷卡机稍稍向前递出，右手抬起做一个轻松的问候手势（挥手）。
+4-6秒：他停下，轻轻点头，身体放松；同时右侧车主的手按下蓝色加油枪扳机，油枪轻微震动。背景树叶轻摆，前场干净明亮。
+人物动作约80%速度（轻微慢动作，流畅自然），摄影机真实速度。动作幅度小，人物不离开左三分之一区域。手部：每只手5根手指，属于正确的手臂；服务员手中只有刷卡机，没有加油枪。制服、帽子、Puma标志保持不变。
 风格：明亮自然日光，干净清晰的商业写实，无雾无霾。只出现Puma Energy品牌，无其他文字、标志、无音乐。
