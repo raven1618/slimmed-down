@@ -158,8 +158,9 @@ def pano(sl, f):
     if "clip" in sl:
         c = CLIPS[sl["id"]]; tt = sl.get("clip_off", 0.0) + (f - sl["f0"]) / FPS * sl.get("speed", 1.0)
         q = sb.prog(f, sl["f0"], sl["f1"], sb.eio); P_ = lambda k, d: sb.lerp(*sl.get(k, [d, d]), q)
-        dy_ = float(np.interp(tt, [k_[0] for k_ in sl["dy_keys"]], [k_[1] for k_ in sl["dy_keys"]])) if "dy_keys" in sl else P_("strip_dy", 0.0)   # head tracking: strip follows the subject
-        K_ = lambda key, d: float(np.interp(tt, [k_[0] for k_ in sl[key]], [k_[1] for k_ in sl[key]])) if key in sl else d
+        dy_ = float(np.mean([np.interp(tt + o_, [k_[0] for k_ in sl["dy_keys"]], [k_[1] for k_ in sl["dy_keys"]]) for o_ in np.linspace(-0.35, 0.35, 9)])) if "dy_keys" in sl else P_("strip_dy", 0.0)   # head tracking: strip follows the subject
+        _sm = lambda key: float(np.mean([np.interp(tt + o_, [k_[0] for k_ in sl[key]], [k_[1] for k_ in sl[key]]) for o_ in np.linspace(-0.35, 0.35, 9)]))
+        K_ = lambda key, d: _sm(key) if key in sl else d                 # smoothed: no kinks between keys
         v, vi = c.strip(int(round(tt * c.fps)), dy_, K_("zoom_keys", P_("zoom", 1.0)), K_("cx_keys", P_("cx", 0.5)))   # tracking crop: follows the action
         if "grade" in sl:                                                # per-clip grade match: contrast, black point, saturation, tint (LAB)
             g_ = sl["grade"]; lab = cv2.cvtColor(np.clip(v, 0, 255).astype(np.uint8), cv2.COLOR_RGB2LAB).astype(np.float32)

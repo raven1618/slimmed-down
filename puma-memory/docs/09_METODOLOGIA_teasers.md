@@ -105,3 +105,15 @@ Approved with Andrés Silva (v8 → v23). **Read this before starting any speake
 - State real-world sizes: goal 7.32 × 2.44 m, net mesh about 12 cm, ball 22 cm.
 - With an end frame, describe the state before the action too. For example, a flat, still net before the ball arrives, otherwise the model bends it from the first frame.
 - Brand checks on every clip: balls (logos), kits (three stripes, swoosh), boards. The fix is an image edit of the frame, then re-animating.
+- **Tracking must be subtle and smooth (user, Nov 13):**
+  - The renderer averages every key track (`dy_keys`, `cx_keys`, `zoom_keys`) over ±0.35 s, so moves ease in and out with no kinks.
+  - Keep zoom at 1.15 or less (scene pushes 1.0 → 1.05–1.15); use horizontal follow only as a gentle drift.
+  - **Priority when it doesn't all fit:** the ball first, then the bodies. A slightly cropped head is acceptable; a cropped ball is not.
+- **Speaker close from a green-screen clip:**
+  - `tools/speaker_key_green.py`: colour-difference key (green minus max(r, b)) plus despill. It beats every model-based cut-out, with clean hair and no fringe.
+  - Wing placement uses the last frame's head position, so the final pose matches the photo.
+  - Applies to all speakers from now on: end frame on green → Seedance → Topaz → this key.
+- **Zoom-out of a clip that came out too tight:**
+  - Place its first frame small on a grey 21:9 canvas (`carolina/s4/`) so the action falls inside the band, crop off any baked-in letterbox first, and outpaint it with GPT Image.
+  - Then use that frame as the start frame and the old clip as a video reference to regenerate the shot (Seedance 2.0 takes a video reference).
+  - A text-only "pull the camera back" edit did nothing.

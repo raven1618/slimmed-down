@@ -168,3 +168,10 @@ Everything we know about this project, indexed by source. Each new piece of cont
   - **Tracking crops:** jugada pushes in on the ball carrier; ataque follows the jump (zoom 1.25, number 10 left of the text); pase follows the ball (zoom 1.25); gol pushes in slightly.
   - **Grade fix:** the jugada and pase clips are hazy; the LAB grade restores contrast.
   - **Still open:** her role is not given in the deck (card reads "CARGO A CONFIRMAR"). The close is a placeholder from the deck portrait until her animation arrives; her Drive photo is private. No voice-over yet.
+- **Nov 13:** Carolina Silva v2, pending her role and the voice-over.
+  - **Close:** her green-screen walk-in (Seedance + Topaz, 7 s), keyed with `tools/speaker_key_green.py`.
+  - **Pass:** the regenerated wide, clear version (`carolina/clips_in/n1.mp4`, from the zoom-out canvas). Plain white kits, no fog, text impact at frame 415.
+  - **Framing:**
+    - Locker room lower.
+    - Attack keeps the ball in frame (zoom 1.10, number 10's head may crop slightly).
+    - Every tracking move is smoothed and subtle (zoom ≤ 1.15).
