@@ -1,0 +1,899 @@
+{
+ "out_dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/puma-kb/production/daniel_formento_v1",
+ "diecut_mask": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/puma-kb/sources/S09-piloto-aprobado/diecut_mask_pilot.png",
+ "fonts": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/drive-dl",
+ "kv": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/kv",
+ "images": {
+  "boots": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/puma-kb/sources/S09-piloto-aprobado/placeholder_botines_16x9.png",
+  "conc": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/extend/conc_21x9.png",
+  "huddle": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/extend/huddle_nb.png",
+  "comp": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/extend/comp_nb_fix.png",
+  "andres": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/puma-kb/sources/S09-piloto-aprobado/placeholder_andres_crop.png",
+  "andresL": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/carolina/wing_L.png",
+  "andresR": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/carolina/wing_R.png"
+ },
+ "centre_fade": [
+  1180,
+  1680,
+  0.8
+ ],
+ "scenes": [
+  {
+   "id": "S0",
+   "intro": true,
+   "f0": 0,
+   "f1": 40,
+   "cams": {
+    "L": {
+     "img": "boots",
+     "s": [
+      2.0,
+      2.0
+     ],
+     "c": [
+      [
+       0.37,
+       0.55
+      ],
+      [
+       0.37,
+       0.55
+      ]
+     ]
+    },
+    "R": {
+     "img": "boots",
+     "s": [
+      1.9,
+      1.9
+     ],
+     "c": [
+      [
+       0.55,
+       0.3
+      ],
+      [
+       0.55,
+       0.3
+      ]
+     ]
+    }
+   },
+   "subject": [
+    0.4,
+    0.55
+   ],
+   "s": [
+    1.0,
+    1.07
+   ]
+  },
+  {
+   "id": "PANO",
+   "f0": 40,
+   "f1": 590,
+   "cams": {
+    "L": {
+     "img": "boots",
+     "s": [
+      1,
+      1
+     ],
+     "c": [
+      [
+       0.5,
+       0.5
+      ],
+      [
+       0.5,
+       0.5
+      ]
+     ]
+    },
+    "R": {
+     "img": "boots",
+     "s": [
+      1,
+      1
+     ],
+     "c": [
+      [
+       0.5,
+       0.5
+      ],
+      [
+       0.5,
+       0.5
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "id": "S5",
+   "f0": 590,
+   "f1": 751,
+   "cams": {
+    "L": {
+     "img": "andresL",
+     "s": [
+      1.0,
+      1.0
+     ],
+     "c": [
+      [
+       0.5,
+       0.5
+      ],
+      [
+       0.5,
+       0.5
+      ]
+     ]
+    },
+    "R": {
+     "img": "andresR",
+     "s": [
+      1.0,
+      1.0
+     ],
+     "c": [
+      [
+       0.5,
+       0.5
+      ],
+      [
+       0.5,
+       0.5
+      ]
+     ]
+    }
+   },
+   "andres_rays": true
+  }
+ ],
+ "beats": [
+  {
+   "id": "B1",
+   "impact": 78,
+   "out": 176,
+   "from": [
+    "abs",
+    960,
+    178
+   ],
+   "y_hit": 176,
+   "exit": 1,
+   "lines": [
+    {
+     "runs": [
+      [
+       "LOS ÚLTIMOS AÑOS",
+       "black",
+       86,
+       "white"
+      ]
+     ],
+     "y": 131,
+     "rules": false,
+     "delay": 0
+    },
+    {
+     "runs": [
+      [
+       "MARCARON EL RUMBO DE NUESTRA",
+       "bold",
+       29,
+       "white"
+      ]
+     ],
+     "y": 160,
+     "rules": true,
+     "delay": 4,
+     "rule_y": 150,
+     "rule_span": [
+      710.0,
+      1210.0
+     ]
+    },
+    {
+     "runs": [
+      [
+       "INDUSTRIA",
+       "black",
+       150,
+       "lime"
+      ]
+     ],
+     "y": 281,
+     "rules": false,
+     "delay": 8
+    }
+   ]
+  },
+  {
+   "id": "B2",
+   "impact": 222,
+   "out": 301,
+   "from": [
+    "abs",
+    960,
+    178
+   ],
+   "y_hit": 176,
+   "exit": -1,
+   "lines": [
+    {
+     "runs": [
+      [
+       "PONIÉNDONOS FRENTE A",
+       "bold",
+       30,
+       "white"
+      ]
+     ],
+     "y": 146,
+     "rules": true,
+     "delay": 0,
+     "rule_y": 136,
+     "rule_span": [
+      680.0,
+      1240.0
+     ]
+    },
+    {
+     "runs": [
+      [
+       "NUEVOS DESAFÍOS",
+       "black",
+       100,
+       "lime"
+      ]
+     ],
+     "y": 226,
+     "rules": false,
+     "delay": 4
+    }
+   ]
+  },
+  {
+   "id": "B3",
+   "impact": 347,
+   "out": 426,
+   "from": [
+    "abs",
+    960,
+    178
+   ],
+   "y_hit": 176,
+   "exit": 1,
+   "lines": [
+    {
+     "runs": [
+      [
+       "EXIGIENDO",
+       "black",
+       134,
+       "white"
+      ]
+     ],
+     "y": 157,
+     "rules": false,
+     "delay": 0
+    },
+    {
+     "runs": [
+      [
+       "DECISIONES",
+       "bold",
+       54,
+       "white"
+      ]
+     ],
+     "y": 209,
+     "rules": true,
+     "delay": 4,
+     "rule_y": 190,
+     "rule_span": [
+      737.5,
+      1182.5
+     ]
+    },
+    {
+     "runs": [
+      [
+       "ESTRATÉGICAS",
+       "black",
+       100,
+       "lime"
+      ]
+     ],
+     "y": 289,
+     "rules": false,
+     "delay": 8
+    }
+   ]
+  },
+  {
+   "id": "B4",
+   "impact": 472,
+   "out": 548,
+   "from": [
+    "abs",
+    960,
+    178
+   ],
+   "y_hit": 176,
+   "exit": -1,
+   "lines": [
+    {
+     "runs": [
+      [
+       "PARA AVANZAR CON CLARIDAD",
+       "black",
+       53,
+       "white"
+      ]
+     ],
+     "y": 136,
+     "rules": false,
+     "delay": 0
+    },
+    {
+     "runs": [
+      [
+       "EN MEDIO DE LA",
+       "bold",
+       21,
+       "white"
+      ]
+     ],
+     "y": 160,
+     "rules": true,
+     "delay": 4,
+     "rule_y": 152,
+     "rule_span": [
+      710.0,
+      1210.0
+     ]
+    },
+    {
+     "runs": [
+      [
+       "COMPLEJIDAD",
+       "black",
+       117,
+       "lime"
+      ]
+     ],
+     "y": 254,
+     "rules": false,
+     "delay": 8
+    }
+   ]
+  },
+  {
+   "id": "B10",
+   "impact": 610,
+   "out": 628,
+   "from": [
+    [
+     "L",
+     0.93,
+     0.47
+    ],
+    [
+     "R",
+     0.07,
+     0.47
+    ]
+   ],
+   "y_hit": 180,
+   "exit": 1,
+   "lines": [
+    {
+     "runs": [
+      [
+       "CON USTEDES",
+       "bold",
+       40,
+       "white"
+      ]
+     ],
+     "y": 196,
+     "rules": true,
+     "rule_y": 182,
+     "rule_span": [
+      662.5071875,
+      1257.4928125000001
+     ]
+    }
+   ]
+  },
+  {
+   "id": "B11",
+   "impact": 635,
+   "out": 2000,
+   "from": [
+    [
+     "L",
+     0.93,
+     0.47
+    ],
+    [
+     "R",
+     0.07,
+     0.47
+    ]
+   ],
+   "y_hit": 165,
+   "lines": [
+    {
+     "runs": [
+      [
+       "DANIEL",
+       "black",
+       104,
+       "white"
+      ],
+      [
+       "FORMENTO",
+       "black",
+       104,
+       "lime"
+      ]
+     ],
+     "y": 214
+    },
+    {
+     "runs": [
+      [
+       "SUPPLY & STRATEGIC PLANNING MANAGER · PUMA PARAGUAY",
+       "medium",
+       22,
+       "white"
+      ]
+     ],
+     "y": 260,
+     "delay": 18
+    }
+   ]
+  }
+ ],
+ "outro": {
+  "card_in": 648,
+  "logo_y": 91,
+  "rule_y": 229,
+  "outline": [
+   690,
+   730
+  ],
+  "rule_half": 297
+ },
+ "flashes": [
+  [
+   578,
+   594,
+   0.35
+  ]
+ ],
+ "info": [
+  {
+   "a": 0,
+   "b": 1.6,
+   "name": "INTRO",
+   "vo": "—",
+   "sides": "Luz por el contorno",
+   "centre": "Verde KV + logo",
+   "light": "Desde ambos costados",
+   "sfx": "Viaje de luz + golpe"
+  },
+  {
+   "a": 1.6,
+   "b": 7.48,
+   "name": "PLACA 1 · INTERNACIONAL",
+   "vo": "«Los últimos años… marcaron el rumbo de nuestra industria.»",
+   "sides": "Titulares Ormuz (2 por lado)",
+   "centre": "Noticiero: EN VIVO + ticker · LOS ÚLTIMOS AÑOS / INDUSTRIA",
+   "light": "Transición slit",
+   "sfx": "Kolomna + impactos"
+  },
+  {
+   "a": 7.48,
+   "b": 12.48,
+   "name": "PLACA 2 · DESAFÍOS",
+   "vo": "«Poniéndonos frente a nuevos desafíos.»",
+   "sides": "Ormuz + suba de combustibles",
+   "centre": "PONIÉNDONOS FRENTE A / NUEVOS DESAFÍOS",
+   "light": "Transición beam",
+   "sfx": "Kolomna + impactos"
+  },
+  {
+   "a": 12.48,
+   "b": 17.48,
+   "name": "PLACA 3 · DECISIONES",
+   "vo": "«Exigiendo decisiones estratégicas.»",
+   "sides": "Hidrovía + diésel",
+   "centre": "EXIGIENDO / DECISIONES / ESTRATÉGICAS",
+   "light": "Transición iris",
+   "sfx": "Kolomna + impactos"
+  },
+  {
+   "a": 17.48,
+   "b": 23.6,
+   "name": "PLACA 4 · CLARIDAD",
+   "vo": "«Para avanzar con claridad… en medio de la complejidad.»",
+   "sides": "Sin noticias: estación Puma",
+   "centre": "PARA AVANZAR CON CLARIDAD / EN MEDIO DE LA / COMPLEJIDAD",
+   "light": "Sweep → pelota KV",
+   "sfx": "Subida al destello"
+  },
+  {
+   "a": 23.6,
+   "b": 30.1,
+   "name": "CIERRE · DANIEL FORMENTO",
+   "vo": "«Con ustedes… Daniel Formento.»",
+   "sides": "(animación del speaker pendiente)",
+   "centre": "CON USTEDES → DANIEL FORMENTO",
+   "light": "Contorno",
+   "sfx": "Impacto + cola"
+  }
+ ],
+ "vo_starts": {
+  "L1": 2.96,
+  "L2": 8.86,
+  "L3": 13.86,
+  "L4": 18.86,
+  "L8": 24.36,
+  "L9": 25.36
+ },
+ "wing_masks": {
+  "L": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/carolina/wing_L_mask.png",
+  "R": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/carolina/wing_R_mask.png"
+ },
+ "slides": [
+  {
+   "id": "S0",
+   "kind": "intro",
+   "f0": 0,
+   "f1": 40
+  },
+  {
+   "id": "S1",
+   "kind": "pano",
+   "f0": 40,
+   "f1": 187,
+   "img": "boots",
+   "s": [
+    1,
+    1
+   ],
+   "c": [
+    [
+     0.5,
+     0.5
+    ],
+    [
+     0.5,
+     0.5
+    ]
+   ],
+   "subject": [
+    0.5,
+    0.5
+   ],
+   "born": 50,
+   "veil": [
+    62,
+    76
+   ],
+   "y_hit": 170,
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/f1.mp4",
+   "speed": 0.88,
+   "zoom_keys": [
+    [
+     0,
+     1.0
+    ],
+    [
+     6,
+     1.04
+    ]
+   ],
+   "news": "F1",
+   "tab2": "MERCADO DEL PETRÓLEO"
+  },
+  {
+   "id": "S2",
+   "kind": "pano",
+   "f0": 187,
+   "f1": 312,
+   "img": "boots",
+   "s": [
+    1,
+    1
+   ],
+   "c": [
+    [
+     0.5,
+     0.5
+    ],
+    [
+     0.5,
+     0.5
+    ]
+   ],
+   "subject": [
+    0.5,
+    0.5
+   ],
+   "born": 197,
+   "veil": [
+    209,
+    223
+   ],
+   "y_hit": 170,
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/f2.mp4",
+   "speed": 0.88,
+   "zoom_keys": [
+    [
+     0,
+     1.0
+    ],
+    [
+     6,
+     1.04
+    ]
+   ],
+   "news": "F2",
+   "tab2": "COMBUSTIBLES"
+  },
+  {
+   "id": "S3",
+   "kind": "pano",
+   "f0": 312,
+   "f1": 437,
+   "img": "boots",
+   "s": [
+    1,
+    1
+   ],
+   "c": [
+    [
+     0.5,
+     0.5
+    ],
+    [
+     0.5,
+     0.5
+    ]
+   ],
+   "subject": [
+    0.5,
+    0.5
+   ],
+   "born": 322,
+   "veil": [
+    334,
+    348
+   ],
+   "y_hit": 170,
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/f3.mp4",
+   "speed": 0.88,
+   "zoom_keys": [
+    [
+     0,
+     1.0
+    ],
+    [
+     6,
+     1.04
+    ]
+   ],
+   "news": "F3",
+   "tab2": "HIDROVÍA Y LOGÍSTICA"
+  },
+  {
+   "id": "S4",
+   "kind": "pano",
+   "f0": 437,
+   "f1": 590,
+   "img": "boots",
+   "s": [
+    1,
+    1
+   ],
+   "c": [
+    [
+     0.5,
+     0.5
+    ],
+    [
+     0.5,
+     0.5
+    ]
+   ],
+   "subject": [
+    0.5,
+    0.5
+   ],
+   "born": 447,
+   "veil": [
+    459,
+    473
+   ],
+   "y_hit": 170,
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/f4.mp4",
+   "speed": 0.88,
+   "zoom_keys": [
+    [
+     0,
+     1.0
+    ],
+    [
+     6,
+     1.04
+    ]
+   ]
+  },
+  {
+   "id": "S5",
+   "kind": "close",
+   "f0": 590,
+   "f1": 751
+  }
+ ],
+ "sweeps": [
+  40,
+  187,
+  312,
+  437
+ ],
+ "births": [
+  50,
+  197,
+  322,
+  447
+ ],
+ "plates": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/plates_4k",
+ "ball": [
+  556,
+  590
+ ],
+ "transitions": {
+  "S1": [
+   "slit",
+   18
+  ],
+  "S2": [
+   "beam",
+   24
+  ],
+  "S3": [
+   "iris",
+   30
+  ],
+  "S4": [
+   "sweep",
+   24
+  ]
+ },
+ "out_fps": 30,
+ "beam_y": 0.965,
+ "andres_anim": {
+  "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/anim_none",
+  "frames": 1
+ },
+ "text_groups": [
+  {
+   "beats": [
+    "B1"
+   ],
+   "box": [
+    710.0,
+    71.0,
+    1210.0,
+    281.0
+   ],
+   "f_in": 72,
+   "f_out": 185
+  },
+  {
+   "beats": [
+    "B2"
+   ],
+   "box": [
+    680.0,
+    125.5,
+    1240.0,
+    226.5
+   ],
+   "f_in": 216,
+   "f_out": 310
+  },
+  {
+   "beats": [
+    "B3"
+   ],
+   "box": [
+    737.5,
+    63.0,
+    1182.5,
+    289.0
+   ],
+   "f_in": 341,
+   "f_out": 435
+  },
+  {
+   "beats": [
+    "B4"
+   ],
+   "box": [
+    710.0,
+    98.5,
+    1210.0,
+    253.5
+   ],
+   "f_in": 466,
+   "f_out": 557
+  }
+ ],
+ "rooms": [
+  [
+   1.6,
+   7.6,
+   150,
+   900,
+   -44,
+   0.3,
+   0.2
+  ],
+  [
+   7.4,
+   12.6,
+   120,
+   1500,
+   -41,
+   0.15,
+   0.12
+  ],
+  [
+   12.4,
+   17.6,
+   120,
+   1500,
+   -41,
+   0.15,
+   0.12
+  ],
+  [
+   17.4,
+   23.7,
+   150,
+   1800,
+   -40,
+   0.25,
+   0.08
+  ]
+ ],
+ "news": {
+  "cards": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/cards",
+  "ticker": [
+   "IRÁN ANUNCIÓ EL CIERRE DEL ESTRECHO DE ORMUZ",
+   "PETRÓLEO SUPERA LOS USD 100 POR ATAQUES EN ORMUZ",
+   "BRENT 74,32 ▲   WTI 76,85 ▲   DUBAI 72,40 ▲",
+   "COMBUSTIBLES SUBEN HASTA G. 700 EN EMBLEMAS PRIVADOS",
+   "DIÉSEL SUBE POR SEXTA VEZ Y TEMEN MÁS AUMENTOS",
+   "HIDROVÍA: EL FLUJO QUE DEFINE LOS COSTOS EN PARAGUAY",
+   "EL NIÑO DESAFÍA LA PREVISIBILIDAD DE LA HIDROVÍA"
+  ],
+  "on": [
+   40,
+   56
+  ],
+  "off": [
+   437,
+   452
+  ]
+ }
+}

@@ -101,3 +101,16 @@ Media logos (La Nación, Ámbito) are not reproduced: section tags + dates only.
 - **Lockup:** moved up (top at about y 90 master) so it clears the tab and ticker.
 - **Wings:** a uniform translucent wash over the whole wing (0.58). The user rejected the patchy shadow behind the text.
 - **Mock:** `formento/mock_F1_broadcast.mp4`, from `tools/formento_mock_anim.py`.
+
+## 5 · Integrated into the standard pipeline (user, Nov 13): "the format is universal"
+- **User rule:** text animation, KV light transitions, pace/rhythm, soundtrack and motion graphics are UNIVERSAL across all teasers. Per speaker only the clips change (and here the side panels). Never mock a speaker's teaser outside the renderer.
+- **`tools/storyboard_v25.py`** = v24 plus two hooks; everything else is unchanged.
+  - `news_wings`: per-slide wing panels with a slow push (+3.5%). At the slide mid-point the old panel fades off (6 f), then the new one wipes in diagonally along the V (12 f), so two headlines never show at once. The panels sit inside `slide_frame`, so the KV light transitions carry them.
+  - `news_overlay`: the centre broadcast layer (tab, EN VIVO, clock, ticker). It's drawn after the text-scrim darkening and before the text. On at f40–56, off at f437–452: placa 4 is the news "switching off".
+- **`cfg_formento.json`:**
+  - 4-placa grid (40/187/312/437, close at 590), with transitions slit/beam/iris/sweep.
+  - Lockups come from `text_layout_formento.py`.
+  - Slides carry `news` (F1–F3) and `tab2`.
+  - Clips are stand-ins (`formento/clips_in/f1–f4.mp4` = the ref frames with a slow push) until the Seedance clips arrive.
+  - Close: `anim_none` (an empty speaker) until Formento's walk-in exists.
+- **Headlines without a photo** get a fuel price-board graphic (`board: true`, dimmed to 55%, drawn on the outer side).

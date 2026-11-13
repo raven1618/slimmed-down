@@ -29,7 +29,8 @@ def crawl_strip(items):
                 d.text((x, 18), seg, font=f, fill=(255, 255, 255)); x += f.getlength(seg)
         _strip[key] = im
     return _strip[key]
-def overlay(t, sp):
+def overlay(t, sp, t_tab=None):
+    t_tab = t if t_tab is None else t_tab
     L = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(L)
     y0 = BAR_Y0; xl = int(IN_L[y0:H - 14].max()); xr = int(IN_R[y0:H - 14].min())
     # ticker bar
@@ -54,7 +55,7 @@ def overlay(t, sp):
     tx = int(IN_L[y0 - TAB_H:y0].max()) + 24; ty = y0 - TAB_H
     f1, f2 = font("black", 36), font("bold", 36)
     w1 = d.textlength(sp["tab1"], font=f1) + 36; w2 = d.textlength(sp["tab2"], font=f2) + 36
-    wipe = min(1.0, max(0.0, (t - sp.get("tab_in", 0.4)) / 0.5))
+    wipe = min(1.0, max(0.0, (t_tab - sp.get("tab_in", 0.4)) / 0.5))
     tab = Image.new("RGBA", (int(w1 + w2), TAB_H), (0, 0, 0, 0)); td = ImageDraw.Draw(tab)
     td.rectangle([0, 0, w1, TAB_H], fill=GREEN); td.text((18, 8), sp["tab1"], font=f1, fill=(8, 12, 18))
     td.rectangle([w1, 0, w1 + w2, TAB_H], fill=(255, 255, 255, 240)); td.text((w1 + 18, 8), sp["tab2"], font=f2, fill=(8, 12, 18))

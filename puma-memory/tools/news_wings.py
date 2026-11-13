@@ -17,8 +17,24 @@ def avail(side, y0, y1, pad=34):
     y0, y1 = max(0, int(y0)), min(H - 1, int(y1))
     if side == "L": return pad + 10, int(EDGE_L[y0:y1 + 1].min()) - pad
     return int(EDGE_R[y0:y1 + 1].max()) + pad, W - pad - 10
+def board(side, hi="D"):
+    """fuel price board graphic (deck values) for headlines with no photo"""
+    bw = int(EDGE_L.max()) + 20; im = Image.new("RGB", (bw, H), (6, 14, 10)); d = ImageDraw.Draw(im)
+    for x in range(0, bw, 38): d.line([(x, 0), (x, H)], fill=(14, 30, 20))
+    for y in range(0, H, 38): d.line([(0, y), (bw, y)], fill=(14, 30, 20))
+    fb = font("black", 150); y = 10; ox = 18 if side == "L" else bw - 640
+    for k, v in [("95", "7.620"), ("93", "7.260"), ("D", "6.950"), ("GNV", "4.990")]:
+        c = (120, 230, 40) if k == hi else (225, 235, 225)
+        c = tuple(int(v_ * 0.55) for v_ in c)
+        d.rectangle([ox, y + 20, ox + 190, y + 152], outline=c, width=5); d.text((ox + 95 - d.textlength(k, font=font("black", 90)) / 2, y + 38), k, font=font("black", 90), fill=c)
+        d.text((ox + 222, y + 2), v, font=fb, fill=c); y += 172
+    im = cv2.cvtColor(np.array(im), cv2.COLOR_RGB2BGR)
+    if side == "R": im = im[:, ::-1] if False else im
+    return im
 def photo(sp, side):
-    im = cv2.imread(R + "formento/news_in/" + sp["src"]); b = sp["box"]; im = im[b[1]:b[3], b[0]:b[2]]
+    if sp.get("board"): im = board(side, sp.get("hi", "D")); sp = dict(sp, box=[0, 0, im.shape[1], im.shape[0]])
+    else: im = cv2.imread(R + "formento/" + sp["src"])
+    b = sp["box"]; im = im[b[1]:b[3], b[0]:b[2]]
     bw = int(EDGE_L.max()) + 20; s = max(bw / im.shape[1], H / im.shape[0]); im = cv2.resize(im, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)
     fx = sp.get("fx", 0.5); x = int((im.shape[1] - bw) * fx); y = (im.shape[0] - H) // 2; im = im[y:y + H, x:x + bw]
     out = np.zeros((H, W, 3), np.uint8)
@@ -28,7 +44,7 @@ def photo(sp, side):
 def words_of(head):
     out, hi = [], False
     for tok in head.split():
-        h = hi or tok.startswith("*"); out.append((tok.strip("*"), h)); hi = h and not tok.endswith("*")
+        h = hi or tok.startswith("*"); out.append((tok.replace("*", ""), h)); hi = h and "*" not in tok[1:]
     return out
 def layout(d, side, sp):
     """shape-fit: each line gets the width the chevron allows at its height; text block centred on the chevron tip."""
