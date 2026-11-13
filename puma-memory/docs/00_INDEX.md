@@ -177,3 +177,4 @@ Everything we know about this project, indexed by source. Each new piece of cont
     - Every tracking move is smoothed and subtle (zoom ≤ 1.15).
 - **Nov 13:** Carolina v3: role on the card = GERENTE DE MARKETING (user: 'gerente de MKT'). Only the voice-over remains open.
 - **Nov 13:** Formento is formatted as a news broadcast. Full slide analysis and the broadcast format are in `docs/11_Formento_broadcast.md`: main feed + KV headline, live bug, segment tags, side panels as video-wall monitors with headline cards and data, a ticker, KV light stingers, and in F4 the news clears out.
+- **Nov 13:** Formento format decided by the user: the same teaser format as the others; only the 4 scene clips change, from football to news footage / news broadcasts carrying each slide's content. Doc 11 updated.

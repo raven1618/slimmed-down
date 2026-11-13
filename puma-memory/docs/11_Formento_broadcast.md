@@ -48,52 +48,22 @@ Name card (s08_image20): **DANIEL / FORMENTO** · SUPPLY & STRATEGIC PLANNING MA
 
 ---
 
-## 2 · Broadcast format on our die-cut screen
+## 2 · Format: DECIDED (user, Nov 13): same teaser format as the other speakers
+- **Unchanged:** intro, 4 placas with KV lockups in the centre + black gradient, KV light transitions (never on text), ball/flash into the close, close with the green-screen speaker in both wings + name card, Kolomna music, male voice-over.
+- **Only change:** the 4 scene clips are **news footage / news broadcasts** instead of football. Each clip carries the content of its deck slide (headlines, data, places) inside the image: on a newsroom video wall, a printed front page, an analysis screen. Then F4 is clean Puma footage.
+- No separate broadcast overlays (no ticker/bug/wing monitors in code). The news lives in the footage.
 
-| Layer | Where on the LED | What it does |
-|---|---|---|
-| **Main feed** | Centre panel (and continuing into the wings) | The scene footage: clean B-roll generated from each deck frame, animated with Seedance |
-| **Headline** | Centre panel, as today | The placa as our KV lockup: the "headline of the segment" |
-| **Live bug** | Top of the centre panel, small | red dot + "EN VIVO" · "INFORME DE MERCADO" · Puma Energy logo |
-| **Segment tag** | Above or beside the lockup, small | F1 "INTERNACIONAL" · F2 "NACIONALES" · F3 "ANÁLISIS" · F4 none (the bug drops off) |
-| **Video wall** | The two V-shaped side panels | Act as newsroom monitors: the headline cards pop in one at a time, the data on the other side (chart / quotes / map / price board) |
-| **Ticker** | Bottom edge of the centre panel | Continuous crawl of all the headlines, with dates, separated by ▲ quotes |
-| **Stingers** | Scene changes | Our KV light plates used as broadcast transition wipes, the same rule as always: light only in transitions, never on text. Cards and ticker hide during the wipe |
+| Placa | News clip |
+|---|---|
+| F1 · INTERNACIONAL | TV newsroom video wall: tanker at a terminal, globe, green oil-price chart 74.32 / 76.85 / 72.40, lower third "IRÁN ANUNCIÓ EL CIERRE DEL ESTRECHO DE ORMUZ" |
+| F2 · NACIONALES | Newspaper front page on the press / desk: "A un mes del último aumento, anuncian nueva suba de Petropar del diésel y la nafta premium", photo of the depot with the Paraguayan flag and the tanker truck |
+| F3 · ANÁLISIS | News analysis screen: Strait of Hormuz map with the tanker route in light, price board 95 7.620 · 93 7.260 · D 6.950 · GNV 4.990, headline "¿Por qué baja el crudo y suben los combustibles en Paraguay?" |
+| F4 · CLARIDAD | Clean, real Puma Energy station: attendant refuelling a car (no news graphics) |
 
-**Arc in the graphics:** F1 → F3 build up (more cards, the ticker speeds up, the price digits tick). In F4 the ticker stops, cards and bug slide out, only clean footage + headline remain = "claridad". Then the close as in every teaser.
-
----
-
-## 3 · Per scene
-
-| | Main feed (Seedance, subtle) | Left wing monitor | Right wing monitor | Ticker |
-|---|---|---|---|---|
-| F1 · INTERNACIONAL | Tanker gliding past a lit terminal; pumpjacks nodding in the sunset | Card: "Combustible: sector privado anticipa posible aumento…" → Card: "Irán anunció el cierre del estrecho de Ormuz" | Globe rotating → candlestick chart rising, quotes 74.32 ▲ 76.85 ▲ 72.40 | starts |
-| F2 · NACIONALES | Depot with the flag waving; tanker truck rolling; nozzle refuelling | Card: "A un mes del último aumento, anuncian nueva suba de Petropar del diésel y la nafta premium" | Card: "Combustibles suben hasta G. 700 desde este sábado en emblemas privados" | runs |
-| F3 · ANÁLISIS | Tanker through the strait; refinery flares | Map: route through the Strait of Hormuz drawn in light + label | Price board 95 / 93 / D / GNV ticking to 7.620 / 7.260 / 6.950 / 4.990 → Card: "¿Por qué baja el crudo y suben los combustibles en Paraguay? Petropar explica" | faster |
-| F4 · (clears) | Puma station, attendant smiles, refuelling | the monitors return to the scene footage | the monitors return to the scene footage | stops, slides out |
-
-Card "Diésel sube por sexta vez y temen más aumentos" and "El mercado internacional del petróleo volvió a moverse" go into the ticker.
-
----
-
-## 4 · Decisions to confirm
-1. **Media logos.** The deck shows La Nación and Ámbito logos. They are third-party brands, so we keep the headlines but label cards by section (ECONOMÍA / NACIONALES / GEOPOLÍTICA) and date, no outlet logos. *(Recommended.)*
-2. **Card style.** (a) newspaper paper clippings as in the deck, or (b) TV broadcast cards: dark glass panels with KV-green accents, section tag, time stamp. *(Recommended: b, it reads as a broadcast and stays sharp on the LED; the paper-clipping look can stay as texture inside the card.)*
-3. **Readability.** At most 2 cards on screen at once; card headlines at least 22 px in the 1920 preview (≈ 0.2 m letters on the 19 m screen).
+Media logos (La Nación, Ámbito) are not reproduced: section tags + dates only.
 
 ## 5 · Production list
-- **4 clean B-roll plates.** GPT Image 2.6 from F1–F4 (prompts in chat, Nov 13), then Seedance 2.5, 5 s each, subtle motion, then Topaz.
-- **Map plate for F3.** A dark stylised map of the Persian Gulf / Strait of Hormuz, generated once. I draw the route in light over it.
-- **Built by me in code:**
-  - the bug;
-  - segment tags;
-  - the cards: typeset with the KV fonts, pop-in animation;
-  - the ticker crawl;
-  - the candlestick chart and quotes;
-  - the price board with ticking digits;
-  - the globe: Seedance plate or code;
-  - the F4 "clear-out".
+- **4 news-clip frames.** GPT Image 2.6 with the matching deck frame as the reference, then Seedance 2.5 (6 s, subtle camera, slow-mo ramp at about 1 s like the others), then Topaz.
 - **Close.** His portrait photo is still needed: the deck photo is 200 px / a stage shot. Green-screen end frame → Seedance → key.
 - **Voice-over** (same male voice):
   - "Los últimos años... marcaron el rumbo de nuestra industria."
