@@ -1,12 +1,128 @@
-{"F1_L1": {"fx": 0.25, "src": "news_in/n05.png", "box": [0, 520, 2370, 1488], "tag": "INTERNACIONAL · 12 JUL 2026", "head": "Irán anunció el cierre del *estrecho de Ormuz*"},
- "F1_L2": {"src": "news_in/n03.png", "box": [33, 703, 1575, 1230], "tag": "INTERNACIONAL · OCT 2026", "head": "Los ataques a barcos cerca de Ormuz alcanzan un *máximo histórico*"},
- "F1_R1": {"src": "news_in/n04.png", "box": [53, 336, 1588, 1333], "tag": "ECONOMÍA · 14 JUL 2026", "head": "El mercado internacional del petróleo *volvió a moverse*"},
- "F1_R2": {"src": "news_in/n07.png", "box": [0, 346, 2192, 1537], "tag": "CONFLICTOS · 10 SEP 2026", "head": "Precio del petróleo supera *USD 100* por ataques en Ormuz"},
- "F2_L1": {"src": "news_in/n03.png", "box": [33, 703, 1575, 1230], "fx": 0.8, "tag": "GEOPOLÍTICA", "head": "Irán intensifica la *vigilancia* en el estrecho de Ormuz"},
- "F2_L2": {"src": "news_clean/n06c.png", "box": [0, 0, 1386, 630], "tag": "CONFLICTOS", "head": "Los envíos de petróleo *se estancan*"},
- "F2_R1": {"src": "news_in/n10.png", "box": [1000, 560, 1589, 1420], "tag": "ECONOMÍA · 06 MAR 2026", "head": "Combustibles suben hasta *G. 700* desde este sábado"},
- "F2_R2": {"board": true, "hi": "D", "tag": "NACIONALES", "head": "Anuncian *nueva suba* del diésel y la nafta premium"},
- "F3_L1": {"src": "news_in/n08.png", "box": [40, 425, 1570, 1275], "tag": "HIDROVÍA · 23 ENE 2026", "head": "Hidrovía y combustibles: *el flujo que define los costos*"},
- "F3_L2": {"src": "news_in/n09.png", "box": [10, 570, 1050, 1194], "tag": "LOGÍSTICA", "head": "El Niño desafía la *previsibilidad* de la Hidrovía"},
- "F3_R1": {"board": true, "hi": "D", "tag": "ECONOMÍA", "head": "Diésel sube *por sexta vez* y temen más aumentos"},
- "F3_R2": {"src": "news_in/n10.png", "box": [1000, 560, 1589, 1420], "fx": 0.2, "tag": "ECONOMÍA · 26 AGO 2026", "head": "¿Por qué baja el crudo y *suben los combustibles*?"}}
+{
+ "F1_L1": {
+  "fx": 0.25,
+  "src": "news_in/n05.png",
+  "box": [
+   0,
+   520,
+   2370,
+   1488
+  ],
+  "tag": "INTERNACIONAL · 12 JUL 2026",
+  "head": "Irán anunció el cierre del *estrecho de Ormuz*"
+ },
+ "F1_L2": {
+  "src": "news_in/n03.png",
+  "box": [
+   33,
+   703,
+   1575,
+   1230
+  ],
+  "tag": "INTERNACIONAL · OCT 2026",
+  "head": "Los ataques a barcos cerca de Ormuz alcanzan un *máximo histórico*"
+ },
+ "F1_R1": {
+  "src": "news_in/n04.png",
+  "box": [
+   53,
+   336,
+   1588,
+   1333
+  ],
+  "tag": "ECONOMÍA · 14 JUL 2026",
+  "head": "El mercado internacional del petróleo *volvió a moverse*"
+ },
+ "F1_R2": {
+  "src": "news_in/n07.png",
+  "box": [
+   0,
+   346,
+   2192,
+   1537
+  ],
+  "tag": "CONFLICTOS · 10 SEP 2026",
+  "head": "Precio del petróleo supera *USD 100* por ataques en Ormuz"
+ },
+ "F2_L1": {
+  "src": "news_in/n03.png",
+  "box": [
+   33,
+   703,
+   1575,
+   1230
+  ],
+  "fx": 0.8,
+  "tag": "GEOPOLÍTICA",
+  "head": "Irán intensifica la *vigilancia* en el estrecho de Ormuz"
+ },
+ "F2_L2": {
+  "src": "news_in/n07.png",
+  "box": [
+   0,
+   346,
+   2192,
+   1537
+  ],
+  "tag": "CONFLICTOS",
+  "head": "Los envíos de petróleo *se estancan*",
+  "fx": 0.15
+ },
+ "F2_R1": {
+  "src": "news_in/n10.png",
+  "box": [
+   1000,
+   560,
+   1589,
+   1420
+  ],
+  "tag": "ECONOMÍA · 06 MAR 2026",
+  "head": "Combustibles suben hasta *G. 700* desde este sábado"
+ },
+ "F2_R2": {
+  "board": true,
+  "hi": "D",
+  "tag": "NACIONALES",
+  "head": "Anuncian *nueva suba* del diésel y la nafta premium"
+ },
+ "F3_L1": {
+  "src": "news_in/n08.png",
+  "box": [
+   40,
+   425,
+   1570,
+   1275
+  ],
+  "tag": "HIDROVÍA · 23 ENE 2026",
+  "head": "Hidrovía y combustibles: *el flujo que define los costos*"
+ },
+ "F3_L2": {
+  "src": "news_in/n09.png",
+  "box": [
+   10,
+   570,
+   1050,
+   1194
+  ],
+  "tag": "LOGÍSTICA",
+  "head": "El Niño desafía la *previsibilidad* de la Hidrovía"
+ },
+ "F3_R1": {
+  "board": true,
+  "hi": "D",
+  "tag": "ECONOMÍA",
+  "head": "Diésel sube *por sexta vez* y temen más aumentos"
+ },
+ "F3_R2": {
+  "src": "news_in/n10.png",
+  "box": [
+   1000,
+   560,
+   1589,
+   1420
+  ],
+  "fx": 0.2,
+  "tag": "ECONOMÍA · 26 AGO 2026",
+  "head": "¿Por qué baja el crudo y *suben los combustibles*?"
+ }
+}

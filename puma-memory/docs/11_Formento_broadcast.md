@@ -124,3 +124,4 @@ Media logos (La Nación, Ámbito) are not reproduced: section tags + dates only.
   - dy −0.25 → −0.19, zoom 1.08–1.10, cx 0.46 → 0.50.
   - His head stays in the strip throughout; he walks behind the text mid-shot, as the prompt asks.
 - **Lesson:** a subject at the extreme left/right top of the strip falls under the V die-cut even when inside the band. Check the V shape, not just the band.
+- Nov 13: client: no fires in the video. F2 is replaced by the Hormuz port terminal (client n04), FOR2b. Wing F2_L2 smoke photo → n07.

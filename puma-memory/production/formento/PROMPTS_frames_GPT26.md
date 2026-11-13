@@ -79,3 +79,19 @@ End frame: `Formento_ENDFRAME_GREEN_21x9_3840x1648.png` (client photo IMG_0397, 
 人物动作约80%速度（轻微慢动作，流畅自然）。面部、发型、胡须、服装与尾帧完全一致，同一个人。手部：每只手5根手指，属于正确的手臂。
 背景：始终是均匀平整的纯绿色，无地面线、无阴影、无反光、无绿色溢色到人物身上，无任何道具或椅子。
 风格：真实照片质感，柔和均匀的影棚正面光。无文字、无标志、皮带扣无字母、无音乐。
+
+## FOR2b · puerto en Ormuz — REPLACES FOR2 (client, Nov 13: no fires in the video)
+Ref: `FOR2b_puerto_REF_21x9.png` (client n04 "Crecientes tensiones en Oriente Medio presionan al alza los precios del petróleo"). Wing F2_L2 photo also changed from smoke (n06) to the strait (n07).
+
+### Frame (GPT Image 2.6 · 21:9 · 4K · High)
+Turn the attached reference into a photorealistic 21:9 news-camera frame of a busy port terminal on the Strait of Hormuz.
+COMPOSITION (locked): keep the reference exactly — the large ship moored at the quay on the left third under the tall orange gantry cranes, the long container yard and smaller orange cranes along the waterfront through the centre, the bare rocky mountain rising on the right, calm blue-green sea in the foreground with a green channel buoy. Extend contextually into the grey: more mountain ridge, quay and yard on the right, sky above, more sea below and on the left. No zoom, crop or reframe.
+SCENE: late-afternoon sun from the left, clear crisp air (no haze, no fog), real port scale (gantry cranes 70 m, ship 300 m), containers in muted mixed colours, a few small tugs at the quay. No smoke, no fire.
+LENS & LOOK: 400 mm telephoto news camera from a boat, compressed perspective, crisp detail, documentary colour.
+FIXES: no ship names, no container logos or lettering, no flags, no text of any kind.
+
+### Seedance 2.5 (@image1 首帧 · 21:9 · 6 s)
+@image1（首帧）。单镜头，6秒，21:9 新闻长焦画面，构图与首帧完全一致。
+0-6秒：400mm长焦，从船上拍摄，轻微随浪起伏的手持感，镜头极缓慢向右平移并略微推近（总共约4%）。左侧码头上的橙色岸桥缓慢移动，吊具吊起一个集装箱缓缓上升；一艘小型拖船从画面左下方低速驶入，留下细白尾浪；海面波光闪烁，航道浮标随浪轻摆。
+动作约80%速度（轻微慢动作），摄影机真实速度。真实比例：岸桥约70米，船长约300米。
+风格：真实新闻纪实，午后清澈阳光，空气通透，无雾无霾，无烟无火。无文字、无标志、无船名、无集装箱字母、无旗帜、无音乐。
