@@ -53,12 +53,20 @@ Name card (s08_image20): **DANIEL / FORMENTO** · SUPPLY & STRATEGIC PLANNING MA
 - **Only change:** the 4 scene clips are **news footage / news broadcasts** instead of football. Each clip carries the content of its deck slide (headlines, data, places) inside the image: on a newsroom video wall, a printed front page, an analysis screen. Then F4 is clean Puma footage.
 - No separate broadcast overlays (no ticker/bug/wing monitors in code). The news lives in the footage.
 
-| Placa | News clip |
-|---|---|
-| F1 · INTERNACIONAL | TV newsroom video wall: tanker at a terminal, globe, green oil-price chart 74.32 / 76.85 / 72.40, lower third "IRÁN ANUNCIÓ EL CIERRE DEL ESTRECHO DE ORMUZ" |
-| F2 · NACIONALES | Newspaper front page on the press / desk: "A un mes del último aumento, anuncian nueva suba de Petropar del diésel y la nafta premium", photo of the depot with the Paraguayan flag and the tanker truck |
-| F3 · ANÁLISIS | News analysis screen: Strait of Hormuz map with the tanker route in light, price board 95 7.620 · 93 7.260 · D 6.950 · GNV 4.990, headline "¿Por qué baja el crudo y suben los combustibles en Paraguay?" |
-| F4 · CLARIDAD | Clean, real Puma Energy station: attendant refuelling a car (no news graphics) |
+**Revised Nov 13 with the client's news screenshots** (Drive "Placa 1 y 2" / "Placa 3 y 4"; local copies in `formento/news_in/n01–n10`; the 3 extra files in Placa 3 y 4 duplicate n05–n07, and the 6 "PLACAS adicionales" shortcuts didn't download).
+- Placa 1 y 2 screenshots: Hormuz. Tankers anchored under arid cliffs (n03/n05/n07), port cranes (n04), the oil-flow chart (n01), a burning tanker with fireboats (n02/n06).
+- Placa 3 y 4 screenshots: Paraguay. Hidrovía barge convoys (n08), a river port with El Niño logistics (n09), stations closing (n10).
+
+| Placa | News clip (footage only, no on-screen text) | Ref |
+|---|---|---|
+| F1 · INTERNACIONAL | Telephoto of anchored tankers in the Strait of Hormuz, arid cliffs behind | n05 |
+| F2 · DESAFÍOS | Tanker superstructure burning, smoke, fireboat water cannons | n06 / n02 |
+| F3 · DECISIONES | Aerial view of the Hidrovía Paraguay with barge convoys | n08 |
+| F4 · CLARIDAD | Clean Puma station (deck frame, text greyed out and extended) | s08_image19 |
+
+- **Refs:** `production/formento/FOR*_REF_21x9.png` are 3360×1440 photo-only canvases (headlines, outlet logos and the play button removed), with the action placed in the LED band.
+- **Prompts:** `production/formento/PROMPTS_frames_GPT26.md`.
+- **Lesson:** client news screenshots carry outlet logos, headlines and UI. Crop to the photo and inpaint UI marks before using them as a ref. Never put the headline into the frame: the placa lockup is the text, and AI text garbles.
 
 Media logos (La Nación, Ámbito) are not reproduced: section tags + dates only.
 
