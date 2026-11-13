@@ -114,3 +114,13 @@ Media logos (La Nación, Ámbito) are not reproduced: section tags + dates only.
   - Clips are stand-ins (`formento/clips_in/f1–f4.mp4` = the ref frames with a slow push) until the Seedance clips arrive.
   - Close: `anim_none` (an empty speaker) until Formento's walk-in exists.
 - **Headlines without a photo** get a fuel price-board graphic (`board: true`, dimmed to 55%, drawn on the outer side).
+
+## 6 · Real clips in (Nov 13)
+- **Clips:** Higgsfield job IDs → CloudFront → `formento/clips_in/F1_ormuz, F2_buque, F3_hidrovia, F4_puma, walkin.mp4`, all 3840×1648 at 30 fps. F1 is 5 s, so the slide speed is 0.84.
+- **F2 differs from the reference:** a burning barge on a river with a fireboat. That's what the user generated; it's used as is.
+- **Walk-in:** keyed with `speaker_key_green.py` → `formento/anim4k` (203 frames).
+- **F4 framing:**
+  - `clip_off` 0.6 s, so the attendant is already clear of the left V.
+  - dy −0.25 → −0.19, zoom 1.08–1.10, cx 0.46 → 0.50.
+  - His head stays in the strip throughout; he walks behind the text mid-shot, as the prompt asks.
+- **Lesson:** a subject at the extreme left/right top of the strip falls under the V die-cut even when inside the band. Check the V shape, not just the band.

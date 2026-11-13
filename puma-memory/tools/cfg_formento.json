@@ -533,7 +533,7 @@
    "b": 30.1,
    "name": "CIERRE · DANIEL FORMENTO",
    "vo": "«Con ustedes… Daniel Formento.»",
-   "sides": "(animación del speaker pendiente)",
+   "sides": "Daniel Formento (walk-in, green-screen key)",
    "centre": "CON USTEDES → DANIEL FORMENTO",
    "light": "Contorno",
    "sfx": "Impacto + cola"
@@ -588,8 +588,8 @@
     76
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/f1.mp4",
-   "speed": 0.88,
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/F1_ormuz.mp4",
+   "speed": 0.84,
    "zoom_keys": [
     [
      0,
@@ -633,7 +633,7 @@
     223
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/f2.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/F2_buque.mp4",
    "speed": 0.88,
    "zoom_keys": [
     [
@@ -678,7 +678,7 @@
     348
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/f3.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/F3_hidrovia.mp4",
    "speed": 0.88,
    "zoom_keys": [
     [
@@ -723,16 +723,49 @@
     473
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/f4.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/F4_puma.mp4",
    "speed": 0.88,
    "zoom_keys": [
     [
      0,
-     1.0
+     1.08
     ],
     [
      6,
-     1.04
+     1.1
+    ]
+   ],
+   "dy_keys": [
+    [
+     0,
+     -0.25
+    ],
+    [
+     1.5,
+     -0.23
+    ],
+    [
+     3,
+     -0.19
+    ],
+    [
+     6,
+     -0.19
+    ]
+   ],
+   "clip_off": 0.6,
+   "cx_keys": [
+    [
+     0,
+     0.46
+    ],
+    [
+     2.5,
+     0.47
+    ],
+    [
+     6,
+     0.5
     ]
    ]
   },
@@ -781,8 +814,8 @@
  "out_fps": 30,
  "beam_y": 0.965,
  "andres_anim": {
-  "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/anim_none",
-  "frames": 1
+  "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/anim4k",
+  "frames": 203
  },
  "text_groups": [
   {
