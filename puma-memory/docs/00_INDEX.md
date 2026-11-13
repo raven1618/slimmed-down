@@ -175,3 +175,4 @@ Everything we know about this project, indexed by source. Each new piece of cont
     - Locker room lower.
     - Attack keeps the ball in frame (zoom 1.10, number 10's head may crop slightly).
     - Every tracking move is smoothed and subtle (zoom ≤ 1.15).
+- **Nov 13:** Carolina v3: role on the card = GERENTE DE MARKETING (user: 'gerente de MKT'). Only the voice-over remains open.

@@ -50,7 +50,7 @@ lockup("B3", [("fit", [("MOVIENDO EL JUEGO", "black", 100, W_)]), ("small", "HAC
 lockup("B4", [("fit", [("CON PASES", "black", 100, W_)]), ("small", "QUE ACERQUEN AL", 0.32), ("fit", [("GOL", "black", 100, L_)])], 420)
 lockup("B5", [("fit", [("Y LA CONVICCIÓN", "black", 100, W_)]), ("small", "DE JUGAR SIEMPRE EN", 0.34), ("fit", [("GRANDE", "black", 100, L_)])], 500)
 name = [("CAROLINA", "black", 104, "white"), ("SILVA", "black", 104, "lime")]; nw = width(name)
-role = [("CARGO A CONFIRMAR", "medium", 26, "white")]
+role = [("GERENTE DE MARKETING", "medium", 26, "white")]
 logo_h = 32; cn, cr = cap(name), cap(role); g1, g2 = 18, 15
 total = logo_h + g1 + cn + g2 + 1 + g2 + cr; top = CY - total / 2
 nb = round(top + logo_h + g1 + cn); rule_y = round(nb + g2); rb = round(rule_y + g2 + cr)
