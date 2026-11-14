@@ -117,3 +117,14 @@ Approved with Andrés Silva (v8 → v23). **Read this before starting any speake
   - Place its first frame small on a grey 21:9 canvas (`carolina/s4/`) so the action falls inside the band, crop off any baked-in letterbox first, and outpaint it with GPT Image.
   - Then use that frame as the start frame and the old clip as a video reference to regenerate the shot (Seedance 2.0 takes a video reference).
   - A text-only "pull the camera back" edit did nothing.
+
+## 8 · Client corrections, Nov 14
+- **Cepede S4 (coach, v5.mp4):**
+  - Client note: "cortar el video antes que se vea la cara de él en primer plano".
+  - The clip changes to the coach's close-up at 3.3 s. Speed 0.88 → 0.6, so the clip ends at about 3.2 s, including the transition out (f 370–504).
+  - **Rule:** check every AI clip for an internal framing change or cut (Seedance sometimes adds one) and keep the placa inside the approved part.
+- **Carolina close:**
+  - New on-the-spot turnaround (back to camera → turns → end pose). Seedance 417a4bf6, Topaz 2c43bb01, 3838×1672 at 24 fps.
+  - Conformed with `scale=3840:-2,crop=3840:1648,fps=30`, keyed into `carolina/anim4k_v2` (211 frames).
+- **Topaz uploads come back as 3838×1672 at 24 fps:** always conform to 3840×1648 at 30 fps before keying or editing.
+- **Formento F2:** the client's Hormuz frame (anchored ships under the cliffs), Topaz 7096125f → `formento/clips_in/F2_hormuz.mp4`.
