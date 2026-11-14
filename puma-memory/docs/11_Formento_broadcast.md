@@ -126,3 +126,4 @@ Media logos (La Nación, Ámbito) are not reproduced: section tags + dates only.
 - **Lesson:** a subject at the extreme left/right top of the strip falls under the V die-cut even when inside the band. Check the V shape, not just the band.
 - Nov 13: client: no fires in the video. F2 is replaced by the Hormuz port terminal (client n04), FOR2b. Wing F2_L2 smoke photo → n07.
 - Nov 13: client picked n07 (strait fleet) for F2 → FOR2c. Wing F2_L2 → n04.
+- Nov 14: Formento v3: F1 stays the original Ormuz clip; only F2 changes, to the sailboats (Topaz 439330e8, 5120×2160 → scale=-2:1648, crop 3840:1648, 30 fps; dy +0.07).
