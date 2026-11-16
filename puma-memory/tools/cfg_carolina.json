@@ -1055,7 +1055,8 @@
  "beam_y": 0.965,
  "andres_anim": {
   "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/carolina/anim4k_v2",
-  "frames": 211
+  "frames": 211,
+  "off": 80
  },
  "text_groups": [
   {

@@ -49,7 +49,7 @@ lockup("B2", [("small", "PONIÉNDONOS FRENTE A", 0.30), ("fit", [("NUEVOS DESAF�
 lockup("B3", [("fit", [("EXIGIENDO", "black", 100, W_)]), ("small", "DECISIONES", 0.40), ("fit", [("ESTRATÉGICAS", "black", 100, L_)])], 480)
 lockup("B4", [("fit", [("PARA AVANZAR CON CLARIDAD", "black", 100, W_)]), ("small", "EN MEDIO DE LA", 0.40), ("fit", [("COMPLEJIDAD", "black", 100, L_)])], 500)
 name = [("DANIEL", "black", 104, "white"), ("FORMENTO", "black", 104, "lime")]; nw = width(name)
-role = [("SUPPLY & STRATEGIC PLANNING MANAGER · PUMA PARAGUAY", "medium", 22, "white")]
+role = [("DIRECTOR DE PLANEAMIENTO", "medium", 26, "white")]
 logo_h = 32; cn, cr = cap(name), cap(role); g1, g2 = 18, 15
 total = logo_h + g1 + cn + g2 + 1 + g2 + cr; top = CY - total / 2
 nb = round(top + logo_h + g1 + cn); rule_y = round(nb + g2); rb = round(rule_y + g2 + cr)

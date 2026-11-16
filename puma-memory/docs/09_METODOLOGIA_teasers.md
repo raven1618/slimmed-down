@@ -128,3 +128,5 @@ Approved with Andrés Silva (v8 → v23). **Read this before starting any speake
   - Conformed with `scale=3840:-2,crop=3840:1648,fps=30`, keyed into `carolina/anim4k_v2` (211 frames).
 - **Topaz uploads come back as 3838×1672 at 24 fps:** always conform to 3840×1648 at 30 fps before keying or editing.
 - **Formento F2:** the client's Hormuz frame (anchored ships under the cliffs), Topaz 7096125f → `formento/clips_in/F2_hormuz.mp4`.
+- **Nov 16 · Carolina (client):** "no quiere que se vea su espalda". The close starts mid-turn: the new `andres_anim.off` (frames to skip) in storyboard_v24/v25, set to 80 for Carolina (profile view). **Rule:** speakers may not want their back shown, so offer an offset start or a turn-only end frame.
+- **Nov 16 · Formento:** the title is DIRECTOR DE PLANEAMIENTO (client). Placa 2: the sailboats are replaced by an oil tanker (FOR2d prompts).

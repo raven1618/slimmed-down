@@ -111,3 +111,18 @@ FIXES: no vessel names, flags, logos or text of any kind.
 0-6秒：200mm长焦，三脚架上极缓慢向右平移并略微推近（总共约4%），稳定无抖动。海面上分散的小货船和木制单桅帆船随浪轻轻起伏，几艘缓慢前行；两艘快艇在中景拉出细长白色尾浪；前景两艘较大的帆船缓缓转向；海面波光闪烁。
 动作约80%速度（轻微慢动作），摄影机真实速度。真实比例：帆船20–30米。
 风格：真实新闻纪实，午后清澈阳光，海岸线清晰，空气通透，无雾无霾，无烟无火。无文字、无标志、无船名、无旗帜、无音乐。
+
+## FOR2d · oil tanker — REPLACES the sailboats (client, Nov 16: "que sean barcazas en vez de veleros / o plataforma de petróleo"; user: oil tanker)
+### Frame (GPT Image 2.6 · 21:9 · 4K · High · optional style ref: the approved placa 1 Hormuz frame)
+Photorealistic 21:9 news-camera frame of a large loaded crude-oil tanker (VLCC) cruising through the Strait of Hormuz, seen side-on from a press boat about 400 m away.
+COMPOSITION: the tanker's long dark-red and black hull runs horizontally across the middle of the frame, waterline at about 65% of the frame height; the white accommodation block and funnel on the left third, the long flat deck with pipelines and manifolds through the centre, the bow with a white bow wave on the right third. Arid ochre mountains low on the horizon behind, open deep-blue sea in the lower third, sky in the upper quarter. The whole ship fits inside the frame with sea on both sides.
+SCENE: late-afternoon low sun from the left, warm light on the superstructure, clear crisp air (no haze, no fog), calm sea with fine ripples and glints, real scale (tanker 330 m long, 60 m wide), a small escort tug far behind on the left. Same colour grade as the Hormuz scene: warm ochre land, deep blue water, blue sky with thin cirrus.
+LENS & LOOK: 300 mm telephoto broadcast camera, compressed perspective, crisp steel and rust detail, documentary colour.
+FIXES: no ship name, no hull lettering or numbers, no flags, no funnel logo, no smoke, no fire, no text of any kind.
+
+### Seedance 2.5 (@image1 首帧 · 21:9 · 6 s)
+@image1（首帧）。单镜头，6秒，21:9 新闻长焦画面，构图与首帧完全一致，油轮始终完整在画面中。
+摄影机：300mm长焦，从并行的新闻船上拍摄，全程轻微、平滑的手持感，随海浪极轻微起伏；镜头以与油轮相同的速度极缓慢向右平移跟随（油轮在画面中的位置基本不变），同时略微推近（总共约3%）。
+0-6秒：满载的油轮从左向右平稳航行，船首劈开白色浪花，船侧拉出长长的白色尾流；远处左侧一艘护航拖船缓缓跟随；前景深蓝色海浪自然翻动并向后流过，浪尖阳光闪烁；背景赭色山脉缓慢后移，显示出前进速度。
+动作约80%速度（轻微慢动作），摄影机真实速度。真实比例：油轮330米。
+风格：真实新闻纪实，午后低角度暖阳，空气清澈通透，无雾无霾，无烟无火，色彩与霍尔木兹场景一致。无文字、无船名、无标志、无旗帜、无音乐。

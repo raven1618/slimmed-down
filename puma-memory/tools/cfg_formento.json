@@ -443,18 +443,18 @@
        "lime"
       ]
      ],
-     "y": 214
+     "y": 212
     },
     {
      "runs": [
       [
-       "SUPPLY & STRATEGIC PLANNING MANAGER · PUMA PARAGUAY",
+       "DIRECTOR DE PLANEAMIENTO",
        "medium",
-       22,
+       26,
        "white"
       ]
      ],
-     "y": 260,
+     "y": 261,
      "delay": 18
     }
    ]
@@ -462,8 +462,8 @@
  ],
  "outro": {
   "card_in": 648,
-  "logo_y": 91,
-  "rule_y": 229,
+  "logo_y": 90,
+  "rule_y": 227,
   "outline": [
    690,
    730
@@ -534,7 +534,7 @@
    "name": "CIERRE · DANIEL FORMENTO",
    "vo": "«Con ustedes… Daniel Formento.»",
    "sides": "Daniel Formento (walk-in, green-screen key)",
-   "centre": "CON USTEDES → DANIEL FORMENTO",
+   "centre": "CON USTEDES → DANIEL FORMENTO · DIRECTOR DE PLANEAMIENTO",
    "light": "Contorno",
    "sfx": "Impacto + cola"
   }
