@@ -1,13 +1,28 @@
 # Outer Heaven · Cerro Kavaju
 
-A static site that pitches the Cerro Kavaju project. It has four views:
+A static site that pitches the Cerro Kavaju project: glamping cabins and a private community at the foot of
+a protected forest hill in Cordillera, Paraguay.
 
-- **The hill:** a 4 × 4 km 3D model of Cerro Kavaju built from satellite elevation, imagery, tree heights and map data. Tap the ground to get coordinates, slope and land cover, or draw boundaries from the title plans. **Display** switches the base map (satellite, topographic, shaded relief, slope, land cover, tree height, vegetation index, infrared) and what else the map shows.
-- **The cabin:** a glamping cabin you can walk around, with a day/night switch.
-- **The residence:** a home on the private side.
+## Views
+
+- **The hill:** a 4 × 4 km 3D model of Cerro Kavaju from satellite elevation, imagery, tree heights and map data.
+- **Walk the site:** the quarry cabins, the lagoon and the forest edge, walkable in first person. Its light was baked in Blender (see `render/`).
+- **The cabin / The residence:** concept designs.
+- **The trail:** Mala Visión, the fight at the trail's midpoint, as a playable prototype.
+- **360° views:** photoreal panoramas rendered in Blender.
 - **The plan:** the investor brief, with an interactive return calculator.
 
-There is no build step for the site. It is one `index.html`, plus `data/` (the 3D hill) and `img/` (site photos and the concept render). Three.js loads from jsDelivr.
+## How it is built
+
+- `index.html`: the page, its styles, and the hill, concept scenes, 360° views and plan.
+- `js/walk.js`, `js/trail.js`: the two heavy views, loaded only when their tab opens.
+- `data/`: terrain, trees, imagery and base maps for the hill; `data/walk/` for the walk.
+- `img/`: site photos and renders. `render/`: the Blender pipeline. `data/build/`: the data pipeline.
+
+There is no build step. Three.js (minified) loads from jsDelivr. Every view draws with **one WebGL renderer**:
+the walk, the trail and the 360° views borrow it, set it up their own way and hand it back when they close,
+and the walk and the trail free their graphics memory when you leave them. One context for the whole site
+keeps phones within their graphics memory.
 
 ## Host it for free
 
