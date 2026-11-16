@@ -477,7 +477,7 @@ export async function build(ctx) {
   }
   function setMirror(on) {
     pl.mirror = on;
-    canvas.style.transform = on ? 'scaleX(-1)' : '';
+    R.domElement.style.transform = on ? 'scaleX(-1)' : '';     // the page's canvas shows the selfie camera's mirror image
     ui.selfie.hidden = !on;
     const b = ui.acts.querySelector('[data-act="mirror"]');
     if (b) b.setAttribute('aria-pressed', String(on));
@@ -841,14 +841,15 @@ export async function build(ctx) {
     director: {
       get phase() { return phase; }, get eyes() { return eyes; }, get rnd() { return rnd; }, get shown() { return shown; }, get turning() { return !!turn; },
       get aimed() { return herVisible() && inReticle(chest(tmp2)); },
+      get view() { cam.updateMatrixWorld(); return { yaw: +pl.yaw.toFixed(2), mirror: pl.mirror, her: +bearing(chest(tmp2)).toFixed(2), onScreen: onScreen(chest(tmp2)), visible: herVisible(), sub: ch && ch.sub, turn: !!turn }; },
       herYaw: () => bearing(chest(tmp2)) - (pl.mirror ? Math.PI : 0),
       turnTo(yaw, d = 0.7) { turn = { from: pl.yaw, to: pl.yaw + wrapA(yaw - pl.yaw), t: 0, d }; },
       stop() { cancelAnimationFrame(raf); raf = 0; },
-      step(dt) { time += dt; update(dt); animate(dt); placeCamera(); overlays(); if (composer) composer.render(); else R.render(scene, cam); },
+      step(dt, draw = true) { time += dt; update(dt); animate(dt); placeCamera(); overlays(); if (draw) { if (composer) composer.render(); else R.render(scene, cam); } },
       start: () => start(), act: (id) => ACT[id].run(), mirror: (on) => setMirror(on), shoot: () => shoot(),
     },
     dispose() {                                            // everything this view put on the GPU, its sound and its listeners
-      cancelAnimationFrame(raf); ac.abort();
+      cancelAnimationFrame(raf); ac.abort(); R.domElement.style.transform = '';
       if (audio) audio.ctx.close().catch(() => {});
       if (composer) { composer.passes.forEach((p) => p.dispose && p.dispose()); composer.dispose(); }
       scene.traverse((o) => { if (o.isLight && o.shadow) o.shadow.dispose(); });

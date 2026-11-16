@@ -12,7 +12,7 @@ import { execFileSync } from 'child_process';
 import fs from 'fs'; import path from 'path';
 
 const [SITE, OUT, THREE_DIR] = process.argv.slice(2);
-const FPS = 30, W = 1280, H = 720, LIMIT = Number(process.env.FRAMES || 1e9);
+const FPS = 30, W = 1280, H = 720, LIMIT = Number(process.env.FRAMES || 1e9), DRY = !!process.env.DRY;   // DRY: play it through without saving frames
 const frames = path.join(OUT, 'frames');
 fs.rmSync(frames, { recursive: true, force: true }); fs.mkdirSync(frames, { recursive: true });
 
@@ -30,7 +30,7 @@ await page.route('http://site/**', (r) => {
   }
   r.fulfill({ path: f, contentType: f.endsWith('.js') ? 'application/javascript' : undefined });
 });
-await page.goto('http://site/index.html#trail');
+await page.goto('http://site/index.html#trail-play', { waitUntil: 'domcontentloaded', timeout: 600000 });
 await page.waitForFunction(() => window.__trailView?.api?.director, null, { timeout: 600000 });
 await page.addStyleTag({ content: `
   #rec-cap { position: fixed; left: 50%; top: 92px; transform: translateX(-50%); z-index: 99; width: min(760px, 86vw); text-align: center;
@@ -40,13 +40,16 @@ await page.addStyleTag({ content: `
   #tr-close, #tr-sound { visibility: hidden; }` });
 await page.evaluate(() => { const d = document.createElement('div'); d.id = 'rec-cap'; document.body.appendChild(d); window.__trailView.api.director.stop(); });
 
-let n = 0;
+let n = 0; const log = {};
 const D = (fn, arg) => page.evaluate(fn, arg);
 const caption = (kick, text) => D(([k, t]) => { document.getElementById('rec-cap').innerHTML = t ? `<small>${k}</small>${t}` : ''; }, [kick, text]);
 async function run(sec, each) {                                  // advance the fight, one saved frame per step
   for (let i = 0, k = Math.round(sec * FPS); i < k && n < LIMIT; i++) {
-    const st = await D((dt) => { const d = window.__trailView.api.director; d.step(dt); return { phase: d.phase, aimed: d.aimed, turning: d.turning, rnd: d.rnd, eyes: d.eyes }; }, 1 / FPS);
-    await page.screenshot({ path: path.join(frames, `f${String(n++).padStart(5, '0')}.jpg`), type: 'jpeg', quality: 92 });
+    const st = await D(([dt, draw]) => { const d = window.__trailView.api.director; d.step(dt, draw); return { phase: d.phase, aimed: d.aimed, turning: d.turning, rnd: d.rnd, eyes: d.eyes }; }, [1 / FPS, !DRY]);
+    if (DRY && st.eyes !== log.eyes && log.eyes !== undefined) console.log('  caught:', JSON.stringify(await D(() => window.__trailView.api.director.view)), 'prev', JSON.stringify(log.view));
+    if (DRY) log.view = await D(() => window.__trailView.api.director.view);
+    if (st.phase !== log.phase || st.eyes !== log.eyes) { console.log(`${(n / FPS).toFixed(1)}s ${st.phase} round ${st.rnd + 1} eyes ${st.eyes}`); Object.assign(log, st); }
+    if (DRY) n++; else await page.screenshot({ path: path.join(frames, `f${String(n++).padStart(5, '0')}.jpg`), type: 'jpeg', quality: 92 });
     if (each && (await each(st)) === false) return st;
   }
 }
@@ -73,23 +76,24 @@ await until((s) => s.aimed, 2);
 await D(() => window.__trailView.api.director.shoot());
 await run(2.5);
 let round = -1, guard = 0;
-while (guard++ < 40 && n < LIMIT) {
+while (guard++ < 2000 && n < LIMIT) {
   const st = await D(() => { const d = window.__trailView.api.director; return { phase: d.phase, rnd: d.rnd }; });
   if (['final', 'end', 'lost', 'settle', 'break'].includes(st.phase)) break;
   if (st.rnd !== round) { round = st.rnd; await caption(`Round ${round + 1} of 3`, ['She charges with her white gaze. Look away, or lose one of your three eyes.', 'Faster now, and she sends the light from more than one tree.', 'The last round. Decoys in the trees; only one of them is her.'][round] || ''); }
-  if (st.phase === 'charge') {
-    await face(0.5); await run(0.6);
-    await D(() => { const d = window.__trailView.api.director; d.mirror(false); d.act('away'); });
-    await until((s) => s.phase !== 'charge', 4);
-  } else if (st.phase === 'idle') {
+  if (st.phase === 'charge') {                                // keep your back to her while her light builds and lands
+    await D(() => { const d = window.__trailView.api.director; d.mirror(false); d.turnTo(d.herYaw() + Math.PI, 0.35); });
+    await run(0.25);
+  } else if (st.phase === 'idle') {                           // wait until her light is spent, then the mirror
     await caption('Strike through the mirror', 'While she rests, turn your back and catch her in the selfie camera. Then take the picture.');
+    await run(1.4);
     await D(() => window.__trailView.api.director.mirror(true));
-    await run(0.4); await face(0.9);
-    await until((s) => s.aimed, 1.5);
-    await D(() => window.__trailView.api.director.shoot());
-    await run(1.8);
+    await run(0.3); await face(0.7);
+    await until((s) => s.aimed || s.phase !== 'idle', 1.5);
+    await D(() => { const d = window.__trailView.api.director; if (d.phase === 'idle') d.shoot(); });
+    await run(1.2);
   } else await run(0.3);
 }
+await until((s) => s.phase !== 'charge' && s.phase !== 'idle', 2);
 await caption('The end of the fight', 'Her light is spent. Lay the phone down and look at her yourself.');
 await face(0.9); await run(1.5);
 await D(() => { const d = window.__trailView.api.director; if (d.shown.includes('down')) d.act('down'); });
@@ -99,6 +103,7 @@ await run(5);
 console.log('captured', n, 'frames in', ((Date.now() - t0) / 60000).toFixed(1), 'min');
 await browser.close();
 
+if (DRY) process.exit(0);
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', path.join(frames, 'f%05d.jpg'),
   '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', path.join(OUT, 'trail.mp4')]);
 console.log('wrote', path.join(OUT, 'trail.mp4'), (fs.statSync(path.join(OUT, 'trail.mp4')).size / 1e6).toFixed(1), 'MB');
