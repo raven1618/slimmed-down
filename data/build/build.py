@@ -4,7 +4,7 @@ Everything is resampled onto one local grid in UTM zone 21S (EPSG:32721),
 the projection Paraguayan title plans normally use. Local scene coordinates
 are metres from the origin: x = easting - E0, z = -(northing - N0).
 
-Outputs (in outer-heaven/data/):
+Outputs (in data/):
   meta.json      origin, extent, sources
   terrain.json   ground heights on a 10 m grid (uint16, cm above BASE)
   imagery.jpg    Sentinel-2 colour composite with 1 m canopy detail
