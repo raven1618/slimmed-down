@@ -488,7 +488,7 @@ body.in-view :is(.shade, .labels, .top, .dock, .display, .credit, .compass, .dra
 .tl-in { width: min(980px, 100%); margin: 0 auto; padding: calc(env(safe-area-inset-top, 0px) + 18px) var(--gutter-r) calc(env(safe-area-inset-bottom, 0px) + 28px) var(--gutter-l); display: grid; gap: 16px; }
 .tl-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .tl-head h2 { margin: 3px 0 0; font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 0.95; }
-.trailer video { width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; background: #000; }
+.trailer video { width: min(100%, calc(64vh * 16 / 9)); justify-self: center; aspect-ratio: 16 / 9; border-radius: 10px; background: #000; }   /* the button stays in view */
 .tl-text { margin: 0; max-width: 46rem; color: var(--sand); text-wrap: pretty; }
 .tl-actions { display: flex; gap: 10px; }
 
