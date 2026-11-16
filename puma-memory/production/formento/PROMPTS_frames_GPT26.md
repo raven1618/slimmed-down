@@ -126,3 +126,18 @@ FIXES: no ship name, no hull lettering or numbers, no flags, no funnel logo, no 
 0-6秒：满载的油轮从左向右平稳航行，船首劈开白色浪花，船侧拉出长长的白色尾流；远处左侧一艘护航拖船缓缓跟随；前景深蓝色海浪自然翻动并向后流过，浪尖阳光闪烁；背景赭色山脉缓慢后移，显示出前进速度。
 动作约80%速度（轻微慢动作），摄影机真实速度。真实比例：油轮330米。
 风格：真实新闻纪实，午后低角度暖阳，空气清澈通透，无雾无霾，无烟无火，色彩与霍尔木兹场景一致。无文字、无船名、无标志、无旗帜、无音乐。
+
+## FOR2e · offshore oil platform — alternative to the tanker (user, Nov 16)
+### Frame (GPT Image 2.6 · 21:9 · 4K · High · optional style ref: the approved placa 1 Hormuz frame)
+Photorealistic 21:9 news-camera frame of a large offshore oil production platform in the Persian Gulf near the Strait of Hormuz, seen from a press boat about 600 m away.
+COMPOSITION: the platform stands on the left third of the frame: four thick steel legs rising from the sea, a multi-deck topside with process modules, pipe racks, a tall drilling derrick, a helideck with its circular marking (no letters) and a lattice crane boom. The main deck sits in the vertical middle of the frame, the waterline at about 65% of the frame height. On the right third, a small supply vessel holds position near the platform and a second, distant platform sits on the horizon. Open deep-blue sea across the lower third, thin ochre coastline low on the horizon, sky in the upper quarter. The whole platform fits inside the frame.
+SCENE: late-afternoon low sun from the left, warm light on the yellow and white steel, long shadows across the decks, clear crisp air (no haze, no fog), calm sea with fine ripples and glints, white surf around the legs. Real scale: topside about 80 m wide, derrick 50 m high. Same colour grade as the Hormuz scene: warm ochre land, deep blue water, blue sky with thin cirrus.
+LENS & LOOK: 300 mm telephoto broadcast camera, compressed perspective, crisp steel detail, documentary colour.
+FIXES: the flare boom is unlit — no flame, no smoke, no fire; no company names, no logos, no lettering on the helideck, no flags, no text of any kind.
+
+### Seedance 2.5 (@image1 首帧 · 21:9 · 6 s)
+@image1（首帧）。单镜头，6秒，21:9 新闻长焦画面，构图与首帧完全一致，海上石油平台始终完整在画面左三分之一。
+摄影机：300mm长焦，从新闻船上拍摄，全程轻微、平滑的手持感，随海浪极轻微起伏；镜头极缓慢向右平移并略微推近（总共约4%），平台始终完整在画面中。
+0-6秒：海浪拍打平台桩腿，激起白色浪花；平台上的吊车吊臂缓慢转动，吊起一个货箱；右侧的补给船随浪轻轻起伏，船尾螺旋桨搅起白色水流；一只海鸟从平台前方缓缓飞过；海面波光闪烁，远处的第二座平台静止在地平线上。
+动作约80%速度（轻微慢动作），摄影机真实速度。真实比例：平台上部约80米宽，井架约50米高。
+风格：真实新闻纪实，午后低角度暖阳，空气清澈通透，无雾无霾。火炬臂不点燃：无火焰、无烟、无火。色彩与霍尔木兹场景一致。无文字、无标志、无公司名、无旗帜、无音乐。
