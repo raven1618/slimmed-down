@@ -483,6 +483,15 @@ body.in-view :is(.shade, .labels, .top, .dock, .display, .credit, .compass, .dra
 .walk .pano-foot { gap: 8px; }
 .wk-credit { opacity: 0.7; }
 
+/* ---------- the trail: the walkthrough video ---------- */
+.trailer { position: fixed; inset: 0; z-index: 36; overflow-y: auto; background: var(--night); }
+.tl-in { width: min(980px, 100%); margin: 0 auto; padding: calc(env(safe-area-inset-top, 0px) + 18px) var(--gutter-r) calc(env(safe-area-inset-bottom, 0px) + 28px) var(--gutter-l); display: grid; gap: 16px; }
+.tl-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.tl-head h2 { margin: 3px 0 0; font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 0.95; }
+.trailer video { width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; background: #000; }
+.tl-text { margin: 0; max-width: 46rem; color: var(--sand); text-wrap: pretty; }
+.tl-actions { display: flex; gap: 10px; }
+
 /* ---------- the trail: Mala Visión, playable ---------- */
 .trail { position: fixed; inset: 0; z-index: 35; overflow: hidden; user-select: none; -webkit-user-select: none; }
 .tr-stage { position: absolute; inset: 0; }
@@ -650,6 +659,19 @@ body.in-view :is(.shade, .labels, .top, .dock, .display, .credit, .compass, .dra
     <div class="pano-tabs" id="wk-spots" role="group" aria-label="Places to stand"></div>
     <p class="pano-hint" id="wk-hint"></p>
     <p class="pano-hint wk-credit">Trees, textures and sky: Poly Haven (CC0)</p>
+  </div>
+</div>
+
+<!-- ======================= THE TRAIL: THE WALKTHROUGH ======================= -->
+<div class="trailer" id="trailer" hidden>
+  <div class="tl-in">
+    <div class="tl-head">
+      <div><p class="eyebrow">The trail · a game played on the real hill</p><h2>Mala Visión</h2></div>
+      <button class="btn ghost" id="tl-close" type="button">Back to 3D</button>
+    </div>
+    <video id="tl-video" controls playsinline preload="none" poster="img/trail-poster.jpg"><source src="img/trail.mp4" type="video/mp4"></video>
+    <p class="tl-text">Halfway up the trail, visitors meet Mala Visión in a ring of whitewashed trees. The app uses the phone's camera, motion sensors and flash: you answer her cry, find her through the camera, take her picture, look away from her gaze and catch her in the selfie mirror. The video is the browser prototype, played through by a script.</p>
+    <div class="tl-actions"><button class="btn" id="tl-play" type="button">Play the prototype</button></div>
   </div>
 </div>
 
@@ -4398,6 +4420,19 @@ const DISPLAY_DEFAULT = {
   title: true, compass: true, hint: true, legend: true, effects: true,
 };
 const display = { ...DISPLAY_DEFAULT };
+/* Two audiences. The pitch is the default; the owners' planning tools (notes, property limits, base maps,
+   data sources) appear when Owner tools is switched on at the foot of Display, or with #tools in the link.
+   The choice is remembered on this device. */
+let TOOLS = false;
+try { TOOLS = localStorage.getItem('oh-tools') === '1' || location.hash === '#tools'; } catch (e) { TOOLS = location.hash === '#tools'; }
+function setTools(on) {
+  TOOLS = on;
+  try { localStorage.setItem('oh-tools', on ? '1' : '0'); } catch (e) {}
+  if (!on) { if (limits.editing || limits.drawing) { limits.editing = limits.drawing = null; drawOverlay(); } notes.placing = notes.moving = null; closeDrawer(); }
+  applyDisplay(); buildBar(); setHint();
+  if (mode === 'cerro') $('lede').textContent = LEDES.cerro;
+  if (!displayEl.hidden) renderDisplay();
+}
 try { Object.assign(display, JSON.parse(localStorage.getItem('oh-display-v1') || '{}')); } catch (e) {}
 const DISPLAY_GROUPS = [
   ['Labels', [['propLabels', 'Property names', 'var(--gold)'], ['propArea', 'Areas on property names'], ['site', 'Homestead buildings', 'var(--sand)'], ['notes', 'Notes and planned cabins', '#7fb3e3'], ['panos', '360° photoreal views', 'var(--gold)'], ['summit', 'Summit', 'var(--gold)'], ['lodging', 'Lodging and glamping', 'var(--earth)'], ['places', 'Other places', 'var(--muted)']]],
@@ -4407,6 +4442,7 @@ const DISPLAY_GROUPS = [
 const displayEl = $('display'), legendEl = $('legend'), creditEl = $('credit');
 function applyDisplay() {
   try { localStorage.setItem('oh-display-v1', JSON.stringify(display)); } catch (e) {}
+  if (!TOOLS && display.base !== 'satellite') { display.base = 'satellite'; display.trees = true; display.contours = false; }   // the pitch shows the satellite map
   document.body.classList.toggle('hide-title', !display.title);
   document.body.classList.toggle('hide-hint', !display.hint);
   compass.hidden = mode !== 'cerro' || !display.compass;
@@ -4414,7 +4450,7 @@ function applyDisplay() {
   const gridChanged = hill.on.grid !== display.grid || hill.on.trail !== display.trail;
   hill.on.grid = display.grid; hill.on.trail = display.trail;
   if (!BASES[display.base]) display.base = 'satellite';
-  if (hill.notes) hill.notes.visible = display.notes;
+  if (hill.notes) hill.notes.visible = display.notes && TOOLS;
   renderLegend();
   if (!hill.terrain) { hill.vs = display.relief ? 2 : 1; return; }
   if (display.base !== baseWant) setBase(display.base);
@@ -4433,6 +4469,7 @@ function chooseBase(id) {
 }
 function renderDisplay() {
   displayEl.innerHTML = '';
+  if (TOOLS) {
   const h = document.createElement('h3'); h.textContent = 'Base map'; displayEl.appendChild(h);
   const grid = document.createElement('div'); grid.className = 'bases'; grid.setAttribute('role', 'group'); grid.setAttribute('aria-label', 'Base map');
   for (const [id, b] of Object.entries(BASES)) {
@@ -4444,9 +4481,11 @@ function renderDisplay() {
     grid.appendChild(t);
   }
   displayEl.appendChild(grid);
+  }
   for (const [group, items] of DISPLAY_GROUPS) {
     const h = document.createElement('h3'); h.textContent = group; displayEl.appendChild(h);
     for (const [key, label, color] of items) {
+      if (key === 'notes' && !TOOLS) continue;
       const row = document.createElement('label'); row.className = 'toggle'; row.htmlFor = 'show-' + key;
       const t = document.createElement('span');
       if (color) { const sw = document.createElement('i'); sw.className = 'sw'; sw.style.background = color; t.appendChild(sw); }
@@ -4462,7 +4501,11 @@ function renderDisplay() {
   reset.addEventListener('click', () => { Object.assign(display, DISPLAY_DEFAULT); applyDisplay(); renderDisplay(); });
   const done = document.createElement('button'); done.type = 'button'; done.className = 'mini'; done.textContent = 'Close';
   done.addEventListener('click', () => toggleDisplay(false));
-  end.append(reset, done);
+  const tools = document.createElement('button'); tools.type = 'button'; tools.className = 'mini'; tools.setAttribute('aria-pressed', String(TOOLS));
+  tools.textContent = TOOLS ? 'Owner tools: on' : 'Owner tools: off';
+  tools.title = 'Notes, property limits, base maps and data sources, for planning';
+  tools.addEventListener('click', () => setTools(!TOOLS));
+  end.append(tools, reset, done);
   displayEl.appendChild(end);
 }
 function toggleDisplay(on) {
@@ -4532,13 +4575,15 @@ function buildBar() {
   if (mode === 'cerro') {
     pill('Overview', null, () => { closeDrawer(); flyTo(HOME.pos, HOME.tgt, 1800); });
     if (OBJECTS.view) pill('Homestead', null, () => { closeDrawer(); homesteadView(); });
-    pill('Notes', null, () => { toggleDisplay(false); closeDrawer(); renderNotes(); }, 'accent');
-    const db = pill('Display', null, () => toggleDisplay(displayEl.hidden));
-    db.dataset.display = '1'; db.setAttribute('aria-expanded', 'false'); db.setAttribute('aria-controls', 'display');
-    pill('Property limits', null, () => { toggleDisplay(false); openLimits(); }, 'accent');
     pill('Walk the site', null, () => openWalk(), 'accent');
     if (PANOS.length) pill('360° views', null, () => openPano(PANOS[0].id), 'accent');
-    pill('Data sources', null, () => openSources());
+    if (TOOLS) {
+      pill('Notes', null, () => { toggleDisplay(false); closeDrawer(); renderNotes(); }, 'accent');
+      pill('Property limits', null, () => { toggleDisplay(false); openLimits(); }, 'accent');
+      pill('Data sources', null, () => openSources());
+    }
+    const db = pill('Display', null, () => toggleDisplay(displayEl.hidden));
+    db.dataset.display = '1'; db.setAttribute('aria-expanded', 'false'); db.setAttribute('aria-controls', 'display');
   } else {
     const sc = scenes[mode];
     VIEWS[mode].forEach(([label, p, t]) => pill(label, null, () => { closeDrawer(); flyTo(new THREE.Vector3(...p), new THREE.Vector3(...t), 1400); }));
@@ -4572,9 +4617,10 @@ function buildChips() {
 
 const tabs = document.querySelectorAll('.tab');
 function markTab(id) { tabs.forEach((t) => t.setAttribute('aria-current', String(t.dataset.go === id))); }
-tabs.forEach((t) => t.addEventListener('click', () => (t.dataset.go === 'plan' ? openPlan() : t.dataset.go === 'trail' ? openTrail() : t.dataset.go === 'walk' ? openWalk() : setMode(t.dataset.go))));
+tabs.forEach((t) => t.addEventListener('click', () => (t.dataset.go === 'plan' ? openPlan() : t.dataset.go === 'trail' ? openTrailer() : t.dataset.go === 'walk' ? openWalk() : setMode(t.dataset.go))));
 
 function openPlan(section) {
+  if (!trailerEl.hidden) closeTrailer();
   if (!trailEl.hidden) closeTrail();
   if (!panoEl.hidden) closePano();
   if (!walkEl.hidden) closeWalk();
@@ -4594,7 +4640,10 @@ $('plan-close').addEventListener('click', closePlan);
 planEl.querySelectorAll('.plan-nav a').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); const el = $(a.getAttribute('href').slice(1)); el && el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }));
 
 const LEDES = {
-  cerro: 'A 4 × 4 km model of the hill built from satellite elevation, imagery and tree-height data. Tap the ground for coordinates. Use Property limits to draw the real boundary.',
+  get cerro() {
+    return TOOLS ? 'A 4 × 4 km model of the hill built from satellite elevation, imagery and tree-height data. Tap the ground for coordinates. Use Property limits to draw the real boundary.'
+      : 'A 4 × 4 km model of Cerro Kavaju built from satellite elevation, imagery and tree-height data. Walk the site to stand where the cabins will be.';
+  },
   cabin: 'A concept cabin: rammed-earth walls set into the bank, a living roof, deep eaves and glass to the view. Design not final.',
   residence: 'A concept home for the private side: two earth volumes stepped with the slope, living roofs and a pool. Design not final.',
 };
@@ -4606,6 +4655,7 @@ function setMode(m) {
   if (!trailEl.hidden) closeTrail();
   if (!panoEl.hidden) closePano();
   if (!walkEl.hidden) closeWalk();
+  if (!trailerEl.hidden) closeTrailer();
   if (m !== 'cerro' && !scenes[m]) {
     try { scenes[m] = buildHouseScene(m); fitCamera(scenes[m].camera); }
     catch (err) { console.error(err); return; }
@@ -4678,7 +4728,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
 });
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  if (!walkEl.hidden) closeWalk();
+  if (!trailerEl.hidden) closeTrailer();
+  else if (!walkEl.hidden) closeWalk();
   else if (!panoEl.hidden) closePano();
   else if (!trailEl.hidden) closeTrail();
   else if (!displayEl.hidden) toggleDisplay(false);
@@ -4767,6 +4818,7 @@ function openPano(id) {
   if (!planEl.hidden) closePlan();
   if (!trailEl.hidden) closeTrail();
   if (!walkEl.hidden) closeWalk();
+  if (!trailerEl.hidden) closeTrailer();
   closeDrawer();
   panoEl.hidden = false;
   lendRenderer({ pixelRatio: 2, toneMapping: THREE.NoToneMapping, exposure: 1, shadows: false, shadowAuto: false });   // the images are finished pictures
@@ -4865,6 +4917,7 @@ function openWalk() {
   if (!planEl.hidden) closePlan();
   if (!trailEl.hidden) closeTrail();
   if (!panoEl.hidden) closePano();
+  if (!trailerEl.hidden) closeTrailer();
   closeDrawer();
   walkEl.hidden = false;
   $('wk-loading').hidden = false; $('wk-bar').style.width = '0'; $('wk-msg').textContent = 'Loading the site';
@@ -4889,8 +4942,30 @@ const trailEl = $('trail'), TRAIL_HTML = trailEl.innerHTML;
 const trailView = moduleView(trailEl, './js/trail.js',
   { pixelRatio: small ? 1.25 : 1.75, toneMapping: THREE.ACESFilmicToneMapping, exposure: 1.25, shadows: !small, shadowAuto: true },
   () => { $('tr-card').innerHTML = '<div class="in"><h3>Mala Visión</h3><p>This browser could not start the fight. The rest of the site still works.</p></div>'; });
+const trailerEl = $('trailer');
+function openTrailer() {
+  if (!trailerEl.hidden) return;
+  if (!planEl.hidden) closePlan();
+  if (!panoEl.hidden) closePano();
+  if (!walkEl.hidden) closeWalk();
+  if (!trailEl.hidden) closeTrail();
+  closeDrawer();
+  trailerEl.hidden = false;
+  markTab('trail');
+  try { history.replaceState(null, '', '#trail'); } catch (e) {}
+  $('tl-close').focus({ preventScroll: true });
+}
+function closeTrailer() {
+  if (trailerEl.hidden) return;
+  trailerEl.hidden = true; $('tl-video').pause();
+  markTab(mode);
+  try { history.replaceState(null, '', '#' + mode); } catch (e) {}
+}
+$('tl-close').addEventListener('click', closeTrailer);
+$('tl-play').addEventListener('click', () => { closeTrailer(); openTrail(); });
 function openTrail() {
   if (!trailEl.hidden) return;
+  if (!trailerEl.hidden) closeTrailer();
   if (!planEl.hidden) closePlan();
   if (!panoEl.hidden) closePano();
   if (!walkEl.hidden) closeWalk();
@@ -4899,7 +4974,7 @@ function openTrail() {
   $('tr-close').addEventListener('click', closeTrail);
   trailEl.hidden = false;
   markTab('trail');
-  try { history.replaceState(null, '', '#trail'); } catch (e) {}
+  try { history.replaceState(null, '', '#trail-play'); } catch (e) {}
   trailView.open();
 }
 function closeTrail() {
@@ -5022,7 +5097,7 @@ const v3 = new THREE.Vector3();
 let elapsed = 0, first = true;
 function tick() {
   requestAnimationFrame(tick);
-  if (!active || (!first && (!planEl.hidden || !trailEl.hidden || !panoEl.hidden || !walkEl.hidden || document.hidden))) return;
+  if (!active || (!first && (!planEl.hidden || !trailEl.hidden || !panoEl.hidden || !walkEl.hidden || !trailerEl.hidden || document.hidden))) return;
   const dt = Math.min(clock.getDelta(), 0.05);
   elapsed += dt;
   FOL.uTime.value = elapsed;
@@ -5047,7 +5122,7 @@ function tick() {
     needle.setAttribute('transform', `rotate(${(ctl.getAzimuthalAngle() * 180) / Math.PI} 15 15)`);
     for (const l of hill.labels) place(l.chip, l.anchor, cam, !display[l.cat] || cam.position.distanceTo(l.anchor) > l.far || !!limits.drawing || !!limits.editing, true);
     for (const l of limitLabels) place(l.chip, l.anchor, cam, !display.propLabels || !!limits.editing || !!limits.drawing, true);
-    for (const l of notes.chips) place(l.chip, l.anchor, cam, !display.notes || !!limits.editing || !!limits.drawing || !!notes.placing || !!notes.moving, true);
+    for (const l of notes.chips) place(l.chip, l.anchor, cam, !TOOLS || !display.notes || !!limits.editing || !!limits.drawing || !!notes.placing || !!notes.moving, true);
     for (const l of panoLabels) place(l.chip, l.anchor, cam, !display.panos || !!limits.editing || !!limits.drawing, true);
     declutter();
     for (const h of handleGroup.children) h.scale.setScalar(Math.max(0.6, cam.position.distanceTo(h.position) * 0.011 * h.userData.s));
@@ -5123,7 +5198,8 @@ async function boot() {
   const want = (location.hash || '').slice(1);
   setMode(want === 'cabin' || want === 'residence' ? want : 'cerro');
   if (want === 'plan') openPlan();
-  if (want === 'trail') openTrail();
+  if (want === 'trail') openTrailer();
+  if (want === 'trail-play') openTrail();
   if (want.startsWith('pano-')) openPano(want.slice(5));
   if (want === 'walk') openWalk();
   requestAnimationFrame(tick);

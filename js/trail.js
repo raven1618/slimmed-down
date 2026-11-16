@@ -837,6 +837,16 @@ export async function build(ctx) {
   startBtn.disabled = false; startBtn.textContent = 'Enter the circle';
   resize(); raf = requestAnimationFrame(loop); startBtn.focus({ preventScroll: true });
   return {
+    /* For recording the walkthrough video (render/trail_video.mjs): the fight on a fixed clock, driven by a script. */
+    director: {
+      get phase() { return phase; }, get eyes() { return eyes; }, get rnd() { return rnd; }, get shown() { return shown; }, get turning() { return !!turn; },
+      get aimed() { return herVisible() && inReticle(chest(tmp2)); },
+      herYaw: () => bearing(chest(tmp2)) - (pl.mirror ? Math.PI : 0),
+      turnTo(yaw, d = 0.7) { turn = { from: pl.yaw, to: pl.yaw + wrapA(yaw - pl.yaw), t: 0, d }; },
+      stop() { cancelAnimationFrame(raf); raf = 0; },
+      step(dt) { time += dt; update(dt); animate(dt); placeCamera(); overlays(); if (composer) composer.render(); else R.render(scene, cam); },
+      start: () => start(), act: (id) => ACT[id].run(), mirror: (on) => setMirror(on), shoot: () => shoot(),
+    },
     dispose() {                                            // everything this view put on the GPU, its sound and its listeners
       cancelAnimationFrame(raf); ac.abort();
       if (audio) audio.ctx.close().catch(() => {});
