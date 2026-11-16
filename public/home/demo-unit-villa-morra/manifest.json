@@ -1,0 +1,640 @@
+{
+  "id": "demo-unit-villa-morra",
+  "title": "Torre Lapacho · 12B · Living-comedor",
+  "location": {
+    "lat": -25.2925,
+    "lon": -57.579,
+    "utcOffset": -3,
+    "city": "Asunción"
+  },
+  "floorHeight": 34.5,
+  "model": "unit.glb",
+  "lightmap": {
+    "encoding": "rgbe",
+    "samples": 128,
+    "atlases": {
+      "arch": 1024,
+      "furniture": 512
+    }
+  },
+  "layers": [
+    {
+      "id": "sky",
+      "kind": "sky",
+      "atlases": {
+        "arch": {
+          "file": "lm_sky.webp",
+          "size": 1024
+        },
+        "furniture": {
+          "file": "lmf_sky.webp",
+          "size": 512
+        }
+      },
+      "mean": 0.1274
+    },
+    {
+      "id": "lamp",
+      "kind": "light",
+      "atlases": {
+        "arch": {
+          "file": "lm_lamp.webp",
+          "size": 1024
+        },
+        "furniture": {
+          "file": "lmf_lamp.webp",
+          "size": 512
+        }
+      },
+      "label": [
+        "Lámpara de pie",
+        "Floor lamp"
+      ],
+      "color": [
+        1,
+        0.74,
+        0.47
+      ],
+      "mean": 0.04091
+    },
+    {
+      "id": "pendant",
+      "kind": "light",
+      "atlases": {
+        "arch": {
+          "file": "lm_pendant.webp",
+          "size": 1024
+        },
+        "furniture": {
+          "file": "lmf_pendant.webp",
+          "size": 512
+        }
+      },
+      "label": [
+        "Colgante comedor",
+        "Dining pendant"
+      ],
+      "color": [
+        1,
+        0.78,
+        0.52
+      ],
+      "mean": 0.10319
+    },
+    {
+      "id": "ceiling",
+      "kind": "light",
+      "atlases": {
+        "arch": {
+          "file": "lm_ceiling.webp",
+          "size": 1024
+        },
+        "furniture": {
+          "file": "lmf_ceiling.webp",
+          "size": 512
+        }
+      },
+      "label": [
+        "Spots de techo",
+        "Ceiling spots"
+      ],
+      "color": [
+        1,
+        0.86,
+        0.68
+      ],
+      "mean": 0.00764
+    },
+    {
+      "id": "kitchen",
+      "kind": "light",
+      "atlases": {
+        "arch": {
+          "file": "lm_kitchen.webp",
+          "size": 1024
+        },
+        "furniture": {
+          "file": "lmf_kitchen.webp",
+          "size": 512
+        }
+      },
+      "label": [
+        "Luz de cocina",
+        "Kitchen strip"
+      ],
+      "color": [
+        1,
+        0.84,
+        0.62
+      ],
+      "mean": 0.08406
+    },
+    {
+      "id": "tv",
+      "kind": "light",
+      "atlases": {
+        "arch": {
+          "file": "lm_tv.webp",
+          "size": 1024
+        },
+        "furniture": {
+          "file": "lmf_tv.webp",
+          "size": 512
+        }
+      },
+      "label": [
+        "Televisor",
+        "TV"
+      ],
+      "color": [
+        0.62,
+        0.74,
+        1
+      ],
+      "mean": 0.02708
+    },
+    {
+      "id": "sun_invierno_0900",
+      "kind": "sun",
+      "season": "invierno",
+      "time": "09:00",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_invierno_0900.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_invierno_0900.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.0235
+    },
+    {
+      "id": "sun_invierno_1100",
+      "kind": "sun",
+      "season": "invierno",
+      "time": "11:00",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_invierno_1100.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_invierno_1100.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.01918
+    },
+    {
+      "id": "sun_invierno_1300",
+      "kind": "sun",
+      "season": "invierno",
+      "time": "13:00",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_invierno_1300.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_invierno_1300.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.01873
+    },
+    {
+      "id": "sun_invierno_1500",
+      "kind": "sun",
+      "season": "invierno",
+      "time": "15:00",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_invierno_1500.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_invierno_1500.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.02391
+    },
+    {
+      "id": "sun_invierno_1645",
+      "kind": "sun",
+      "season": "invierno",
+      "time": "16:45",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_invierno_1645.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_invierno_1645.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.03217
+    },
+    {
+      "id": "sun_verano_0615",
+      "kind": "sun",
+      "season": "verano",
+      "time": "06:15",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_verano_0615.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_verano_0615.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.00169
+    },
+    {
+      "id": "sun_verano_0830",
+      "kind": "sun",
+      "season": "verano",
+      "time": "08:30",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_verano_0830.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_verano_0830.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.00163
+    },
+    {
+      "id": "sun_verano_1100",
+      "kind": "sun",
+      "season": "verano",
+      "time": "11:00",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_verano_1100.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_verano_1100.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.00099
+    },
+    {
+      "id": "sun_verano_1330",
+      "kind": "sun",
+      "season": "verano",
+      "time": "13:30",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_verano_1330.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_verano_1330.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.00193
+    },
+    {
+      "id": "sun_verano_1600",
+      "kind": "sun",
+      "season": "verano",
+      "time": "16:00",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_verano_1600.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_verano_1600.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.00121
+    },
+    {
+      "id": "sun_verano_1845",
+      "kind": "sun",
+      "season": "verano",
+      "time": "18:45",
+      "atlases": {
+        "arch": {
+          "file": "lm_sun_verano_1845.webp",
+          "size": 512
+        },
+        "furniture": {
+          "file": "lmf_sun_verano_1845.webp",
+          "size": 256
+        }
+      },
+      "mean": 0.00149
+    }
+  ],
+  "sun": {
+    "strength": 4,
+    "seasons": {
+      "invierno": {
+        "date": "2026-06-21",
+        "keys": [
+          {
+            "time": "07:15",
+            "azimuth": 66.41,
+            "elevation": -5.01
+          },
+          {
+            "time": "09:00",
+            "azimuth": 53.92,
+            "elevation": 15.62,
+            "layer": "sun_invierno_0900"
+          },
+          {
+            "time": "11:00",
+            "azimuth": 31.44,
+            "elevation": 34.21,
+            "layer": "sun_invierno_1100"
+          },
+          {
+            "time": "13:00",
+            "azimuth": 357.61,
+            "elevation": 41.24,
+            "layer": "sun_invierno_1300"
+          },
+          {
+            "time": "15:00",
+            "azimuth": 324.95,
+            "elevation": 32.27,
+            "layer": "sun_invierno_1500"
+          },
+          {
+            "time": "16:45",
+            "azimuth": 305.98,
+            "elevation": 15.5,
+            "layer": "sun_invierno_1645"
+          }
+        ]
+      },
+      "verano": {
+        "date": "2026-12-21",
+        "keys": [
+          {
+            "time": "06:15",
+            "azimuth": 114.64,
+            "elevation": 2.85,
+            "layer": "sun_verano_0615"
+          },
+          {
+            "time": "08:30",
+            "azimuth": 103,
+            "elevation": 31.73,
+            "layer": "sun_verano_0830"
+          },
+          {
+            "time": "11:00",
+            "azimuth": 91.46,
+            "elevation": 65.28,
+            "layer": "sun_verano_1100"
+          },
+          {
+            "time": "13:30",
+            "azimuth": 278.94,
+            "elevation": 80.36,
+            "layer": "sun_verano_1330"
+          },
+          {
+            "time": "16:00",
+            "azimuth": 261.92,
+            "elevation": 46.59,
+            "layer": "sun_verano_1600"
+          },
+          {
+            "time": "18:45",
+            "azimuth": 248.93,
+            "elevation": 10.54,
+            "layer": "sun_verano_1845"
+          }
+        ]
+      }
+    }
+  },
+  "sky": {
+    "color": [
+      0.62,
+      0.78,
+      1
+    ],
+    "strength": 1
+  },
+  "north": [
+    0,
+    0,
+    -1
+  ],
+  "room": {
+    "min": [
+      -4,
+      0,
+      -3
+    ],
+    "max": [
+      4,
+      2.7,
+      3
+    ]
+  },
+  "window": {
+    "min": [
+      -3.75,
+      0.04,
+      -3
+    ],
+    "max": [
+      3.75,
+      2.6,
+      -3
+    ]
+  },
+  "background": {
+    "offset": 0.6,
+    "day": "bg_day.jpg"
+  },
+  "views": [
+    {
+      "id": "entrada",
+      "label": [
+        "Entrada",
+        "Entrance"
+      ],
+      "at": [
+        -2.45,
+        1.62,
+        2.3
+      ],
+      "look": [
+        0.6,
+        1.1,
+        -1.6
+      ]
+    },
+    {
+      "id": "living",
+      "label": [
+        "Living",
+        "Living"
+      ],
+      "at": [
+        1.1,
+        1.6,
+        0.35
+      ],
+      "look": [
+        -3.2,
+        0.9,
+        -1.2
+      ]
+    },
+    {
+      "id": "ventanal",
+      "label": [
+        "Ventanal",
+        "Window"
+      ],
+      "at": [
+        0.3,
+        1.6,
+        -0.2
+      ],
+      "look": [
+        0,
+        1.4,
+        -3.5
+      ]
+    },
+    {
+      "id": "cocina",
+      "label": [
+        "Cocina",
+        "Kitchen"
+      ],
+      "at": [
+        2.4,
+        1.6,
+        -0.7
+      ],
+      "look": [
+        2.2,
+        0.9,
+        2.6
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "id": "lamp",
+      "label": [
+        "Lámpara de pie",
+        "Floor lamp"
+      ],
+      "color": [
+        1,
+        0.74,
+        0.47
+      ],
+      "at": [
+        -0.35,
+        1.52,
+        -1.95
+      ]
+    },
+    {
+      "id": "pendant",
+      "label": [
+        "Colgante comedor",
+        "Dining pendant"
+      ],
+      "color": [
+        1,
+        0.78,
+        0.52
+      ],
+      "at": [
+        2.2,
+        2.05,
+        -1.05
+      ]
+    },
+    {
+      "id": "ceiling",
+      "label": [
+        "Spots de techo",
+        "Ceiling spots"
+      ],
+      "color": [
+        1,
+        0.86,
+        0.68
+      ],
+      "at": null
+    },
+    {
+      "id": "kitchen",
+      "label": [
+        "Luz de cocina",
+        "Kitchen strip"
+      ],
+      "color": [
+        1,
+        0.84,
+        0.62
+      ],
+      "at": null
+    },
+    {
+      "id": "tv",
+      "label": [
+        "Televisor",
+        "TV"
+      ],
+      "color": [
+        0.62,
+        0.74,
+        1
+      ],
+      "at": [
+        -3.9,
+        1.25,
+        -0.45
+      ]
+    }
+  ],
+  "interactive": {
+    "faucet": {
+      "at": [
+        2.55,
+        1.22,
+        1.07
+      ]
+    },
+    "steam": {
+      "object": "pot"
+    }
+  },
+  "build": {
+    "seconds": 1422.6,
+    "blender": "5.3.0",
+    "coverage": {
+      "arch": 0.854,
+      "furniture": 0.172
+    }
+  }
+}

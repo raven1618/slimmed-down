@@ -1,73 +1,101 @@
-# Welcome to your Lovable project
+# Habitar
 
-## Project info
+Real estate as a 3D experience, starting with Asunción. Fly over the city, browse listings
+by agency or agent, open buildings that exist or not yet, and *live in* a unit before
+buying: real sunlight for its orientation, lamps, curtains, the faucet, the TV. Works in
+the browser on desktop and phones; WebXR for headsets and an AR portal on Android.
 
-**URL**: https://lovable.dev/projects/a1cc2276-f955-4cc7-a596-18a54fe8154f
+This is **Phase 0**: three technical tests in one app. See [docs/CONCEPT.md](docs/CONCEPT.md)
+for the product concept and roadmap.
 
-## How can I edit this code?
+| Route | What it tests |
+|---|---|
+| `#/ciudad` | God's-eye map of Asunción: satellite or Google photoreal 3D, 16 demo listings (3 agencies, 6 agents), generated buildings, availability by floor and unit, nearby services from OpenStreetMap with walking rings and routes, real-time sun and night lights |
+| `#/hogar` | A unit you can live in: light pre-computed in Blender as layers and mixed live, real sun for Asunción (winter and summer), lamps, curtains, TV, faucet, steam, "moments", walk, magic window, VR, AR portal |
+| `#/captura` | Gaussian-splat viewer for captured properties (`.ply`, `.spz`, `.splat`, `.ksplat`, `.rad`) |
 
-There are several ways of editing your application.
+All listings, agencies, agents and prices are **fictional demo data**.
 
-**Use Lovable**
+![Reference render of the demo unit](docs/images/preview_entrada.jpg)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a1cc2276-f955-4cc7-a596-18a54fe8154f) and start prompting.
+## Run it
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm install
+npm run dev          # http://localhost:5173
 ```
 
-**Edit a file directly in GitHub**
+The demo unit (`public/home/demo-unit-villa-morra/`) is committed, so `#/hogar` works
+straight away.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Photorealistic city (optional)
 
-**Use GitHub Codespaces**
+The map works without keys (Esri satellite imagery + OpenStreetMap buildings). For Google
+Photorealistic 3D Tiles, create a Google Maps Platform key with the **Map Tiles API**
+enabled, restrict it to your domains, and either paste it in the app (map → *Activar
+fotorrealista*, stored in that browser only) or put it in `.env.local`:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+VITE_GOOGLE_MAPS_API_KEY=AIza...
+```
 
-## What technologies are used for this project?
+Google bills Map Tiles per session (check current pricing) and requires its attribution,
+which the app shows.
 
-This project is built with:
+## Pipelines
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Units: Blender, headless
 
-## How can I deploy this project?
+`pipeline/blender/build_unit.py` builds a unit from a JSON spec with Blender as a Python
+module, places CC0 furniture from Poly Haven, unwraps lightmap UVs (one atlas for the
+architecture, one for furniture), bakes every light layer with Cycles, denoises them
+(edge-aware à-trous filter guided by position and normal passes), and exports a glb, the
+lightmaps (RGBE in PNG) and a manifest.
 
-Simply open [Lovable](https://lovable.dev/projects/a1cc2276-f955-4cc7-a596-18a54fe8154f) and click on Share -> Publish.
+```bash
+python -m venv .venv && .venv/bin/pip install bpy==5.3.0 numpy   # Python 3.13
+PYTHON=.venv/bin/python pipeline/build_unit.sh pipeline/blender/specs/demo-unit-villa-morra.json
+# add --preview for path-traced reference renders of every view
+```
 
-## Can I connect a custom domain to my Lovable project?
+About 20–30 minutes on 4 CPU cores. Then `scripts/optimize-glb.mjs` compresses the glb
+(WebP textures, meshopt geometry): 36 MB → about 5 MB.
 
-Yes, you can!
+### Captures: Gaussian splats
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+`pipeline/splat/process_capture.sh` turns a phone walkthrough or drone orbit into a splat
+(ffmpeg → COLMAP/GLOMAP → gsplat). It needs a CUDA GPU and hasn't been run in the build
+environment yet. See [docs/CAPTURE.md](docs/CAPTURE.md) for how to film.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Layout
+
+```
+src/
+  main.ts, hub.ts            router + landing
+  city/                      map: tiles, camera flights, listings, Tower (procedural
+                             buildings), PoiLayer (services, rings, routes), osm.ts (Overpass)
+  home/                      unit: HomeView, LightLayers (GPU lightmap mixer),
+                             WalkControls (+ magic window), life.ts (steam, water, TV,
+                             sound), xr.ts (VR + AR portal)
+  splat/                     Spark-based splat viewer
+  shared/                    i18n (es-PY / en), solar position, tweening, DOM helpers
+pipeline/
+  blender/                   build_unit.py + unit specs
+  splat/                     process_capture.sh
+public/
+  data/asuncion/             demo listings
+  home/<unit>/               built units (glb, lightmaps, manifest)
+scripts/                     Poly Haven fetch, glb optimisation
+```
+
+## Stack
+
+three.js r187 (WebGL 2, WebXR), [3d-tiles-renderer](https://github.com/NASA-AMMOS/3DTilesRendererJS)
+for the globe, [Spark](https://sparkjs.dev) for Gaussian splats, Vite + TypeScript, Blender 5.3
+(`bpy`) for baking, glTF-Transform for compression.
+
+## Credits
+
+Imagery © Esri, Maxar, Earthstar Geographics. Map data © OpenStreetMap contributors (ODbL).
+Google Photorealistic 3D Tiles © Google (with a key). Furniture, textures and panorama:
+[Poly Haven](https://polyhaven.com) (CC0). Concept inspired by God's Eye View by Bilawal Sidhu (MIT).
