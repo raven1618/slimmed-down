@@ -18,7 +18,7 @@ def mask_for(v, min_h=0.22, pad=0.45):
             if h < min_h * H: continue
             cx, cy = x + w / 2, y + h / 2
             cv2.ellipse(m, (int(cx), int(cy)), (int(w * (0.5 + pad)), int(h * (0.55 + pad))), 0, 0, 360, 1.0, -1)
-    return cv2.GaussianBlur(m, (0, 0), max(4, H * 0.03))
+    return cv2.GaussianBlur(m, (0, 0), max(8, H * 0.07))   # wide feather: no visible edge
 def apply(key, v, cfg):
     m = mask_for(v, cfg.get("min_h", 0.22))
     prev = _state.get(key)
@@ -28,5 +28,5 @@ def apply(key, v, cfg):
     H = v.shape[0]
     blur = cv2.GaussianBlur(v, (0, 0), H * cfg.get("blur", 0.018))
     dark = blur * cfg.get("dark", 0.45)
-    a = m[..., None]
+    a = (np.clip(m * 1.9, 0, 1) ** 1.3)[..., None] * cfg.get("amount", 0.9)   # soft falloff, never 100%
     return v * (1 - a) + dark * a
