@@ -43,3 +43,4 @@
   - Topaz: W1 a9e8b24b, W2 86d27ec5, W3 dacf9521, W4 88a25519 → `wally/clips_4k`.
   - W4 is a fly-by, so there's no static 1.3 zoom.
   - Close is a static placeholder keyed from the deck card. The real photo and walk-in are still pending.
+- Nov 18: Wally v3: W2 340deac4 (static AR values) → Topaz 8d3c7037; W4 118d3b35 (Seedance built it backwards) → Topaz debc3ca7 → reversed locally.

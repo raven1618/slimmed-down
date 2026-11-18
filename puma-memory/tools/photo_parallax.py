@@ -9,7 +9,7 @@ img = cv2.imread(src)[:, :, ::-1].copy(); h, w = img.shape[:2]
 a = matte(img).astype(np.float32); a = cv2.GaussianBlur(a, (0, 0), 1.0)
 hole = cv2.dilate((a > 0.15).astype(np.uint8), np.ones((25, 25), np.uint8)) * 255
 bg = cv2.inpaint(img, hole, 12, cv2.INPAINT_TELEA); bg = cv2.GaussianBlur(bg, (0, 0), 1.5)
-W, H = 3840, 1648
+import os; W, H = int(os.environ.get("PW", 3840)), int(os.environ.get("PH", 1648))
 def canvas(layer, scale, dx, dy, alpha=None):
     s = H / h * scale; lw, lh = int(w * s), int(h * s); L = cv2.resize(layer, (lw, lh), interpolation=cv2.INTER_LANCZOS4)
     x0 = int((W - lw) * fx + dx); y0 = int((H - lh) / 2 + dy)

@@ -208,7 +208,7 @@ def slide_frame(sl, f, t, L, light=True):
         # Andrés: his Seedance clip, keyed; he walks in and settles into the photo pose. Star rays stay fixed behind his final head position.
         pw_ = sb.prog(f, S5["f0"], S5["f1"])
         an = C["andres_anim"]; ci = int(min(max(round((f - S5["f0"]) / FPS * 30), 0), an["frames"] - 1))
-        fa = cv2.cvtColor(cv2.imread(f"{an['dir']}/{win}/{ci:03d}.png", cv2.IMREAD_UNCHANGED), cv2.COLOR_BGRA2RGBA).astype(np.float32)
+        fa = cv2.cvtColor(cv2.imread(f"{an.get('dir_' + win, an['dir'])}/{win}/{ci:03d}.png", cv2.IMREAD_UNCHANGED), cv2.COLOR_BGRA2RGBA).astype(np.float32)
         v, _ = sb.view(fa[..., :3], (x0, y0, x1, y1), 1.0, 0.5, 0.5); av, _ = sb.view(fa[..., 3] / 255.0, (x0, y0, x1, y1), 1.0, 0.5, 0.5)
         a3 = av[..., None]; dec = cv2.GaussianBlur(v * a3, (0, 0), 2.5) / (cv2.GaussianBlur(av, (0, 0), 2.5)[..., None] + 1e-4)   # edge colour decontamination:
         v = np.where(a3 < 0.97, dec, v)                                                                            # no grey studio rim on the green

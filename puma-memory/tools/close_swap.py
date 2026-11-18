@@ -38,7 +38,10 @@ class CloseSwap:
         role = b11["lines"][1]["runs"][0][0]
         # per wing: label under the speaker, fitted to the chevron width at the bottom of the panel
         self.lab = {}
+        WN = C["outro"].get("wing_names")   # optional per-side {"L": [[runs], role], "R": ...} (two speakers)
+        base_name, base_role = name, role
         for side in "LR":
+            name, role = ([(t, k, c) for t, k, c in WN[side][0]], WN[side][1]) if WN else (base_name, base_role)
             m = np.asarray(sb.MASK[side]) > 0.5
             y_name, y_role = int(H * 0.80), int(H * 0.93)
             def span(y0, y1):
