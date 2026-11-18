@@ -650,17 +650,7 @@
    ],
    "y_hit": 170,
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_raw/W4.mp4",
-   "speed": 0.88,
-   "zoom_keys": [
-    [
-     0,
-     1.3
-    ],
-    [
-     6,
-     1.3
-    ]
-   ]
+   "speed": 0.88
   },
   {
    "id": "S5",
@@ -707,8 +697,8 @@
  "out_fps": 30,
  "beam_y": 0.965,
  "andres_anim": {
-  "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/anim_none",
-  "frames": 1
+  "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/anim4k",
+  "frames": 30
  },
  "text_groups": [
   {

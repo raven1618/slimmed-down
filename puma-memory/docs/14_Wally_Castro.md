@@ -39,3 +39,7 @@
   - W4 384522bf (drone fly-by)
 - **Upscales only after the user approves the animations.**
 - **Lockups:** `text_layout_wally.py`. Card: WALLY CASTRO · LA IA JUEGA EN TU EQUIPO.
+- **Nov 18:** the user approved the 4 animations.
+  - Topaz: W1 a9e8b24b, W2 86d27ec5, W3 dacf9521, W4 88a25519 → `wally/clips_4k`.
+  - W4 is a fly-by, so there's no static 1.3 zoom.
+  - Close is a static placeholder keyed from the deck card. The real photo and walk-in are still pending.
