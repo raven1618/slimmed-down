@@ -43,6 +43,16 @@ class Clip:
         st = cv2.warpAffine(fr, M, (W, H), flags=cv2.INTER_AREA | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
         return cv2.cvtColor(st, cv2.COLOR_BGR2RGB).astype(np.float32), (x0 + ww / 2, y0 + hh / 2, ww, hh)
 CLIPS = {s_["id"]: Clip(s_["clip"]) for s_ in SL if "clip" in s_}
+
+# ---- sync fix (user, Nov 18): a clip must never run out before the outgoing transition ends (it froze on its last frame).
+# Each slide is shown from f0 until the next slide's transition is over (~45 frames after f1); slow the clip just enough to cover that.
+TAIL_F = 45
+def _fit_speed(n, fps, f0, f1, off, sp):
+    need = (f1 + TAIL_F - f0) / FPS; avail = n / fps - off - 0.06
+    return min(sp, avail / need) if need * sp > avail else sp
+for s_ in SL:
+    if "clip" in s_:
+        c_ = CLIPS[s_["id"]]; s_["speed"] = _fit_speed(c_.n, c_.fps, s_["f0"], s_["f1"], s_.get("clip_off", 0.0), s_.get("speed", 1.0))
 _cols = np.where(sb.LOGO_A.max(0) > 0.2)[0]; _cols = _cols[_cols < 400]
 sb.LOGO, sb.LOGO_A = sb.LOGO[:, :_cols.max() + 2], sb.LOGO_A[:, :_cols.max() + 2]   # logo cropped to itself -> truly centred
 

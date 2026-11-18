@@ -44,6 +44,16 @@ class Clip:
         st = cv2.warpAffine(fr, M, (W, H), flags=cv2.INTER_AREA | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
         return cv2.cvtColor(st, cv2.COLOR_BGR2RGB).astype(np.float32), (x0 + ww / 2, y0 + hh / 2, ww, hh)
 CLIPS = {s_["id"]: Clip(s_["clip"]) for s_ in SL if "clip" in s_}
+
+# ---- sync fix (user, Nov 18): a clip must never run out before the outgoing transition ends (it froze on its last frame).
+# Each slide is shown from f0 until the next slide's transition is over (~45 frames after f1); slow the clip just enough to cover that.
+TAIL_F = 45
+def _fit_speed(n, fps, f0, f1, off, sp):
+    need = (f1 + TAIL_F - f0) / FPS; avail = n / fps - off - 0.06
+    return min(sp, avail / need) if need * sp > avail else sp
+for s_ in SL:
+    if "clip" in s_:
+        c_ = CLIPS[s_["id"]]; s_["speed"] = _fit_speed(c_.n, c_.fps, s_["f0"], s_["f1"], s_.get("clip_off", 0.0), s_.get("speed", 1.0))
 _cols = np.where(sb.LOGO_A.max(0) > 0.2)[0]; _cols = _cols[_cols < 400]
 sb.LOGO, sb.LOGO_A = sb.LOGO[:, :_cols.max() + 2], sb.LOGO_A[:, :_cols.max() + 2]   # logo cropped to itself -> truly centred
 
@@ -200,7 +210,7 @@ for s_ in SL:
         for k, src in enumerate(tl if isinstance(tl, list) else [tl]):
             if src["clip"] not in TCLIPS: TCLIPS[src["clip"]] = Clip(src["clip"])
 def tile_frame(src, f, sl, side):
-    c = TCLIPS[src["clip"]]; tt = src.get("off", 0.0) + (f - sl["f0"]) / FPS * src.get("speed", 0.88)
+    c = TCLIPS[src["clip"]]; tt = src.get("off", 0.0) + (f - sl["f0"]) / FPS * _fit_speed(c.n, c.fps, sl["f0"], sl["f1"], src.get("off", 0.0), src.get("speed", 0.88))
     fr = c.frame(int(round(tt * c.fps))); fr = fr[:, ::-1] if src.get("flip") else fr; IN = 32; fr = fr[:, IN:c.W - IN] if c.W > 1920 else fr
     x0, y0, x1, y1 = sb.BOX[side]; w, h = x1 - x0, y1 - y0
     z = src.get("z", 1.0) * (1 + src.get("push", 0.03) * (f - sl["f0"]) / max(1, sl["f1"] - sl["f0"]))
