@@ -585,9 +585,11 @@
    "speed": 0.88,
    "tiles": {
     "L": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/R1.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/R1.mp4",
+     "z": 1.5,
+     "fy": 0.4,
      "speed": 1.0,
-     "push": 0.0
+     "push": 0.02
     },
     "C": {
      "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/KV.mp4",
@@ -595,9 +597,11 @@
      "push": 0.0
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/H1.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/H1.mp4",
+     "z": 1.3,
+     "fy": 0.3,
      "speed": 1.0,
-     "push": 0.0
+     "push": 0.02
     }
    }
   },
@@ -634,10 +638,11 @@
    "speed": 0.88,
    "tiles": {
     "L": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/R2.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/R2.mp4",
+     "z": 1.8,
+     "fy": 0.3,
      "speed": 1.0,
-     "push": 0.0,
-     "fx": 0.62
+     "push": 0.02
     },
     "C": {
      "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/KV.mp4",
@@ -645,9 +650,11 @@
      "push": 0.0
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/H2.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/H2.mp4",
+     "z": 1.7,
+     "fy": 0.3,
      "speed": 1.0,
-     "push": 0.0
+     "push": 0.02
     }
    }
   },
@@ -684,9 +691,11 @@
    "speed": 0.88,
    "tiles": {
     "L": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/R3.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/R3.mp4",
+     "z": 1.4,
+     "fy": 0.45,
      "speed": 1.0,
-     "push": 0.0
+     "push": 0.02
     },
     "C": {
      "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/KV.mp4",
@@ -694,9 +703,11 @@
      "push": 0.0
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/H3.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/X2.mp4",
+     "z": 1.4,
+     "fy": 0.4,
      "speed": 1.0,
-     "push": 0.0
+     "push": 0.02
     }
    }
   },
@@ -733,9 +744,11 @@
    "speed": 0.88,
    "tiles": {
     "L": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/R4.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/X1.mp4",
+     "z": 1.5,
+     "fy": 0.4,
      "speed": 1.0,
-     "push": 0.0
+     "push": 0.02
     },
     "C": {
      "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/KV.mp4",
@@ -743,9 +756,11 @@
      "push": 0.0
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/clips/H4.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/H4.mp4",
+     "z": 1.35,
+     "fy": 0.35,
      "speed": 1.0,
-     "push": 0.0
+     "push": 0.02
     }
    }
   },

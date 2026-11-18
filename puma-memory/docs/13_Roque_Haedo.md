@@ -34,3 +34,7 @@
 
   Placas 1–2 unchanged; lockups for 3–4 updated. Render v2.
 - Nov 18: user wants the photos upscaled, extended to 21:9 and animated as a slow-mo bullet-time orbit (AI, the user's call). Prompts in production/roque_haedo/PROMPTS_bullet_time.md. The user uploads (upload from Claude Code is blocked). Risk: identity drift / IP rejection on real players.
+- **Nov 18 v3:** photos upscaled to 21:9 by the user (GPT 2.6) and animated in Seedance (super slow motion on the player, camera orbiting at normal speed, faces frozen).
+  - **Clips:** R1 2c29ffd8, R2 53866812, R3 7a19c87c, R4 832fea34, H1 9e4fc18c (interview, dolly-in, talking), H2 39d4f800, H3 3e86fdb0, H4 3f6525f1.
+  - Panel crops per tile: z 1.3–1.8, fy 0.3–0.45.
+  - **Lessons:** a 21:9 frame for a narrow side panel needs the crop set in the edit; never ask for expression changes (faces morph); a talking shot needs ~80% speed and an explicit mic-to-mouth.
