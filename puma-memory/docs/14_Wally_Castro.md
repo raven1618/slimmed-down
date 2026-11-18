@@ -26,3 +26,16 @@
 **W3:** @image1（首帧）。单镜头，5秒，21:9，对称构图与首帧一致，消失点始终位于画面中央。摄影机以真实速度沿服务器走廊中轴线平稳快速向前推进（飞越感），两侧机柜的绿色指示灯连续闪烁并向后流过，天花板线槽上的绿色光粒子加速流向远处消失点，地面反光随之流动。动作流畅连续，摄影机真实速度。冷暗色调配霓虹绿，超清晰。无标志、无品牌、无文字、无音乐。
 
 **W4:** @image1（首帧）。单镜头，5秒，21:9，构图与首帧一致，公路、油罐车与全息图保持在画面垂直中部。摄影机以真实速度与车队同向缓慢横移跟随；白色油罐车沿弯道平稳行驶，绿色全息路线随卡车延伸，地图图钉依次亮起，需求曲线与价格图表实时生长更新；夕阳光线在车身上流动。动作约80%速度，摄影机真实速度。空气清澈。油罐车无标志无文字，无加油站，无可读文字或数字，无音乐。
+
+## Nov 18 · frames and animations
+- **User feedback:**
+  - The first W2 (holograms everywhere) "looks like AI slop" and was not framed for the screen.
+  - W2 is now a realistic photo with the engineer centred and a realistic AR layer (anchored outlines plus small numeric tags). Job 6e904750.
+  - W4 got the same AR treatment (62dc233a). In the edit, zoom 1.3 so the 3 trucks land one per panel.
+- **Seedance (dynamic camera, user: "don't make them so stale"):**
+  - W1 3cc85c8e
+  - W2 8de53e9c
+  - W3 a662b408
+  - W4 384522bf (drone fly-by)
+- **Upscales only after the user approves the animations.**
+- **Lockups:** `text_layout_wally.py`. Card: WALLY CASTRO · LA IA JUEGA EN TU EQUIPO.
