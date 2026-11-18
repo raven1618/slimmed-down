@@ -284,44 +284,44 @@
     {
      "runs": [
       [
-       "PORQUE SER GRANDE ES",
+       "PORQUE TODA",
        "bold",
        32,
        "white"
       ]
      ],
-     "y": 87,
+     "y": 104,
      "rules": true,
      "delay": 0,
-     "rule_y": 76,
+     "rule_y": 92,
      "rule_span": [
-      730.0,
-      1190.0
+      720.0,
+      1200.0
      ]
     },
     {
      "runs": [
       [
-       "SABER SEGUIR",
+       "GRAN HISTORIA",
        "black",
-       105,
+       100,
        "white"
       ]
      ],
-     "y": 171,
+     "y": 184,
      "rules": false,
      "delay": 4
     },
     {
      "runs": [
       [
-       "ADELANTE",
+       "SE CONSTRUYE",
        "black",
-       146,
+       107,
        "lime"
       ]
      ],
-     "y": 288,
+     "y": 270,
      "rules": false,
      "delay": 8
     }
@@ -342,64 +342,51 @@
     {
      "runs": [
       [
-       "Y ENTENDER QUE LAS",
+       "CON QUIENES SE ATREVEN",
        "bold",
-       21,
-       "white"
-      ]
-     ],
-     "y": 80,
-     "rules": true,
-     "delay": 0,
-     "rule_y": 72,
-     "rule_span": [
-      792.5,
-      1127.5
-     ]
-    },
-    {
-     "runs": [
-      [
-       "GRANDES VICTORIAS",
-       "black",
        53,
        "white"
       ]
      ],
-     "y": 126,
-     "rules": false,
-     "delay": 4
-    },
-    {
-     "runs": [
-      [
-       "NUNCA SE CONSIGUEN",
-       "bold",
-       21,
-       "white"
-      ]
-     ],
-     "y": 150,
+     "y": 100,
      "rules": true,
-     "delay": 8,
-     "rule_y": 142,
+     "delay": 0,
+     "rule_y": 82,
      "rule_span": [
-      792.5,
-      1127.5
+      735.0,
+      1185.0
      ]
     },
     {
      "runs": [
       [
-       "SOLOS",
+       "A JUGAR EN",
+       "bold",
+       53,
+       "white"
+      ]
+     ],
+     "y": 146,
+     "rules": true,
+     "delay": 4,
+     "rule_y": 128,
+     "rule_span": [
+      735.0,
+      1185.0
+     ]
+    },
+    {
+     "runs": [
+      [
+       "GRANDE",
        "black",
-       172,
+       177,
        "lime"
       ]
      ],
-     "y": 288,
+     "y": 289,
      "rules": false,
-     "delay": 12
+     "delay": 8
     }
    ]
   },
@@ -581,8 +568,8 @@
   {
    "a": 12.48,
    "b": 17.48,
-   "name": "PLACA 3 · SEGUIR ADELANTE",
-   "vo": "«Porque ser grande es saber seguir adelante.»",
+   "name": "PLACA 3 · GRAN HISTORIA",
+   "vo": "«Porque toda gran historia se construye…»",
    "sides": "Roque (izq.) / Haedo (der.) · fotos reales",
    "centre": "EXIGIENDO / DECISIONES / ESTRATÉGICAS",
    "light": "Transición iris",
@@ -591,8 +578,8 @@
   {
    "a": 17.48,
    "b": 23.6,
-   "name": "PLACA 4 · NUNCA SOLOS",
-   "vo": "«Y entender que las grandes victorias nunca se consiguen solos.»",
+   "name": "PLACA 4 · JUGAR EN GRANDE",
+   "vo": "«…con quienes se atreven a jugar en grande.»",
    "sides": "Roque (izq.) / Haedo (der.) · fotos reales",
    "centre": "PARA AVANZAR CON CLARIDAD / EN MEDIO DE LA / COMPLEJIDAD",
    "light": "Sweep → pelota KV",
@@ -907,10 +894,10 @@
     "B3"
    ],
    "box": [
-    730.0,
-    64.0,
-    1190.0,
-    288.0
+    720.0,
+    81.5,
+    1200.0,
+    270.5
    ],
    "f_in": 341,
    "f_out": 435
@@ -920,10 +907,10 @@
     "B4"
    ],
    "box": [
-    792.5,
-    64.5,
-    1127.5,
-    287.5
+    735.0,
+    63.0,
+    1185.0,
+    289.0
    ],
    "f_in": 466,
    "f_out": 557

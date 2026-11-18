@@ -26,3 +26,10 @@
   - **Mapping by club/number context, not faces:** Roque = 53 Olimpia, 52 training (guess), 54 Bayern, 62 Paraguay #24. Haedo = 55 "HAEDO" shirt, 60 training (guess), 58 Werder, 61 Paraguay #18. Client to confirm.
   - Built with storyboard_v26 tiles: L Roque parallax, C KV push, R Haedo parallax.
   - **Close:** two speakers (`andres_anim.dir_L` / `dir_R`; `outro.wing_names` per side: ROQUE SANTA CRUZ · TEAM ROQUE / NELSON HAEDO VALDEZ · TEAM HAEDO). Card: ROQUE + HAEDO · UNA CHARLA PARA JUGAR EN GRANDE.
+- **Nov 18 · FINAL approved script (client):**
+  1. Dos historias que empezaron con un sueño
+  2. con desafíos que los obligaron a superarse
+  3. porque toda gran historia se construye
+  4. con quienes se atreven a jugar en grande
+
+  Placas 1–2 unchanged; lockups for 3–4 updated. Render v2.
