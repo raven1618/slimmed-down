@@ -33,3 +33,4 @@
   4. con quienes se atreven a jugar en grande
 
   Placas 1–2 unchanged; lockups for 3–4 updated. Render v2.
+- Nov 18: user wants the photos upscaled, extended to 21:9 and animated as a slow-mo bullet-time orbit (AI, the user's call). Prompts in production/roque_haedo/PROMPTS_bullet_time.md. The user uploads (upload from Claude Code is blocked). Risk: identity drift / IP rejection on real players.
