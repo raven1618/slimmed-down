@@ -201,7 +201,7 @@ for s_ in SL:
             if src["clip"] not in TCLIPS: TCLIPS[src["clip"]] = Clip(src["clip"])
 def tile_frame(src, f, sl, side):
     c = TCLIPS[src["clip"]]; tt = src.get("off", 0.0) + (f - sl["f0"]) / FPS * src.get("speed", 0.88)
-    fr = c.frame(int(round(tt * c.fps))); IN = 32; fr = fr[:, IN:c.W - IN] if c.W > 1920 else fr
+    fr = c.frame(int(round(tt * c.fps))); fr = fr[:, ::-1] if src.get("flip") else fr; IN = 32; fr = fr[:, IN:c.W - IN] if c.W > 1920 else fr
     x0, y0, x1, y1 = sb.BOX[side]; w, h = x1 - x0, y1 - y0
     z = src.get("z", 1.0) * (1 + src.get("push", 0.03) * (f - sl["f0"]) / max(1, sl["f1"] - sl["f0"]))
     fh, fw = fr.shape[:2]; s = max(w / fw, h / fh) * z

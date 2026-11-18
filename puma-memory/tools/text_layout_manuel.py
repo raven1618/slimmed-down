@@ -49,7 +49,7 @@ lockup("B2", [("small", "ES ANTICIPAR", 0.30), ("fit", [("OPORTUNIDADES", "black
 lockup("B3", [("fit", [("TRANSFORMARLAS", "black", 100, W_)]), ("small", "EN", 0.40), ("fit", [("DECISIONES", "black", 100, L_)])], 500)
 lockup("B4", [("small", "ES LO QUE", 0.30), ("fit", [("GENERA", "black", 100, W_)]), ("fit", [("VALOR", "black", 100, L_)])], 440)
 name = [("MANUEL", "black", 104, "white"), ("FERREIRA", "black", 104, "lime")]; nw = width(name)
-role = [("ECONOMÍA 2026 · PERSPECTIVA 2027", "medium", 26, "white")]
+role = [("EX MINISTRO DE ECONOMÍA", "medium", 26, "white")]
 logo_h = 32; cn, cr = cap(name), cap(role); g1, g2 = 18, 15
 total = logo_h + g1 + cn + g2 + 1 + g2 + cr; top = CY - total / 2
 nb = round(top + logo_h + g1 + cn); rule_y = round(nb + g2); rb = round(rule_y + g2 + cr)
