@@ -26,3 +26,15 @@
 **W3:** @image1（首帧）。单镜头，5秒，21:9，对称构图与首帧一致，消失点始终位于画面中央。摄影机以真实速度沿服务器走廊中轴线平稳快速向前推进（飞越感），两侧机柜的绿色指示灯连续闪烁并向后流过，天花板线槽上的绿色光粒子加速流向远处消失点，地面反光随之流动。动作流畅连续，摄影机真实速度。冷暗色调配霓虹绿，超清晰。无标志、无品牌、无文字、无音乐。
 
 **W4:** @image1（首帧）。单镜头，5秒，21:9，构图与首帧一致，公路、油罐车与全息图保持在画面垂直中部。摄影机以真实速度与车队同向缓慢横移跟随；白色油罐车沿弯道平稳行驶，绿色全息路线随卡车延伸，地图图钉依次亮起，需求曲线与价格图表实时生长更新；夕阳光线在车身上流动。动作约80%速度，摄影机真实速度。空气清澈。油罐车无标志无文字，无加油站，无可读文字或数字，无音乐。
+
+## Close · walk-in from the deck photo (user, Nov 18)
+### 1 · GPT Image 2.6 edit (21:9 · 4K · upload Wally_ENDFRAME_GREEN)
+Edit the attached image: keep the man exactly as he is — same face, smile, styled dark hair, navy blazer with white pocket square, white crew-neck t-shirt, same size and position — and complete the left side of his body (viewer's right), which is cut by a straight vertical edge: draw the rest of his blazer shoulder and arm hanging naturally at his side. Extend him down to mid-thigh with dark jeans. Keep the background a perfectly flat uniform chroma green (#00B140), no shadow, no floor, no gradient. Photorealistic, same lighting, sharp detail. No text, no logos.
+
+### 2 · Seedance 2.5 (@image1 = fixed end frame as 尾帧 · 21:9 · 6 s · 480p)
+@image1（尾帧）。单镜头，6秒，21:9，纯色绿幕背景（#00B140），摄影机完全固定，不推不摇，构图以尾帧为准。
+0-1秒：画面中央远处（距离镜头约4米），男子正面朝向镜头，全身可见，深蓝色西装外套配白色口袋巾、白色圆领T恤、深色牛仔裤、白色运动鞋，深色短发。始终面向镜头，不转身，不出现背影。
+1-4.5秒：他面带自信的笑容，从容自然地向镜头走近，步伐轻快有活力，身体逐渐变大。
+4.5-6秒：他停在尾帧的位置和大小（大腿中部以下出画），双手自然放下，看向镜头露出灿烂的笑容，与尾帧姿势完全一致并保持静止。
+人物动作约80%速度。面部、发型、服装与尾帧完全一致，同一个人。手部：每只手5根手指。
+背景：始终是均匀平整的纯绿色，无地面线、无阴影、无反光、无绿色溢色。真实照片质感，柔和均匀的影棚光。无文字、无标志、无音乐。
