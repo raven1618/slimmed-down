@@ -143,3 +143,4 @@ Approved with Andrés Silva (v8 → v23). **Read this before starting any speake
   1. In Higgsfield the end frame must go in the **end_image** slot. In the start slot the model walks *past* the photo size, and the head gets cut.
   2. A "two steps" walk with an "80% speed" note in a 7 s generation came out robotic and slow. Fix it in post at no cost: trim the motion part and speed it up with `setpts=PTS/1.35`.
   3. Default to fixing pace and length in the edit before any re-generation.
+- **Nov 18 · AR numbers rule (Wally):** never ask Seedance to make on-screen numbers change ("数值跳动"); the digits garble. Prompt that "all data tags keep exactly the values of the first frame, unchanged, sharp, not changing, just anchored to their object; no new tags". This worked (W2 340deac4). Convoy redone the same way, with a gentler fly-by (118d3b35).
