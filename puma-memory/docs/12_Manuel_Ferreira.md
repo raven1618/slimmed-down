@@ -31,3 +31,12 @@
   - The text sits on the centre gradient.
   - **Proposed:** each tile changes once mid-placa, so 8 shots per placa.
 - **Tiles are small:** Seedance at 480p, then Topaz 1080p is enough (saves credits).
+
+## Nov 18 · build
+- **Layout (user):** 3-panel collage, one clip per die-cut panel. Placa 1's centre swaps $ → ₲ (100k only, user choice). `tools/storyboard_v26.py` adds `tiles` per slide (`clip`, `off`, `speed`, `fx`/`fy`, `z`, `push`, swap `until`).
+- **P1:** globe 4K | dollars stock → 100k 4K | port 4K.
+- **P2:** river ship MF2b | boardroom MF2a (dolly-out prompt) | refinery MF2c.
+- **P3:** ship's bridge MF3b | client stock phone/data (MF3a was rejected by Higgsfield as "copyright/IP detected") | control centre MF3c.
+- **P4:** Formento Hidrovía | Puma reel terminal aerial (offset 8 s) | soy MF4c.
+- **Costs:** images 2.75 each, Seedance 480p 15 each. Unlimited generations are not usable from Claude Code. Avoid over-planning: 11 frames were made, only 7 needed.
+- **Still pending:** Manuel's title, walk-in (photo ready), and the 4K upscales of the 6 placa 2–4 clips.
