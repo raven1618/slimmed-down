@@ -34,3 +34,8 @@
 - **Wally:** the corrected texts are P1 LA IA ESTÁ CAMBIANDO LA INDUSTRIA, P2 TRANSFORMANDO CÓMO ANALIZAMOS DATOS, P3 Y TOMAMOS DECISIONES CON MEJOR PRECISIÓN, P4 EN UN MUNDO CADA VEZ MÁS DINÁMICO Y CONECTADO, LA IA JUEGA EN TU EQUIPO. Clips reordered: refinery AR / data centre / convoy / city. Accents added (the client's doc had none).
 - **General rule from the client:** avoid recognisable AI faces in close-up (they read as fake). Prefer hands, backs, silhouettes or crops.
 - Nov 18: the face blur was too harsh (user). Softened: mask feather H*0.07, alpha=(m*1.9)^1.3*0.9, dark 0.55, blur 0.015. Carolina's close is now the regenerated walk-in 1cddd0e0 (profile → turn → smile, no look-down), keyed to anim4k_v4.
+
+## Client review folder (Drive, shared by the user)
+- TEASERS · Versiones para aprobación: https://drive.google.com/drive/folders/1FIZ7rOZ-5qDWxhe8cXI6pNlyKnOYqEcD (subfolder "Ronda 2026-11-18" is empty).
+- The user uploads the files themselves: the Drive connector's limit is about 3 MB per upload from this session.
+- **Nov 18 round in the folder:** Andrés Silva v27 (music only), Cepede v12, Carolina v9, Formento v7, Manuel v4, Wally v4, Roque+Haedo v2.
