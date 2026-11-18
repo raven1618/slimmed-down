@@ -21,3 +21,4 @@
 - **Framing:** subjects inside the 43% band; nothing important behind a V.
 - **Audio:** Kolomna music stops on the cut to the close. The VO versions use the agreed male voice.
 - **Master:** 3840×708 at 30 fps, plus a 1920×356 preview. 30.0 s each.
+- Nov 18: all 7 teasers re-rendered with the freeze fix: Andrés v25, Cepede v10, Carolina v7, Formento v7, Manuel v3, Wally v3, Roque+Haedo v1.
