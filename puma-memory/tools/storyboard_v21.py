@@ -42,6 +42,7 @@ class Clip:
         st = cv2.warpAffine(fr, M, (W, H), flags=cv2.INTER_AREA | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
         return cv2.cvtColor(st, cv2.COLOR_BGR2RGB).astype(np.float32), (x0 + ww / 2, y0 + hh / 2, ww, hh)
 CLIPS = {s_["id"]: Clip(s_["clip"]) for s_ in SL if "clip" in s_}
+import importlib.util as _iu; _sp = _iu.spec_from_file_location("face_dim", "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/tools/face_dim.py"); FD = _iu.module_from_spec(_sp); _sp.loader.exec_module(FD)
 
 # ---- sync fix (user, Nov 18): a clip must never run out before the outgoing transition ends (it froze on its last frame).
 # Each slide is shown from f0 until the next slide's transition is over (~45 frames after f1); slow the clip just enough to cover that.
@@ -165,6 +166,7 @@ def pano(sl, f):
         c = CLIPS[sl["id"]]; tt = sl.get("clip_off", 0.0) + (f - sl["f0"]) / FPS
         q = sb.prog(f, sl["f0"], sl["f1"], sb.eio); P_ = lambda k, d: sb.lerp(*sl.get(k, [d, d]), q)
         v, vi = c.strip(int(round(tt * c.fps)), P_("strip_dy", 0.0), P_("zoom", 1.0), P_("cx", 0.5))
+        if "face_dim" in sl: v = FD.apply(sl["id"], v, sl["face_dim"])   # client: darken/blur close-up faces
         return v, vi, _Shape(c.H, c.W)
     p = sb.prog(f, sl["f0"], sl["f1"], sb.eio); img = sb.IMG[sl["img"]]
     v, vi = sb.view(img, (0, 0, W, H), sb.lerp(*sl["s"], p), sb.lerp(sl["c"][0][0], sl["c"][1][0], p), sb.lerp(sl["c"][0][1], sl["c"][1][1], p))

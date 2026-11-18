@@ -711,7 +711,12 @@
    "cx": [
     0.5,
     0.53
-   ]
+   ],
+   "face_dim": {
+    "min_h": 0.15,
+    "dark": 0.45,
+    "blur": 0.018
+   }
   },
   {
    "id": "S2",
@@ -748,7 +753,12 @@
    "strip_dy": [
     0.0,
     -0.09
-   ]
+   ],
+   "face_dim": {
+    "min_h": 0.15,
+    "dark": 0.45,
+    "blur": 0.018
+   }
   },
   {
    "id": "S3",
@@ -781,7 +791,12 @@
    ],
    "y_hit": 95,
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/clips_4k/S3_huddle.mp4",
-   "clip_off": 0.6
+   "clip_off": 0.6,
+   "face_dim": {
+    "min_h": 0.15,
+    "dark": 0.45,
+    "blur": 0.018
+   }
   },
   {
    "id": "S4",
@@ -815,7 +830,12 @@
    "y_hit": 65,
    "exit": "ball",
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/clips_4k/S4_companerismo.mp4",
-   "clip_off": 0.0
+   "clip_off": 0.0,
+   "face_dim": {
+    "min_h": 0.15,
+    "dark": 0.45,
+    "blur": 0.018
+   }
   },
   {
    "id": "S5",

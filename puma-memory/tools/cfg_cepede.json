@@ -635,7 +635,12 @@
    "y_hit": 170,
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/clips_in/v2.mp4",
    "clip_off": 0.0,
-   "speed": 0.85
+   "speed": 0.85,
+   "face_dim": {
+    "min_h": 0.15,
+    "dark": 0.45,
+    "blur": 0.018
+   }
   },
   {
    "id": "S2",
@@ -687,7 +692,12 @@
      5,
      -0.04
     ]
-   ]
+   ],
+   "face_dim": {
+    "min_h": 0.15,
+    "dark": 0.45,
+    "blur": 0.018
+   }
   },
   {
    "id": "S3",
@@ -721,7 +731,12 @@
    "y_hit": 170,
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/clips_in/v1c.mp4",
    "clip_off": 0.0,
-   "speed": 0.88
+   "speed": 0.88,
+   "face_dim": {
+    "min_h": 0.15,
+    "dark": 0.45,
+    "blur": 0.018
+   }
   },
   {
    "id": "S4",
@@ -785,7 +800,12 @@
      5,
      -0.283
     ]
-   ]
+   ],
+   "face_dim": {
+    "min_h": 0.15,
+    "dark": 0.45,
+    "blur": 0.018
+   }
   },
   {
    "id": "S4b",
@@ -861,7 +881,12 @@
      5,
      -0.03
     ]
-   ]
+   ],
+   "face_dim": {
+    "min_h": 0.15,
+    "dark": 0.45,
+    "blur": 0.018
+   }
   },
   {
    "id": "S5",

@@ -453,8 +453,8 @@
   {
    "a": 1.6,
    "b": 7.48,
-   "name": "PLACA 1 · LO QUE VIENE",
-   "vo": "«¿Cómo jugamos lo que viene?»",
+   "name": "PLACA 1 · LA IA",
+   "vo": "«La IA está cambiando la industria.»",
    "sides": "Titulares Ormuz (2 por lado)",
    "centre": "Noticiero: EN VIVO + ticker · LOS ÚLTIMOS AÑOS / INDUSTRIA",
    "light": "Transición slit",
@@ -463,8 +463,8 @@
   {
    "a": 7.48,
    "b": 12.48,
-   "name": "PLACA 2 · LA IA",
-   "vo": "«La IA ya está cambiando la industria.»",
+   "name": "PLACA 2 · DATOS",
+   "vo": "«Transformando cómo analizamos datos.»",
    "sides": "Ormuz + suba de combustibles",
    "centre": "PONIÉNDONOS FRENTE A / NUEVOS DESAFÍOS",
    "light": "Transición beam",
@@ -473,8 +473,8 @@
   {
    "a": 12.48,
    "b": 17.48,
-   "name": "PLACA 3 · DATOS",
-   "vo": "«Más datos, más capacidad, más velocidad.»",
+   "name": "PLACA 3 · DECISIONES",
+   "vo": "«Y tomamos decisiones con mejor precisión.»",
    "sides": "Hidrovía + diésel",
    "centre": "EXIGIENDO / DECISIONES / ESTRATÉGICAS",
    "light": "Transición iris",
@@ -483,8 +483,8 @@
   {
    "a": 17.48,
    "b": 23.6,
-   "name": "PLACA 4 · DECISIONES",
-   "vo": "«Demanda, logística, precios, experiencia.»",
+   "name": "PLACA 4 · TU EQUIPO",
+   "vo": "«En un mundo cada vez más dinámico y conectado, la IA juega en tu equipo.»",
    "sides": "Sin noticias: estación Puma",
    "centre": "PARA AVANZAR CON CLARIDAD / EN MEDIO DE LA / COMPLEJIDAD",
    "light": "Sweep → pelota KV",
@@ -550,7 +550,7 @@
     76
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W1.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W2v2.mp4",
    "speed": 0.88
   },
   {
@@ -583,7 +583,7 @@
     223
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W2v2.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W3.mp4",
    "speed": 0.88
   },
   {
@@ -616,7 +616,7 @@
     348
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W3.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W4v2.mp4",
    "speed": 0.88
   },
   {
@@ -649,7 +649,7 @@
     473
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W4v2.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W1.mp4",
    "speed": 0.88
   },
   {

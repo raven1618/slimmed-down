@@ -168,28 +168,46 @@
     {
      "runs": [
       [
-       "¿CÓMO JUGAMOS",
-       "black",
-       100,
+       "LA IA ESTÁ",
+       "bold",
+       41,
        "white"
       ]
      ],
-     "y": 164,
-     "rules": false,
-     "delay": 0
+     "y": 92,
+     "rules": true,
+     "delay": 0,
+     "rule_y": 78,
+     "rule_span": [
+      720.0,
+      1200.0
+     ]
     },
     {
      "runs": [
       [
-       "LO QUE VIENE?",
+       "CAMBIANDO",
        "black",
-       117,
+       129,
+       "white"
+      ]
+     ],
+     "y": 196,
+     "rules": false,
+     "delay": 4
+    },
+    {
+     "runs": [
+      [
+       "LA INDUSTRIA",
+       "black",
+       113,
        "lime"
       ]
      ],
-     "y": 258,
+     "y": 289,
      "rules": false,
-     "delay": 4
+     "delay": 8
     }
    ]
   },
@@ -208,44 +226,44 @@
     {
      "runs": [
       [
-       "LA IA YA ESTÁ",
-       "bold",
-       39,
+       "TRANSFORMANDO",
+       "black",
+       68,
        "white"
       ]
      ],
-     "y": 91,
+     "y": 111,
+     "rules": false,
+     "delay": 0
+    },
+    {
+     "runs": [
+      [
+       "CÓMO ANALIZAMOS",
+       "bold",
+       27,
+       "white"
+      ]
+     ],
+     "y": 139,
      "rules": true,
-     "delay": 0,
-     "rule_y": 78,
+     "delay": 4,
+     "rule_y": 130,
      "rule_span": [
-      720.0,
-      1200.0
+      770.0,
+      1150.0
      ]
     },
     {
      "runs": [
       [
-       "CAMBIANDO",
+       "DATOS",
        "black",
-       129,
-       "white"
-      ]
-     ],
-     "y": 195,
-     "rules": false,
-     "delay": 4
-    },
-    {
-     "runs": [
-      [
-       "LA INDUSTRIA",
-       "black",
-       113,
+       186,
        "lime"
       ]
      ],
-     "y": 288,
+     "y": 289,
      "rules": false,
      "delay": 8
     }
@@ -266,39 +284,44 @@
     {
      "runs": [
       [
-       "MÁS DATOS",
-       "black",
-       120,
+       "Y TOMAMOS",
+       "bold",
+       50,
        "white"
       ]
      ],
-     "y": 148,
-     "rules": false,
-     "delay": 0
+     "y": 104,
+     "rules": true,
+     "delay": 0,
+     "rule_y": 86,
+     "rule_span": [
+      710.0,
+      1210.0
+     ]
     },
     {
      "runs": [
       [
-       "MÁS CAPACIDAD",
+       "DECISIONES",
        "black",
-       84,
+       140,
        "white"
       ]
      ],
-     "y": 220,
+     "y": 217,
      "rules": false,
      "delay": 4
     },
     {
      "runs": [
       [
-       "MÁS VELOCIDAD",
+       "CON MEJOR PRECISIÓN",
        "black",
-       85,
+       73,
        "lime"
       ]
      ],
-     "y": 288,
+     "y": 283,
      "rules": false,
      "delay": 8
     }
@@ -319,52 +342,62 @@
     {
      "runs": [
       [
-       "DEMANDA",
-       "black",
-       71,
+       "EN UN MUNDO CADA VEZ MÁS",
+       "bold",
+       28,
        "white"
       ]
      ],
-     "y": 114,
-     "rules": false,
-     "delay": 0
+     "y": 83,
+     "rules": true,
+     "delay": 0,
+     "rule_y": 73,
+     "rule_span": [
+      745.0,
+      1175.0
+     ]
     },
     {
      "runs": [
       [
-       "LOGÍSTICA",
-       "black",
-       70,
-       "lime"
+       "DINÁMICO Y CONECTADO,",
+       "bold",
+       28,
+       "white"
       ]
      ],
-     "y": 172,
-     "rules": false,
-     "delay": 4
+     "y": 112,
+     "rules": true,
+     "delay": 4,
+     "rule_y": 102,
+     "rule_span": [
+      745.0,
+      1175.0
+     ]
     },
     {
      "runs": [
       [
-       "PRECIOS",
+       "LA IA JUEGA",
        "black",
-       85,
+       117,
        "white"
       ]
      ],
-     "y": 241,
+     "y": 206,
      "rules": false,
      "delay": 8
     },
     {
      "runs": [
       [
-       "EXPERIENCIA",
+       "EN TU EQUIPO",
        "black",
-       55,
+       102,
        "lime"
       ]
      ],
-     "y": 288,
+     "y": 289,
      "rules": false,
      "delay": 12
     }
@@ -490,8 +523,8 @@
   {
    "a": 1.6,
    "b": 7.48,
-   "name": "PLACA 1 · LO QUE VIENE",
-   "vo": "«¿Cómo jugamos lo que viene?»",
+   "name": "PLACA 1 · LA IA",
+   "vo": "«La IA está cambiando la industria.»",
    "sides": "Titulares Ormuz (2 por lado)",
    "centre": "Noticiero: EN VIVO + ticker · LOS ÚLTIMOS AÑOS / INDUSTRIA",
    "light": "Transición slit",
@@ -500,8 +533,8 @@
   {
    "a": 7.48,
    "b": 12.48,
-   "name": "PLACA 2 · LA IA",
-   "vo": "«La IA ya está cambiando la industria.»",
+   "name": "PLACA 2 · DATOS",
+   "vo": "«Transformando cómo analizamos datos.»",
    "sides": "Ormuz + suba de combustibles",
    "centre": "PONIÉNDONOS FRENTE A / NUEVOS DESAFÍOS",
    "light": "Transición beam",
@@ -510,8 +543,8 @@
   {
    "a": 12.48,
    "b": 17.48,
-   "name": "PLACA 3 · DATOS",
-   "vo": "«Más datos, más capacidad, más velocidad.»",
+   "name": "PLACA 3 · DECISIONES",
+   "vo": "«Y tomamos decisiones con mejor precisión.»",
    "sides": "Hidrovía + diésel",
    "centre": "EXIGIENDO / DECISIONES / ESTRATÉGICAS",
    "light": "Transición iris",
@@ -520,8 +553,8 @@
   {
    "a": 17.48,
    "b": 23.6,
-   "name": "PLACA 4 · DECISIONES",
-   "vo": "«Demanda, logística, precios, experiencia.»",
+   "name": "PLACA 4 · TU EQUIPO",
+   "vo": "«En un mundo cada vez más dinámico y conectado, la IA juega en tu equipo.»",
    "sides": "Sin noticias: estación Puma",
    "centre": "PARA AVANZAR CON CLARIDAD / EN MEDIO DE LA / COMPLEJIDAD",
    "light": "Sweep → pelota KV",
@@ -587,7 +620,7 @@
     76
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W1.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W2v2.mp4",
    "speed": 0.88
   },
   {
@@ -620,7 +653,7 @@
     223
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W2v2.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W3.mp4",
    "speed": 0.88
   },
   {
@@ -653,7 +686,7 @@
     348
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W3.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W4v2.mp4",
    "speed": 0.88
   },
   {
@@ -686,7 +719,7 @@
     473
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W4v2.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W1.mp4",
    "speed": 0.88
   },
   {
@@ -743,10 +776,10 @@
     "B1"
    ],
    "box": [
-    700.0,
-    94.0,
-    1220.0,
-    258.0
+    720.0,
+    63.0,
+    1200.0,
+    289.0
    ],
    "f_in": 72,
    "f_out": 185
@@ -756,10 +789,10 @@
     "B2"
    ],
    "box": [
-    720.0,
-    64.0,
-    1200.0,
-    288.0
+    770.0,
+    63.0,
+    1150.0,
+    289.0
    ],
    "f_in": 216,
    "f_out": 310
@@ -769,10 +802,10 @@
     "B3"
    ],
    "box": [
-    750.0,
-    63.5,
-    1170.0,
-    288.5
+    710.0,
+    69.0,
+    1210.0,
+    283.0
    ],
    "f_in": 341,
    "f_out": 435
@@ -782,10 +815,10 @@
     "B4"
    ],
    "box": [
-    850.0,
-    64.0,
-    1070.0,
-    288.0
+    745.0,
+    63.0,
+    1175.0,
+    289.0
    ],
    "f_in": 466,
    "f_out": 557

@@ -44,10 +44,10 @@ def lockup(bid, spec, wt):
     B[bid]["lines"] = out
     groups.append(dict(beats=[bid], box=[960 - wt / 2, t, 960 + wt / 2, bt], f_in=B[bid]["impact"] - 6, f_out=B[bid]["out"] + 9))
 W_, L_ = "white", "lime"
-lockup("B1", [("fit", [("¿CÓMO JUGAMOS", "black", 100, W_)]), ("fit", [("LO QUE VIENE?", "black", 100, L_)])], 520)
-lockup("B2", [("small", "LA IA YA ESTÁ", 0.30), ("fit", [("CAMBIANDO", "black", 100, W_)]), ("fit", [("LA INDUSTRIA", "black", 100, L_)])], 480)
-lockup("B3", [("fit", [("MÁS DATOS", "black", 100, W_)]), ("fit", [("MÁS CAPACIDAD", "black", 100, W_)]), ("fit", [("MÁS VELOCIDAD", "black", 100, L_)])], 440)
-lockup("B4", [("fit", [("DEMANDA", "black", 100, W_)]), ("fit", [("LOGÍSTICA", "black", 100, L_)]), ("fit", [("PRECIOS", "black", 100, W_)]), ("fit", [("EXPERIENCIA", "black", 100, L_)])], 380)
+lockup("B1", [("small", "LA IA ESTÁ", 0.32), ("fit", [("CAMBIANDO", "black", 100, W_)]), ("fit", [("LA INDUSTRIA", "black", 100, L_)])], 480)
+lockup("B2", [("fit", [("TRANSFORMANDO", "black", 100, W_)]), ("small", "CÓMO ANALIZAMOS", 0.40), ("fit", [("DATOS", "black", 100, L_)])], 480)
+lockup("B3", [("small", "Y TOMAMOS", 0.36), ("fit", [("DECISIONES", "black", 100, W_)]), ("fit", [("CON MEJOR PRECISIÓN", "black", 100, L_)])], 500)
+lockup("B4", [("small", "EN UN MUNDO CADA VEZ MÁS", 0.24), ("small", "DINÁMICO Y CONECTADO,", 0.24), ("fit", [("LA IA JUEGA", "black", 100, W_)]), ("fit", [("EN TU EQUIPO", "black", 100, L_)])], 520)
 name = [("WALLY", "black", 104, "white"), ("CASTRO", "black", 104, "lime")]; nw = width(name)
 role = [("LA IA JUEGA EN TU EQUIPO", "medium", 26, "white")]
 logo_h = 32; cn, cr = cap(name), cap(role); g1, g2 = 18, 15
