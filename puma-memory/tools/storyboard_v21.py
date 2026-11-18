@@ -170,6 +170,10 @@ def outline(L, f, a, b, inten, t, seed=21):
             sb.ribbon(L, c[[(i0 + j) % nn for j in range(half)]][-tail:], inten, t, strands=4, spread=4, seed=seed)
             sb.ribbon(L, c[[(i0 - j) % nn for j in range(half)]][-tail:], inten, t, strands=4, spread=4, seed=seed + 1)
 
+sys.path.insert(0, "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/tools")
+import close_swap as _cs
+CS = _cs.CloseSwap(C, sb, W, H, CX, CY)
+
 def slide_frame(sl, f, t, L, light=True):
     if sl["kind"] == "intro":
         fr = green(t) * sb.MASK["C"][..., None]
@@ -211,11 +215,12 @@ def slide_frame(sl, f, t, L, light=True):
         fr[y0:y1, x0:x1] = fr[y0:y1, x0:x1] * (1 - m) + v * m
     oc = C["outro"]
     if f >= oc["card_in"]:
-        la = sb.prog(f, oc["card_in"], oc["card_in"] + 10); lw, lh = int(sb.LOGO.shape[1] * 0.62), int(sb.LOGO.shape[0] * 0.62)
+        la = sb.prog(f, oc["card_in"], oc["card_in"] + 10) * CS.frame_out(f); lw, lh = int(sb.LOGO.shape[1] * 0.62), int(sb.LOGO.shape[0] * 0.62)
         lg = cv2.resize(sb.LOGO, (lw, lh)); al = cv2.resize(sb.LOGO_A, (lw, lh))[..., None] * la; x0, y0 = int(CX - lw / 2), oc["logo_y"]
         fr[y0:y0 + lh, x0:x0 + lw] = fr[y0:y0 + lh, x0:x0 + lw] * (1 - al) + lg * al
-        lp = sb.prog(f, oc["card_in"] + 6, oc["card_in"] + 20, sb.eout)
+        lp = sb.prog(f, oc["card_in"] + 6, oc["card_in"] + 20, sb.eout) * CS.frame_out(f)
         rh = oc.get("rule_half", 230); cv2.line(fr, (int(CX - rh * lp), oc["rule_y"]), (int(CX + rh * lp), oc["rule_y"]), (255, 255, 255), 1, cv2.LINE_AA)
+    fr = CS.apply(fr, f)   # client Nov 18: name + title to the side panels, event KV in the centre
     if light and f >= 676:   # the light traces the screen's own border around the close (Seedance outline clip)
         put(OUTLINE, 0.3 + (f - 676) * 0.058, np.float32([[1, 0, 0], [0, 1, 0]]), 0.8 * (1 - sb.prog(f, 742, 751)))
     return fr

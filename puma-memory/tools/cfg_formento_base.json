@@ -374,7 +374,7 @@
   {
    "id": "B11",
    "impact": 635,
-   "out": 2000,
+   "out": 688,
    "from": [
     [
      "L",
@@ -429,7 +429,8 @@
    690,
    730
   ],
-  "rule_half": 260
+  "rule_half": 260,
+  "swap": 690
  },
  "flashes": [
   [
@@ -616,7 +617,7 @@
     223
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/F2_veleros_v2.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/clips_in/F2_rig.mp4",
    "speed": 0.88,
    "zoom_keys": [
     [
@@ -632,14 +633,19 @@
    "tab2": "COMBUSTIBLES",
    "dy_keys": [
     [
-     0,
-     0.05
+     1.5,
+     -0.1
+    ],
+    [
+     4,
+     -0.08
     ],
     [
      6,
-     0.08
+     -0.06
     ]
-   ]
+   ],
+   "clip_off": 1.5
   },
   {
    "id": "S3",

@@ -130,3 +130,12 @@ Approved with Andrés Silva (v8 → v23). **Read this before starting any speake
 - **Formento F2:** the client's Hormuz frame (anchored ships under the cliffs), Topaz 7096125f → `formento/clips_in/F2_hormuz.mp4`.
 - **Nov 16 · Carolina (client):** "no quiere que se vea su espalda". The close starts mid-turn: the new `andres_anim.off` (frames to skip) in storyboard_v24/v25, set to 80 for Carolina (profile view). **Rule:** speakers may not want their back shown, so offer an offset start or a turn-only end frame.
 - **Nov 16 · Formento:** the title is DIRECTOR DE PLANEAMIENTO (client). Placa 2: the sailboats are replaced by an oil tanker (FOR2d prompts).
+
+## 9 · Close swap — ALL teasers (client, Nov 18)
+- **Client request:** after the name + title show in the centre panel, move the speaker's name + title to the side panels under their image, and leave the generic event KV in the centre. Applies to all 7 videos.
+- **`tools/close_swap.py`** (CloseSwap), hooked into storyboard_v21, v24 and v25.
+  - Set `outro.swap` = 690 and B11 `out` = 688. The name card exits with the usual exit animation; the logo and rule fade out over 8 frames.
+  - **KV lockup:** the Puma Energy logo + CONVOCADOS A JUGAR EN GRANDE. Cut from `kv/kv_full.png` minus `kv/kv_bg_beams.png` (layer difference = clean alpha), 70% of the strip height, centred. It fades and settles from 106% scale.
+  - **Wing labels:** name (white first name, lime surname) + role, auto-fitted to the chevron width at 80% / 93% of the strip height. A soft dark band sits behind them inside the wing.
+- **Andrés Silva:** v21 picture plus this swap, muxed with the approved v23 audio (with and without VO) → `andres_silva_v24/`.
+- **Formento placa 2:** offshore oil rig, drone fly-by (Topaz bd3a9d09), `clip_off` 1.5 s to skip the opening close-up of the legs.
