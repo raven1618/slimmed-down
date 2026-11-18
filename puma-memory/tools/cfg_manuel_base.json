@@ -603,13 +603,13 @@
    "speed": 0.88,
    "tiles": {
     "L": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_raw/MF2b.mp4"
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_4k/MF2b.mp4"
     },
     "C": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_raw/MF2a.mp4"
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_4k/MF2a.mp4"
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_raw/MF2c.mp4"
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_4k/MF2c.mp4"
     }
    }
   },
@@ -646,7 +646,7 @@
    "speed": 0.88,
    "tiles": {
     "L": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_raw/MF3b.mp4"
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_4k/MF3b.mp4"
     },
     "C": {
      "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/stock_in/phone_data.mov",
@@ -656,7 +656,7 @@
      "fy": 0.1
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_raw/MF3c.mp4"
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_4k/MF3c.mp4"
     }
    }
   },
@@ -703,7 +703,7 @@
      "speed": 1.0
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_raw/MF4c.mp4"
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/clips_4k/MF4c.mp4"
     }
    }
   },
@@ -752,8 +752,9 @@
  "out_fps": 30,
  "beam_y": 0.965,
  "andres_anim": {
-  "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/formento/anim_none",
-  "frames": 1
+  "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/manuel/anim4k",
+  "frames": 211,
+  "off": 90
  },
  "text_groups": [
   {

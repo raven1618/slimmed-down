@@ -40,3 +40,8 @@
 - **P4:** Formento Hidrovía | Puma reel terminal aerial (offset 8 s) | soy MF4c.
 - **Costs:** images 2.75 each, Seedance 480p 15 each. Unlimited generations are not usable from Claude Code. Avoid over-planning: 11 frames were made, only 7 needed.
 - **Still pending:** Manuel's title, walk-in (photo ready), and the 4K upscales of the 6 placa 2–4 clips.
+- **Nov 18 v2:**
+  - Title EX MINISTRO DE ECONOMÍA.
+  - P4 left Hidrovía mirrored (`flip`).
+  - The 6 placa 2–4 clips are now Topaz 4K (5120×2160 → `scale=-2:1648,crop=3840:1648,fps=30`).
+  - Walk-in: Seedance dba18c97 → Topaz abca2d21, keyed (211 frames), `off` 90 to skip the turn. The user rejected it because the AI back of his head showed a bald spot. **Rule:** for speakers whose back isn't known, start the walk-in already facing camera.
