@@ -550,7 +550,7 @@
     76
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_raw/W1.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W1.mp4",
    "speed": 0.88
   },
   {
@@ -583,7 +583,7 @@
     223
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_raw/W2.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W2.mp4",
    "speed": 0.88
   },
   {
@@ -616,7 +616,7 @@
     348
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_raw/W3.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W3.mp4",
    "speed": 0.88
   },
   {
@@ -649,7 +649,7 @@
     473
    ],
    "y_hit": 170,
-   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_raw/W4.mp4",
+   "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/clips_4k/W4.mp4",
    "speed": 0.88
   },
   {
@@ -698,7 +698,7 @@
  "beam_y": 0.965,
  "andres_anim": {
   "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/wally/anim4k",
-  "frames": 30
+  "frames": 129
  },
  "text_groups": [
   {

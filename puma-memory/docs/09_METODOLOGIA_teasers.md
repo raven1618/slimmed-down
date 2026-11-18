@@ -139,3 +139,7 @@ Approved with Andrés Silva (v8 → v23). **Read this before starting any speake
   - **Wing labels:** name (white first name, lime surname) + role, auto-fitted to the chevron width at 80% / 93% of the strip height. A soft dark band sits behind them inside the wing.
 - **Andrés Silva:** v21 picture plus this swap, muxed with the approved v23 audio (with and without VO) → `andres_silva_v24/`.
 - **Formento placa 2:** offshore oil rig, drone fly-by (Topaz bd3a9d09), `clip_off` 1.5 s to skip the opening close-up of the legs.
+- **Nov 18 · walk-in lessons (Wally, user angry about wasted credits):**
+  1. In Higgsfield the end frame must go in the **end_image** slot. In the start slot the model walks *past* the photo size, and the head gets cut.
+  2. A "two steps" walk with an "80% speed" note in a 7 s generation came out robotic and slow. Fix it in post at no cost: trim the motion part and speed it up with `setpts=PTS/1.35`.
+  3. Default to fixing pace and length in the edit before any re-generation.
