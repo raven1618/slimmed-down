@@ -15,3 +15,22 @@
   - 30° grid, seam line (red, at u=0/1), auto-spin.
   - Views: audience, from below, close, pole.
   - Human scale: 1.75 m person; sphere centre at 3 m.
+
+## Apertura script (BRICK PDF "Pantalla Esférica", Nov 19)
+- **VO:** Somos Puma Energy / Una compañía global presente en + de 40 países, por eso cuando decimos calidad internacional sabemos de qué estamos hablando / Y en Paraguay brindamos soluciones / en cada kilómetro recorrido / en cada entrega / en cada destino / con combustible de calidad / Y esta historia la construimos juntos / Nuestro próximo logro empieza hoy / Listos para jugar en grande / 2027
+- **Beats:**
+  1. Black sphere, then halo pentagon pulses (×5, with SFX); the pulse opens to the green ball.
+  2. SOMOS + Puma logo; the puma runs.
+  3. The halo forms a path; the puma runs on the spot while Puma Energy places pass behind it.
+  4. Rotating world map: UNA COMPAÑÍA GLOBAL, then +40 PAÍSES (connection lines), then CALIDAD INTERNACIONAL.
+  5. Zoom to South America; Paraguay lights up: Y EN PARAGUAY.
+  6. Photo scenes, each with text on top and the puma running below: EN CADA KM RECORRIDO, EN CADA ENTREGA (×5 photos), EN CADA DESTINO (×2), CON COMBUSTIBLES DE CALIDAD.
+  7. CONSTRUIMOS JUNTOS: video seconds 4–11 (from the truck to the mirrored city), then a photo collage.
+  8. Pulses again; the pulses become the ball; a person kicks it; it becomes the KV.
+  9. Logo without the puma; the puma runs into the logo.
+  10. NUESTRO PRÓXIMO LOGRO, EMPIEZA HOY, LISTOS PARA JUGAR EN GRANDE, then 2027 grows small→full, then the KV loop.
+- **Loop 1 (DURANTE):** neon Paraguay map with lines linking Puma Energy stations; placas JUGAMOS EN GRANDE EN TODO EL PAÍS.
+- **Materials:** `esfera_in/` (scratchpad) holds 1_km (San Antonio ×3), 2_entrega (cilindro, aerial plant ×3, convoy, Ladario barge, fuel nozzle), 3_destino (station, airport), 4_calidad (station + car), 5_juntos (parar_cargar_seguir_20s.mp4; "PARAR." text burns in around 18 s, so use seconds 4–11). The ball-reference folder `12LaPhxz…` returns not-found (needs sharing).
+- **Method:** author each scene as a square "front disc", the same composition as the PDF circles. `tools/sphere_proj.py` `disc_to_equi()` projects it orthographically onto the front and back hemispheres (centres at lon 0/180, feathered limb), producing 2688×1296. Full-wrap equirect is used only for content that should truly wrap (map loop, pulses).
+- **Visualizer:** the canvas centre (x = 1344) now faces the audience. `tools/esfera/shot.js` screenshots any equirect frame (headless).
+- **Brand QC:** the airport photo shows a third-party airline tail and the car photo shows a car-maker grille. Crop or flag them before using.

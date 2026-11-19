@@ -25,7 +25,7 @@
   let tex = new THREE.VideoTexture(video);
   tex.colorSpace = THREE.SRGBColorSpace; tex.encoding = THREE.sRGBEncoding;
   const mat = new THREE.MeshBasicMaterial({ map: tex });
-  let sphere;
+  let sphere, sphere_rot;
   const state = { mode: 'stretch', spin: true, gridOn: false, seamOn: false };
   function buildSphere() {
     if (sphere) { scene.remove(sphere); sphere.geometry.dispose(); }
@@ -36,7 +36,7 @@
       geo = new THREE.SphereGeometry(R, 128, 64, 0, Math.PI * 2, (Math.PI - latSpan) / 2, latSpan);
     }
     sphere = new THREE.Mesh(geo, mat);
-    sphere.position.y = CENTRE_Y; scene.add(sphere);
+    sphere.position.y = CENTRE_Y; sphere.rotation.y = (sphere_rot = sphere_rot ?? -Math.PI / 2); scene.add(sphere);   // canvas centre (x = 1344) faces the audience
     sphere.add(gridMesh); sphere.add(seam);
   }
   // lat/long overlay (every 30°) and the seam line (u = 0 / 1)
@@ -94,7 +94,7 @@
   let last = performance.now();
   (function loop(now) {
     const dt = (now - last) / 1000; last = now;
-    if (state.spin) sphere.rotation.y += dt * 0.12;
+    if (state.spin) sphere.rotation.y += dt * 0.12; sphere_rot = sphere.rotation.y;
     placeCam(); renderer.render(scene, camera); requestAnimationFrame(loop);
   })(last);
   video.play().catch(() => { $('info').textContent = 'Click to play'; window.addEventListener('click', () => video.play(), { once: true }); });
