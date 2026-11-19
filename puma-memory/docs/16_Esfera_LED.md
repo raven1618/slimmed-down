@@ -34,3 +34,16 @@
 - **Method:** author each scene as a square "front disc", the same composition as the PDF circles. `tools/sphere_proj.py` `disc_to_equi()` projects it orthographically onto the front and back hemispheres (centres at lon 0/180, feathered limb), producing 2688×1296. Full-wrap equirect is used only for content that should truly wrap (map loop, pulses).
 - **Visualizer:** the canvas centre (x = 1344) now faces the audience. `tools/esfera/shot.js` screenshots any equirect frame (headless).
 - **Brand QC:** the airport photo shows a third-party airline tail and the car photo shows a car-maker grille. Crop or flag them before using.
+
+## Apertura renderer v1 (Nov 19), `tools/sphere_render.py`, no credits used
+- **Run:** `sphere_render.py [scale] [t,t,...]`. Scale 0.5 renders a 1344×648 preview; 1 renders the 2688×1296 master. Passing times renders contact stills (front view + back view + equirect).
+- **Outputs:** `Esfera_apertura_equirect*.mp4` (the file for the LED) and `Esfera_apertura_vista_frente_dorso.mp4` (an orthographic preview of the front and back views).
+- **Ball:** a true truncated icosahedron (12 pentagons + 20 hexagons) with one pentagon facing the audience. A pixel's panel is the face plane its ray hits first (score = P·n / r, with r_pent = 2.32744 and r_hex = 2.26728). Seams use the score difference between the top two faces and are drawn as multi-strand neon. Hexagon centres = icosahedron face centroids (the first attempt used the wrong dual orientation).
+- **Pulse:** the front pentagon in the gnomonic plane, with edge normals pointing at the 5 adjacent hexagons. At scale 1 it matches the real panel, so the pulse opens into the ball and the light spreads outward from the front.
+- **Globe:** Natural Earth 50m (public domain), rasterised to 4096×2048 (land, coast, borders, Paraguay), with an azimuthal zoom about the front. Arcs go from Asunción to 40 hubs (decorative).
+- **Text:** front-disc lockups in Gotham Condensed, projected onto the front and back hemispheres.
+- **Photos:** a glass-ball look, light-sweep wipes between photos, and the KV light path (a tilted great-circle swoosh) as the puma's track. The airport photo is cropped to remove the airline tail; the car photo is cropped to the attendant and pump to remove the grille.
+- **Timeline:** `TL` dict, about 72 s. It is temporary until the VO is recorded; retime by editing `TL`.
+- **2027:** capped at the visible face to avoid wrap-around ("0202"), then flashes into the KV.
+- **Placeholders (Higgsfield later):** the running puma (for now the logo cat slides in) and the person kicking the ball (for now a fast ball spin and a flash).
+- **Logo:** the only logo source is `kv_logo_rgba.png`, at about 360 px wide, which is soft on the sphere. Ask for the vector logo.
