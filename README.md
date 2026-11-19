@@ -7,7 +7,7 @@ a protected forest hill in Cordillera, Paraguay.
 
 - **The hill:** a 4 × 4 km 3D model of Cerro Kavaju from satellite elevation, imagery, tree heights and map data.
 - **Walk the site:** the quarry cabins, the lagoon and the forest edge, walkable in first person. Its light was baked in Blender (see `render/`).
-- **The cabin / The residence:** concept designs.
+- **Designs:** the glamping cabin (the same design as the quarry row in the walk) and a residence for the private side, with a Cabin / Residence switch.
 - **The trail:** a video of Mala Visión, the fight at the trail's midpoint, with the playable prototype one button away (`#trail-play`). The video is recorded from the prototype by `render/trail_video.mjs`.
 - **360° views:** photoreal panoramas rendered in Blender.
 - **The plan:** the investor brief, with an interactive return calculator.
