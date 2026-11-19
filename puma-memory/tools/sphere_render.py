@@ -223,7 +223,7 @@ def photo_disc(path, fx=0.5, fy=0.5, z=1.0):
     key = (path, fx, fy, z)
     if key in _pc: return _pc[key]
     im = cv2.imread(path, cv2.IMREAD_COLOR); im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-    h, w = im.shape[:2]; s = DN / min(h, w) * z; im = cv2.resize(im, (int(w * s), int(h * s)), interpolation=cv2.INTER_AREA)
+    h, w = im.shape[:2]; s = DN / min(h, w) * z; im = cv2.resize(im, (max(DN, math.ceil(w * s)), max(DN, math.ceil(h * s))), interpolation=cv2.INTER_AREA)
     x0 = int((im.shape[1] - DN) * fx); y0 = int((im.shape[0] - DN) * fy)
     d = im[y0:y0 + DN, x0:x0 + DN].astype(np.float32); _pc[key] = d; return d
 YY, XX = np.mgrid[0:DN, 0:DN]; RR = np.hypot(XX - DN / 2, YY - DN / 2) / (DN / 2)
