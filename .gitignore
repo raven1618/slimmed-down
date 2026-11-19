@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# client review video previews (delivered directly, not versioned)
+review_*/
