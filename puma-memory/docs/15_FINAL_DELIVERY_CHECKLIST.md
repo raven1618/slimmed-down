@@ -39,3 +39,12 @@
 - TEASERS · Versiones para aprobación: https://drive.google.com/drive/folders/1FIZ7rOZ-5qDWxhe8cXI6pNlyKnOYqEcD (subfolder "Ronda 2026-11-18" is empty).
 - The user uploads the files themselves: the Drive connector's limit is about 3 MB per upload from this session.
 - **Nov 18 round in the folder:** Andrés Silva v27 (music only), Cepede v12, Carolina v9, Formento v7, Manuel v4, Wally v4, Roque+Haedo v2.
+
+## Client round, Nov 19 (via Benjamín)
+- **Wally:** approved. In placa 4, EN UN MUNDO CADA VEZ MÁS / DINÁMICO Y CONECTADO, now reads alone first (~1 s); LA IA JUEGA / EN TU EQUIPO then enters below it (line delays 0/4/30/34 in `text_layout_wally.py`). → Wally v5
+- **Manuel:** approved. A small "Y" line was added above TRANSFORMARLAS (`text_layout_manuel.py`). → Manuel v5
+- **Andrés Silva and Cepede:** the face blur was reverted (client preferred the earlier version). Instead, the text covers the faces:
+  - New beat flags `hold` and `hold_end` in `storyboard_v21.py` / `v24.py`. A held text enters early, stays over the image without an exit animation, and is drawn on the outgoing slide during the next transition, so it leaves with the cut.
+  - Andrés: placa 2 text 12 frames earlier; placa 3 (huddle) 18 frames earlier plus hold; placa 4 unchanged apart from removing the blur. → Andrés v28
+  - Cepede: every placa's text 12 frames earlier plus hold. Placa 5 (Y SE ATREVEN A JUGAR EN GRANDE) holds until f570 and then fades into the ball flash. → Cepede v13
+- **Lesson:** this client prefers text covering faces to face blur.

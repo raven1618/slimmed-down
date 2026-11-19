@@ -48,6 +48,7 @@ lockup("B1", [("small", "LA IA ESTÁ", 0.32), ("fit", [("CAMBIANDO", "black", 10
 lockup("B2", [("fit", [("TRANSFORMANDO", "black", 100, W_)]), ("small", "CÓMO ANALIZAMOS", 0.40), ("fit", [("DATOS", "black", 100, L_)])], 480)
 lockup("B3", [("small", "Y TOMAMOS", 0.36), ("fit", [("DECISIONES", "black", 100, W_)]), ("fit", [("CON MEJOR PRECISIÓN", "black", 100, L_)])], 500)
 lockup("B4", [("small", "EN UN MUNDO CADA VEZ MÁS", 0.24), ("small", "DINÁMICO Y CONECTADO,", 0.24), ("fit", [("LA IA JUEGA", "black", 100, W_)]), ("fit", [("EN TU EQUIPO", "black", 100, L_)])], 520)
+for ln_, d_ in zip(B["B4"]["lines"], (0, 4, 30, 34)): ln_["delay"] = d_   # client Nov 19: the small line reads alone first, then LA IA JUEGA EN TU EQUIPO enters below
 name = [("WALLY", "black", 104, "white"), ("CASTRO", "black", 104, "lime")]; nw = width(name)
 role = [("LA IA JUEGA EN TU EQUIPO", "medium", 26, "white")]
 logo_h = 32; cn, cr = cap(name), cap(role); g1, g2 = 18, 15

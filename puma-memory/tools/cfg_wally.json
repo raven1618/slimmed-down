@@ -386,7 +386,7 @@
      ],
      "y": 206,
      "rules": false,
-     "delay": 8
+     "delay": 30
     },
     {
      "runs": [
@@ -399,7 +399,7 @@
      ],
      "y": 289,
      "rules": false,
-     "delay": 12
+     "delay": 34
     }
    ]
   },

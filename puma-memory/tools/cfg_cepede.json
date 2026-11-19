@@ -155,7 +155,7 @@
  "beats": [
   {
    "id": "B1",
-   "impact": 72,
+   "impact": 60,
    "out": 138,
    "from": [
     "abs",
@@ -209,11 +209,12 @@
      "rules": false,
      "delay": 8
     }
-   ]
+   ],
+   "hold": true
   },
   {
    "id": "B2",
-   "impact": 182,
+   "impact": 170,
    "out": 248,
    "from": [
     "abs",
@@ -267,11 +268,12 @@
      "rules": false,
      "delay": 8
     }
-   ]
+   ],
+   "hold": true
   },
   {
    "id": "B3",
-   "impact": 292,
+   "impact": 280,
    "out": 358,
    "from": [
     "abs",
@@ -313,11 +315,12 @@
      "rules": false,
      "delay": 4
     }
-   ]
+   ],
+   "hold": true
   },
   {
    "id": "B4",
-   "impact": 402,
+   "impact": 390,
    "out": 468,
    "from": [
     "abs",
@@ -353,11 +356,12 @@
      "rules": false,
      "delay": 4
     }
-   ]
+   ],
+   "hold": true
   },
   {
    "id": "B5",
-   "impact": 512,
+   "impact": 500,
    "out": 548,
    "from": [
     "abs",
@@ -411,7 +415,9 @@
      "rules": false,
      "delay": 8
     }
-   ]
+   ],
+   "hold": true,
+   "hold_end": 570
   },
   {
    "id": "B10",
@@ -635,13 +641,7 @@
    "y_hit": 170,
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/clips_in/v2.mp4",
    "clip_off": 0.0,
-   "speed": 0.85,
-   "face_dim": {
-    "min_h": 0.15,
-    "dark": 0.55,
-    "blur": 0.015,
-    "amount": 0.9
-   }
+   "speed": 0.85
   },
   {
    "id": "S2",
@@ -693,13 +693,7 @@
      5,
      -0.04
     ]
-   ],
-   "face_dim": {
-    "min_h": 0.15,
-    "dark": 0.55,
-    "blur": 0.015,
-    "amount": 0.9
-   }
+   ]
   },
   {
    "id": "S3",
@@ -733,13 +727,7 @@
    "y_hit": 170,
    "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/cepede/clips_in/v1c.mp4",
    "clip_off": 0.0,
-   "speed": 0.88,
-   "face_dim": {
-    "min_h": 0.15,
-    "dark": 0.55,
-    "blur": 0.015,
-    "amount": 0.9
-   }
+   "speed": 0.88
   },
   {
    "id": "S4",
@@ -803,13 +791,7 @@
      5,
      -0.283
     ]
-   ],
-   "face_dim": {
-    "min_h": 0.15,
-    "dark": 0.55,
-    "blur": 0.015,
-    "amount": 0.9
-   }
+   ]
   },
   {
    "id": "S4b",
@@ -885,13 +867,7 @@
      5,
      -0.03
     ]
-   ],
-   "face_dim": {
-    "min_h": 0.15,
-    "dark": 0.55,
-    "blur": 0.015,
-    "amount": 0.9
-   }
+   ]
   },
   {
    "id": "S5",
@@ -958,7 +934,7 @@
     1240.0,
     289.0
    ],
-   "f_in": 66,
+   "f_in": 54,
    "f_out": 147
   },
   {
@@ -971,7 +947,7 @@
     1150.0,
     289.0
    ],
-   "f_in": 176,
+   "f_in": 164,
    "f_out": 257
   },
   {
@@ -984,7 +960,7 @@
     1240.0,
     284.5
    ],
-   "f_in": 286,
+   "f_in": 274,
    "f_out": 367
   },
   {
@@ -997,7 +973,7 @@
     1180.0,
     288.0
    ],
-   "f_in": 396,
+   "f_in": 384,
    "f_out": 477
   },
   {
@@ -1010,7 +986,7 @@
     1155.0,
     287.5
    ],
-   "f_in": 506,
+   "f_in": 494,
    "f_out": 557
   }
  ],

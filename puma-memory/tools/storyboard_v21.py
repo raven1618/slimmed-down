@@ -242,18 +242,23 @@ def src_xy(src, f):
     if src[0] == "abs": return (src[1], src[2])
     _, vin = sb.side_frame(S5, f); return sb.anchor(vin, src[0], src[1], src[2])
 
-def render(f):
-    global PL
-    sb.CUR_F = f; t = f / FPS; L = np.zeros((H, W, 3), np.float32); PL = np.zeros((H, W, 3), np.float32)
-    sl = slide_of(f); fr = slide_frame(sl, f, t, L)
-    i = SL.index(sl)
-    if sl["id"] in TR and f < sl["f0"] + TR[sl["id"]][1] + 14:
-        m = transition(sl, f)
-        if m is not None: fr = slide_frame(SL[i - 1], f, t, L, light=False) * (1 - m) + fr * m
-    gain = 1.0
+# client Nov 19: "hold" beats enter and stay over the image until the cut; during the next transition they are
+# drawn on the OUTGOING slide, so they leave with it (no exit animation). Optional hold_end = frame to fade out (last slide).
+def _beat_slide_end(b): return next(s_ for s_ in SL if s_["f0"] <= b["impact"] < s_["f1"])["f1"]
+def _hold_k(b, f, mode, prev_end):
+    if not b.get("hold"): return 1.0 if mode == "main" else 0.0
+    se = _beat_slide_end(b)
+    if mode == "old": return 1.0 if se == prev_end else 0.0
+    if "hold_end" in b: return 1.0 - sb.prog(f, b["hold_end"], b["hold_end"] + 8)
+    return 1.0 if f < se else 0.0
+def text_pass(fr, f, mode, prev_end=None):
     ga = np.zeros((H, W), np.float32)
+    BI = {b["id"]: b for b in sb.BEATS}
     for gq in C.get("text_groups", []):
-        a_ = sb.prog(f, gq["f_in"], gq["f_in"] + 8) * (1 - sb.prog(f, gq["f_out"] - 4, gq["f_out"] + 6))
+        hb = [BI[k] for k in gq["beats"] if BI[k].get("hold")]
+        if hb: a_ = sb.prog(f, gq["f_in"], gq["f_in"] + 8) * _hold_k(hb[0], f, mode, prev_end)
+        elif mode == "main": a_ = sb.prog(f, gq["f_in"], gq["f_in"] + 8) * (1 - sb.prog(f, gq["f_out"] - 4, gq["f_out"] + 6))
+        else: a_ = 0
         if a_ <= 0: continue
         bx0, by0, bx1, by1 = gq["box"]; cxg, cyg = (bx0 + bx1) / 2, (by0 + by1) / 2
         rxg, ryg = (bx1 - bx0) / 2 + 230, (by1 - by0) / 2 + 95
@@ -261,17 +266,33 @@ def render(f):
         ga = np.maximum(ga, a_ * 0.72 * (1 - np.clip((d - 0.42) / 0.58, 0, 1)) ** 1.4)
     if ga.max() > 0: fr = fr * (1 - ga[..., None])
     for b in sb.BEATS:
+        k_ = _hold_k(b, f, mode, prev_end)
+        if k_ <= 0: continue
+        out = 99999 if b.get("hold") else b["out"]
         fi = b["impact"]; fs = fi - b.get("travel", 13)
-        if f < fs or f > b["out"] + 12: continue
-        srcs = [b["from"]] if isinstance(b["from"][0], str) else b["from"]
+        if f < fs or f > out + 12: continue
+        dst = fr.copy() if k_ < 1 else fr
         for ((items, rng_), has_rules, ld), ln in zip(sb.T_LINES[b["id"]], b["lines"]):
-            draw_text(fr, items, fi + ld, b["out"], exit_dir=b.get("exit", 1))
+            draw_text(dst, items, fi + ld, out, exit_dir=b.get("exit", 1))
             if has_rules and "rule_span" in ln:
-                p_ = sb.prog(f, fi + ld, fi + ld + 10, sb.eout) * (1 - sb.prog(f, b["out"], b["out"] + 8))
+                p_ = sb.prog(f, fi + ld, fi + ld + 10, sb.eout) * (1 - sb.prog(f, out, out + 8))
                 if p_ > 0:
                     yy = ln["rule_y"]; gap_ = 14
                     for xs_, xe_ in ((rng_[0] - gap_, ln["rule_span"][0]), (rng_[1] + gap_, ln["rule_span"][1])):
-                        cv2.line(fr, (int(xs_), yy), (int(xs_ + (xe_ - xs_) * p_), yy), (255 * p_,) * 3, 1, cv2.LINE_AA)
+                        cv2.line(dst, (int(xs_), yy), (int(xs_ + (xe_ - xs_) * p_), yy), (255 * p_,) * 3, 1, cv2.LINE_AA)
+        if k_ < 1: fr = fr * (1 - k_) + dst * k_
+    return fr
+
+def render(f):
+    global PL
+    sb.CUR_F = f; t = f / FPS; L = np.zeros((H, W, 3), np.float32); PL = np.zeros((H, W, 3), np.float32)
+    sl = slide_of(f); fr = slide_frame(sl, f, t, L)
+    i = SL.index(sl)
+    if sl["id"] in TR and f < sl["f0"] + TR[sl["id"]][1] + 14:
+        m = transition(sl, f)
+        if m is not None: fr = text_pass(slide_frame(SL[i - 1], f, t, L, light=False), f, "old", SL[i - 1]["f1"]) * (1 - m) + fr * m
+    gain = 1.0
+    fr = text_pass(fr, f, "main")
     for (fa, fb, inten) in C.get("flashes", []):
         if fa <= f <= fb: q = math.sin(math.pi * (f - fa) / (fb - fa)) * inten; fr = fr * (1 - q) + sb.FLASH * q
     bx = C["ball"]

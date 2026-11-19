@@ -271,32 +271,50 @@
     {
      "runs": [
       [
-       "TRANSFORMARLAS",
-       "black",
-       87,
+       "Y",
+       "bold",
+       32,
        "white"
       ]
      ],
-     "y": 133,
+     "y": 86,
+     "rules": true,
+     "delay": 0,
+     "rule_y": 74,
+     "rule_span": [
+      727.5,
+      1192.5
+     ]
+    },
+    {
+     "runs": [
+      [
+       "TRANSFORMARLAS",
+       "black",
+       81,
+       "white"
+      ]
+     ],
+     "y": 152,
      "rules": false,
-     "delay": 0
+     "delay": 4
     },
     {
      "runs": [
       [
        "EN",
        "bold",
-       35,
+       32,
        "white"
       ]
      ],
-     "y": 167,
+     "y": 184,
      "rules": true,
-     "delay": 4,
-     "rule_y": 154,
+     "delay": 8,
+     "rule_y": 172,
      "rule_span": [
-      710.0,
-      1210.0
+      727.5,
+      1192.5
      ]
     },
     {
@@ -304,13 +322,13 @@
       [
        "DECISIONES",
        "black",
-       140,
+       130,
        "lime"
       ]
      ],
-     "y": 280,
+     "y": 289,
      "rules": false,
-     "delay": 8
+     "delay": 12
     }
    ]
   },
@@ -831,10 +849,10 @@
     "B3"
    ],
    "box": [
-    710.0,
-    72.0,
-    1210.0,
-    280.0
+    727.5,
+    63.0,
+    1192.5,
+    289.0
    ],
    "f_in": 341,
    "f_out": 435
