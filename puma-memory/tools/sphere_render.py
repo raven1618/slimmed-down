@@ -119,7 +119,7 @@ def lockup(lines, width=0.62, y_c=0.47, gap=0.02):
     a = np.array(L).astype(np.float32); s_ = np.array(sh).astype(np.float32)
     s_[..., 3] = cv2.GaussianBlur(s_[..., 3], (0, 0), DN * 0.006)
     out = s_.copy(); al = a[..., 3:] / 255.0
-    out[..., :3] = a[..., :3]; out[..., 3:] = np.maximum(a[..., 3:], s_[..., 3:] * 0.85); out[..., :3] *= al / np.maximum(out[..., 3:] / 255.0, 1e-3)
+    out[..., :3] = a[..., :3]; out[..., 3:] = np.maximum(a[..., 3:], s_[..., 3:] * 0.45); out[..., :3] *= al / np.maximum(out[..., 3:] / 255.0, 1e-3)
     _tc[key] = out; return out
 W_, LIME = (255, 255, 255), (127, 255, 0)
 def text_in(rgba, t, t_in, t_out=None):
@@ -235,10 +235,77 @@ def rgba(rgb, a=None):
     return np.dstack([rgb, np.full(rgb.shape[:2], 255, np.float32) if a is None else a])
 
 # swoosh: the KV light path around the ball (tilted great circle bands, moving) — also the puma's track
-def swoosh(t, inten=1.0, tilt=-0.35, y0=-0.32, speed=0.6):
-    Rm = rotx(tilt) @ roty(t * speed); Q = P.reshape(-1, 3) @ Rm.T; Q = Q.reshape(EH, EW, 3)
-    d = Q[..., 1] - y0 - 0.06 * np.sin(2 * np.arctan2(Q[..., 0], Q[..., 2]) + t)
-    return neon(d, 0.012 / SC ** 0.3 * SC ** 0.3, inten, strands=4, Q=Q, t=t)
+# client mockup: one diagonal band under the puma (a tilted ring: low on the left, rising to the right for the front
+# audience) + multi-strand ribbons around the rim of the ball = the side meridians where the front and back views meet.
+PATH_B, PATH_A = math.radians(24), math.radians(14)              # band latitude at the front/back centre, tilt amplitude
+def path_lat(lon): return -PATH_B + 0.5 * PATH_A * np.sin(2 * lon)    # rises to the right through BOTH the front (0) and back (180) centres
+# real light: the teaser Seedance plates (organic multi-strand KV light) mapped along the band and the rims
+def _plate(name, w=1280):
+    raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", R + f"plates_4k/{name}.mp4", "-vf", f"scale={w}:-2", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True).stdout
+    h = int(round(1648 * w / 3840 / 2) * 2); return np.frombuffer(raw, np.uint8).reshape(-1, h, w, 3)
+PL_INTRO = _plate("intro"); PL_BEAM = _plate("beam")
+BANDH = math.radians(38)                                            # plate height spread over this many degrees of the band
+def _band(plate, u, v):
+    """sample a plate tiled twice around the ball (u in tiles), crossfading the tile ends so no seam shows."""
+    ph_, pw_ = plate.shape[:2]; out = 0
+    for off, wfun in ((0.0, lambda f: np.sin(np.pi * f) ** 2), (0.5, lambda f: np.cos(np.pi * f) ** 2)):
+        f = (u + off + (0.27 if off else 0.0)) % 1.0
+        mx = (f * (pw_ - 1)).astype(np.float32); my = (np.clip(v, 0, 1) * (ph_ - 1)).astype(np.float32)
+        s_ = cv2.remap(plate, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT).astype(np.float32)
+        out = out + s_ * (wfun((u) % 1.0) if off == 0.0 else wfun((u) % 1.0))[..., None]
+    return out * ((v > 0) & (v < 1))[..., None]
+def _intro_frame(tl):
+    n = len(PL_INTRO); fps = 30
+    if tl < 2.9: return PL_INTRO[min(int(tl * fps), n - 1)]           # the strands fly in and form the path
+    a, b = int(1.9 * fps), min(int(2.9 * fps), n - 1); k = int((tl - 2.9) * fps * 0.6) % (2 * (b - a))
+    return PL_INTRO[a + (k if k < (b - a) else 2 * (b - a) - k)]       # then a calm ping-pong of the intertwined strands
+def bloom(L, k=0.6):
+    sm = cv2.resize(L, (EW // 4, EH // 4), interpolation=cv2.INTER_AREA)
+    g = cv2.GaussianBlur(sm, (0, 0), 6) * 0.6 + cv2.GaussianBlur(sm, (0, 0), 18) * 0.4
+    return L + cv2.resize(g, (EW, EH)) * k
+def light_over(fr, L, k=1.4, dark=0.45):
+    """light that reads over bright footage: a soft dark halo under the strands, then screen the light on top."""
+    m = np.clip(L.max(-1) / 110.0, 0, 1); m = cv2.GaussianBlur(m, (0, 0), 9 * SC * 2)
+    fr = np.clip(fr, 0, 255) * (1 - dark * m[..., None]); Lk = np.clip(L * k, 0, 255)
+    return 255 - (255 - fr) * (255 - Lk) / 255
+def swoosh(t, inten=1.0, rim=False, **_):
+    pl = _intro_frame(t - TL["path"])
+    u = LON / np.pi + 0.5                                             # one plate per half: centre (spark) at the front and back
+    v = 0.5 - (LAT - path_lat(LON)) / BANDH
+    out = _band(pl, u, v) * inten
+    if rim:                                                           # calm beam light along the rim of the ball (side joins)
+        pb = PL_BEAM[int(t * 30) % len(PL_BEAM)]
+        ur = (LAT / np.pi + 0.5) * 1.0; vr = 0.5 + P[..., 2] / math.sin(math.radians(16))
+        out = out + _band(pb, ur, vr) * inten * 0.85
+    return bloom(out, 0.5)
+
+# chrome puma run (4K Seedance + Topaz, on black): runs in place on the band, front (lon 0) and back (lon 180)
+def _load_puma():
+    import os
+    src = R + "esfera_in/puma/puma_4k.mp4"
+    if not os.path.exists(src): return None
+    raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", src, "-vf", "scale=1280:-2", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True).stdout
+    h = int(round(1648 * 1280 / 3840 / 2) * 2); F = np.frombuffer(raw, np.uint8).reshape(-1, h, 1280, 3)
+    mx = F.max(0).max(-1); ys, xs = np.where(mx > 40)
+    return F[:, max(0, ys.min() - 12):ys.max() + 12, max(0, xs.min() - 12):xs.max() + 12]
+PUMA = _load_puma()
+PUMA_WDEG = 64.0
+def puma_put(fr, t, alpha=1.0, centres=(0.0, math.pi)):
+    if PUMA is None or alpha <= 0: return fr
+    q = PUMA[int(t * 30) % len(PUMA)].astype(np.float32); fh, fw = q.shape[:2]
+    for c in centres:
+        lat0 = float(path_lat(np.array(c))); slope = PATH_A * math.cos(2 * c)          # band slope at this centre (rad/rad)
+        wpx = int(PUMA_WDEG / 360 * EW / math.cos(lat0)); hpx = int(wpx * fh / fw * math.cos(lat0))
+        img = cv2.resize(q, (wpx, hpx), interpolation=cv2.INTER_AREA)
+        ang = math.degrees(math.atan(slope * (EH / 180) / (EW / 360)))         # +: counter-clockwise = rising to the right, along the band
+        pad = hpx; img = cv2.copyMakeBorder(img, pad, pad, 0, 0, cv2.BORDER_CONSTANT)
+        M = cv2.getRotationMatrix2D((wpx / 2, img.shape[0] / 2), ang, 1.0); img = cv2.warpAffine(img, M, (wpx, img.shape[0]))
+        cx = int((c / (2 * math.pi) + 0.5) * EW) % EW; yrow = int(EH * (0.5 - math.degrees(lat0) / 180))
+        top = yrow - int(hpx * 0.70) - pad; cols = np.arange(cx - wpx // 2, cx - wpx // 2 + wpx) % EW
+        y0, y1 = max(0, top), min(EH, top + img.shape[0]); img = img[y0 - top:y1 - top]
+        al = np.clip((img.max(-1, keepdims=True) - 10) / 55, 0, 1) * alpha
+        reg = fr[y0:y1][:, cols]; fr[y0:y1][:, cols] = reg * (1 - al) + img * alpha
+    return fr
 
 def wipe(t, t0, dur=0.6):
     """light sweep across the sphere (left->right over the front): returns mask of NEW scene + light band."""
@@ -300,7 +367,7 @@ def render(t):
             p = ease((t - T["logo"] + 0.2) / 0.8); cat = place(CAT, 0.62, 0.5 - 0.6 * (1 - p), 0.56)
             fr = disc_put(fr, cat, 1.0)
         if t >= T["path"]:                              # the halo becomes a path; the ball goes dark
-            p = ease((t - T["path"]) / 0.6); fr = fr * (1 - p) + swoosh(t, p * 1.3)
+            p = ease((t - T["path"]) / 0.6); fr = fr * (1 - p) + swoosh(t, 1.0); fr = puma_put(fr, t, ease((t - T["path"] - 1.6) / 0.6))
         return fr
     # ---- 3. globe ----
     if t < T["km"]:
@@ -310,7 +377,7 @@ def render(t):
             lo = lo * (1 - p) + PY_LL[0] * p; la = la * (1 - p) + PY_LL[1] * p; zoom = 1 + 5.5 * p ** 1.6; pyg = sm(0.6, 1.0, p)
         arcs = ease((t - T["txt_40"]) / 2.2) * (1 - ease((t - T["zoom"]) / 0.8))
         fa = ease((t - T["globe"]) / 0.8)
-        fr = globe(t, lo, la, zoom, arcs=arcs, py_glow=pyg) * fa + swoosh(t, 1.0 - 0.6 * fa)
+        fr = globe(t, lo, la, zoom, arcs=arcs, py_glow=pyg) * fa; fr = light_over(fr, swoosh(t, 1.0), 1.3, 0.3); fr = puma_put(fr, t)
         for key, lines, nxt in (("txt_global", [("UNA COMPAÑÍA", "black", 0.12, W_), ("GLOBAL", "black", 0.2, LIME)], "txt_40"),
                                 ("txt_40", [("+40", "black", 0.26, LIME), ("PAÍSES", "black", 0.14, W_)], "txt_cal"),
                                 ("txt_cal", [("CALIDAD", "black", 0.15, W_), ("INTERNACIONAL", "black", 0.12, LIME)], "zoom"),
@@ -334,7 +401,7 @@ def render(t):
             fr = pic(j, t)
             if j > 0 and t < t0 + j * seg + 0.45:              # light sweep between photos of the same line
                 m, band = wipe(t, t0 + j * seg - 0.15, 0.6); fr = pic(j - 1, t) * (1 - m) + fr * m + band
-            fr = fr + swoosh(t, 1.0)
+            fr = light_over(fr, swoosh(t, 1.0, rim=True), 1.6, 0.5); fr = puma_put(fr, t)
             r, a = text_in(lockup(lines, y_c=0.36), t, t0 + 0.1)
             if a: fr = disc_put(fr, r, a)
             if t >= t1 - 0.6:
@@ -359,7 +426,7 @@ def render(t):
                 c = cv2.warpAffine(card, M, (DN, DN)); c[..., 3] *= p; a = c[..., 3:] / 255
                 L[..., :3] = L[..., :3] * (1 - a) + c[..., :3] * a; L[..., 3:] = np.maximum(L[..., 3:], c[..., 3:])
             fr = disc_put(fr, L)
-        fr = fr + swoosh(t, 1.0)
+        fr = light_over(fr, swoosh(t, 1.0, rim=True), 1.6, 0.5); fr = puma_put(fr, t, 1.0 - ease((t - T["pulse2"] + 0.9) / 0.4))
         r, a = text_in(lockup([("CONSTRUIMOS", "black", 0.13, W_), ("JUNTOS", "black", 0.17, LIME)], y_c=0.30), t, T["juntos"] + 0.4)
         if a: fr = disc_put(fr, r, a)
         if t >= T["pulse2"] - 0.5: fr *= 1 - ease((t - T["pulse2"] + 0.5) / 0.5)
@@ -382,8 +449,15 @@ def render(t):
     d, cent, top, Q = ball_field(spin); fr = green_fill(cent, Q) + neon(d, SW, 1.0, Q=Q, t=t)
     if t < T["logro"]:
         fr = disc_put(fr, place(BAR_NOCAT, 0.72, 0.5, 0.5), ease((t - T["logo2"]) / 0.4))
-        if t >= T["cat_in"]:                            # PLACEHOLDER for the running puma (Higgsfield)
-            p = ease((t - T["cat_in"]) / 0.9); fr = disc_put(fr, place(CAT_G, 0.72, 0.5 + 0.7 * (1 - p), 0.5), 1.0)
+        if t >= T["cat_in"]:                            # the chrome puma runs in from the left and lands as the logo cat
+            p = ease((t - T["cat_in"]) / 0.9)
+            if PUMA is not None and p < 1:
+                q = PUMA[int(t * 30) % len(PUMA)].astype(np.float32); fw = int(DN * 0.30); fh = int(fw * q.shape[0] / q.shape[1])
+                L = np.zeros((DN, DN, 4), np.float32); qq = cv2.resize(q, (fw, fh))
+                cx = int(DN * (0.05 + 0.62 * p)); cy = int(DN * 0.47); x0 = max(0, cx - fw // 2); y0 = cy - fh // 2
+                w_ = min(fw, DN - x0); L[y0:y0 + fh, x0:x0 + w_, :3] = qq[:, :w_]; L[y0:y0 + fh, x0:x0 + w_, 3] = np.clip((qq[:, :w_].max(-1) - 10) / 55, 0, 1) * 255
+                fr = disc_put(fr, L, 1.0 - ease((p - 0.75) / 0.25))
+            fr = disc_put(fr, place(CAT_G, 0.72, 0.5, 0.5), ease((p - 0.75) / 0.25))
         return fr
     # ---- 8. closing lines, 2027 grows to fill, KV loop ----
     for key, lines, nxt in (("logro", [("NUESTRO PRÓXIMO", "black", 0.1, W_), ("LOGRO", "black", 0.2, W_)], "hoy"),
