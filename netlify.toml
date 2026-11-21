@@ -1,0 +1,7 @@
+[build]
+  publish = "esfera_site"
+
+[[headers]]
+  for = "/*.mp4"
+  [headers.values]
+    Cache-Control = "public, max-age=300"

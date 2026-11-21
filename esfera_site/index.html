@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Esfera LED · visor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a calm technical tool for a dark event venue — the content on the ball is the only bright thing.
+   IDEA: an LED rigging check — the sphere hanging at 3 m, a person for scale, a rigger's control sheet.
+   PICTURE: the 3D sphere fills the whole screen; the controls are a sheet that can be hidden.
+   COLOUR and TYPE: near-black venue, LED green as the single accent; Barlow Condensed titles, Inter controls.
+   LAYOUT: canvas full-bleed; sheet docked right on wide screens, bottom sheet on phones. */
+:root{color-scheme:dark;--bg:#07090a;--panel:rgba(14,19,17,.92);--ink:#e8efe9;--mute:#93a39a;--line:#24312b;--led:#5cff5c;--led-d:#1f7a33}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,sans-serif;overflow:hidden}
+#view{position:fixed;inset:0;touch-action:none}
+#view canvas{display:block;width:100%;height:100%}
+.chip{position:fixed;top:12px;left:12px;padding:8px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);z-index:2}
+.chip h1{margin:0;font:700 22px/1.05 'Barlow Condensed',sans-serif;letter-spacing:.2px}
+.chip p{margin:2px 0 0;color:var(--mute);font-size:13px}
+#toggle{position:fixed;top:12px;right:12px;z-index:3}
+.sheet{position:fixed;top:64px;right:12px;width:340px;max-height:calc(100% - 76px);overflow:auto;padding:14px;border-radius:16px;background:var(--panel);border:1px solid var(--line);z-index:2;backdrop-filter:blur(8px)}
+.sheet.hidden{display:none}
+.sec{margin:0 0 14px}
+.sec h2{margin:0 0 8px;font:600 13px/1.2 Inter,sans-serif;color:var(--mute)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+button,.file{appearance:none;font:500 15px Inter,sans-serif;color:var(--ink);background:#121915;border:1px solid var(--line);border-radius:10px;min-height:44px;padding:0 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+button:focus-visible,.file:focus-within{outline:2px solid var(--led);outline-offset:2px}
+button.on{background:var(--led-d);border-color:var(--led);color:#fff}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.file input{position:absolute;width:1px;height:1px;opacity:0}
+.file{position:relative}
+.note{font-size:13px;color:var(--mute);margin:6px 0 0}
+.ok{color:var(--led)}.warn{color:#ffcf5c}
+.hidden-mode{display:none}
+@media(max-width:700px){
+  .sheet{top:auto;bottom:0;right:0;left:0;width:auto;max-height:46vh;border-radius:16px 16px 0 0;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  .chip h1{font-size:20px}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div class="chip"><h1>Esfera LED · Ø 2 m</h1><p>Centro a 3 m · persona 1,75 m</p></div>
+<button id="toggle" aria-expanded="true">Controles</button>
+
+<div class="sheet" id="sheet">
+  <div class="sec">
+    <h2>Formato del contenido</h2>
+    <div class="seg">
+      <button id="m-fish" class="on">Fisheye frente + dorso</button>
+      <button id="m-equi">Equirect 2:1</button>
+    </div>
+    <p class="note" id="m-note">Dos círculos fisheye 180° (1:1), horizonte por el centro. Cada uno cubre media esfera.</p>
+  </div>
+
+  <div class="sec">
+    <h2>Cargar archivos (imagen o video)</h2>
+    <div class="row" id="files-fish">
+      <label class="file">Frente<input type="file" id="f-front" accept="image/*,video/*"></label>
+      <label class="file">Dorso<input type="file" id="f-back" accept="image/*,video/*"></label>
+    </div>
+    <div class="row hidden-mode" id="files-equi">
+      <label class="file">Archivo equirect<input type="file" id="f-equi" accept="image/*,video/*"></label>
+    </div>
+    <p class="note" id="info">Mostrando patrón de prueba. Sin dorso cargado, el dorso repite el frente (espejo).</p>
+    <div class="row" style="margin-top:8px"><button id="play">Pausa video</button><button id="sync">Reiniciar</button></div>
+  </div>
+
+  <div class="sec">
+    <h2>Capas</h2>
+    <div class="row">
+      <button id="t-spin">Girar esfera</button>
+      <button id="t-rib">Cintas laterales (guía)</button>
+      <button id="t-path">Camino de luz</button>
+      <button id="t-grid">Grilla 30°</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Punto de vista</h2>
+    <div class="row">
+      <button data-v="front" class="on">Público frente</button>
+      <button data-v="back">Público dorso</button>
+      <button data-v="side">Lateral</button>
+      <button data-v="below">Desde abajo</button>
+      <button data-v="close">Cerca</button>
+    </div>
+    <p class="note">Arrastrá para orbitar · pellizcá o rueda para acercar.</p>
+  </div>
+</div>
+
+<script src="three.min.js"></script>
+<script>
+{
+const $ = id => document.getElementById(id);
+const view = $('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+view.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x07090a);
+const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 100);
+
+// venue: floor grid + person for scale
+const CY = 3.0, R = 1.0;
+const floor = new THREE.Mesh(new THREE.CircleGeometry(14, 64), new THREE.MeshBasicMaterial({ color: 0x0b110e }));
+floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const grid = new THREE.GridHelper(28, 28, 0x1d3328, 0x121d18); grid.position.y = 0.002; scene.add(grid);
+function person(x, z) {
+  const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: 0x2b3a33 });
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.17, 1.45, 18), m); b.position.y = 0.725; g.add(b);
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 12), m); h.position.y = 1.62; g.add(h);
+  g.position.set(x, 0, z); scene.add(g);
+}
+person(1.5, 1.6); person(-1.4, -1.7);
+
+// demo content: neutral test pattern (FRENTE / DORSO circles, equirect grid)
+function demoFish(label, hue) {
+  const c = document.createElement('canvas'); c.width = c.height = 1024; const x = c.getContext('2d');
+  x.fillStyle = '#000'; x.fillRect(0, 0, 1024, 1024);
+  const g = x.createLinearGradient(0, 0, 0, 1024); g.addColorStop(0, `hsl(${hue},45%,30%)`); g.addColorStop(.5, `hsl(${hue},60%,62%)`); g.addColorStop(.5, '#3b3226'); g.addColorStop(1, '#141210');
+  x.save(); x.beginPath(); x.arc(512, 512, 512, 0, 7); x.clip(); x.fillStyle = g; x.fillRect(0, 0, 1024, 1024);
+  x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 3;
+  for (let r = 85; r < 512; r += 85) { x.beginPath(); x.arc(512, 512, r, 0, 7); x.stroke(); }
+  for (let a = 0; a < 12; a++) { x.beginPath(); x.moveTo(512, 512); x.lineTo(512 + 512 * Math.cos(a * Math.PI / 6), 512 + 512 * Math.sin(a * Math.PI / 6)); x.stroke(); }
+  x.strokeStyle = '#fff'; x.lineWidth = 6; x.beginPath(); x.moveTo(0, 512); x.lineTo(1024, 512); x.stroke();
+  x.fillStyle = '#fff'; x.font = '700 120px "Barlow Condensed",sans-serif'; x.textAlign = 'center'; x.fillText(label, 512, 400);
+  x.font = '600 44px Inter,sans-serif'; x.fillText('horizonte', 512, 580); x.restore();
+  return new THREE.CanvasTexture(c);
+}
+function demoEqui() {
+  const c = document.createElement('canvas'); c.width = 2048; c.height = 1024; const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, 1024); g.addColorStop(0, '#16324a'); g.addColorStop(.5, '#6aa0c8'); g.addColorStop(.5, '#3b3226'); g.addColorStop(1, '#141210');
+  x.fillStyle = g; x.fillRect(0, 0, 2048, 1024); x.strokeStyle = 'rgba(255,255,255,.3)'; x.lineWidth = 2;
+  for (let i = 0; i <= 12; i++) { x.beginPath(); x.moveTo(i * 2048 / 12, 0); x.lineTo(i * 2048 / 12, 1024); x.stroke(); }
+  for (let j = 0; j <= 6; j++) { x.beginPath(); x.moveTo(0, j * 1024 / 6); x.lineTo(2048, j * 1024 / 6); x.stroke(); }
+  x.fillStyle = '#fff'; x.font = '700 110px "Barlow Condensed",sans-serif'; x.textAlign = 'center';
+  x.fillText('FRENTE', 1024, 470); x.fillText('DORSO', 60, 470); x.fillText('DORSO', 1988, 470);
+  return new THREE.CanvasTexture(c);
+}
+
+// sphere with a mapping shader: mode 0 = equirect, 1 = fisheye front + back (equidistant 180°)
+const U = {
+  tF: { value: demoFish('FRENTE', 205) }, tB: { value: demoFish('DORSO', 25) }, tE: { value: demoEqui() },
+  mode: { value: 1 }, hasB: { value: 1 }, rib: { value: 0 }, path: { value: 0 }, grid: { value: 0 }, time: { value: 0 }
+};
+const mat = new THREE.ShaderMaterial({
+  uniforms: U,
+  vertexShader: `varying vec3 vN; void main(){ vN = normal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader: `
+    uniform sampler2D tF, tB, tE; uniform float mode, hasB, rib, path, grid, time; varying vec3 vN;
+    const float PI = 3.14159265;
+    vec3 neon(float d, float w, float k){ float c = exp(-pow(d/(w*.35),2.)); float g = exp(-pow(d/w,2.))*.6 + exp(-d/(w*4.))*.25; return (c*vec3(.92,1.,.88)*.9 + g*vec3(.25,1.,.2))*k; }
+    void main(){
+      vec3 n = normalize(vN); vec3 col;
+      float lon = atan(n.x, n.z), lat = asin(clamp(n.y,-1.,1.));
+      if (mode < .5) {
+        col = texture2D(tE, vec2(.5 + lon/(2.*PI), .5 + lat/PI)).rgb;
+      } else {
+        bool front = n.z >= 0.;
+        vec3 m = front ? n : vec3(-n.x, n.y, -n.z);
+        float th = acos(clamp(m.z,-1.,1.)); float r = th/PI;          // 0 at centre .. 0.5 at the rim (90°)
+        float ph = atan(m.y, m.x); vec2 uv = .5 + r*vec2(cos(ph), sin(ph));
+        col = (front || hasB < .5) ? texture2D(tF, uv).rgb : texture2D(tB, uv).rgb;
+      }
+      if (rib > .5) {                                                 // KV light ribbons over the side joins
+        for (int k = 0; k < 3; k++) { float fk = float(k);
+          float d = abs(n.z - (fk-1.)*.025 - .03*sin(3.*n.y + time*(.6+.2*fk) + fk*2.));
+          col += neon(d, .018 - .004*fk, 1. - .25*fk); }
+      }
+      if (path > .5) {                                                // light path on the ground band
+        float d = abs(lat + .30 + .03*sin(2.*lon + time*.8));
+        col += neon(d, .02, 1.);
+      }
+      if (grid > .5) {
+        float gl = min(abs(fract(lon/(PI/6.)+.5)-.5), abs(fract(lat/(PI/6.)+.5)-.5));
+        col = mix(col, vec3(.45,1.,.35), smoothstep(.02,.0,gl)*.7);
+      }
+      gl_FragColor = vec4(col, 1.);
+    }`
+});
+const sphere = new THREE.Mesh(new THREE.SphereGeometry(R, 160, 96), mat);
+sphere.position.y = CY; scene.add(sphere);
+
+// files
+let videos = [];
+function setInfo(t, cls) { const i = $('info'); i.textContent = t; i.className = 'note ' + (cls || ''); }
+function load(file, slot) {
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const done = (tex, w, h) => {
+    tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;
+    if (slot === 'F') U.tF.value = tex; if (slot === 'B') { U.tB.value = tex; U.hasB.value = 1; } if (slot === 'E') U.tE.value = tex;
+    const ratio = w / h, want = slot === 'E' ? 2.0 : 1.0;
+    const ok = Math.abs(ratio - want) < (slot === 'E' ? 0.1 : 0.03);
+    setInfo(`${file.name} · ${w}×${h} · ${ratio.toFixed(3)}:1 ${ok ? '✓ formato correcto' : slot === 'E' ? '⚠ se espera 2:1 (2688×1296)' : '⚠ se espera 1:1 (círculo fisheye)'}`, ok ? 'ok' : 'warn');
+  };
+  if (file.type.startsWith('video/')) {
+    const v = document.createElement('video'); v.src = url; v.loop = true; v.muted = true; v.playsInline = true; v.crossOrigin = 'anonymous';
+    v.addEventListener('loadedmetadata', () => { done(new THREE.VideoTexture(v), v.videoWidth, v.videoHeight); v.play().catch(() => setInfo('Tocá "Reiniciar" para reproducir el video', 'warn')); });
+    videos.push(v);
+  } else {
+    new THREE.TextureLoader().load(url, t => done(t, t.image.width, t.image.height));
+  }
+}
+$('f-front').onchange = e => { if (slotFrontFirst()) U.hasB.value = 0; load(e.target.files[0], 'F'); };
+let backLoaded = false;
+function slotFrontFirst() { return !backLoaded; }
+$('f-back').onchange = e => { backLoaded = true; load(e.target.files[0], 'B'); };
+$('f-equi').onchange = e => load(e.target.files[0], 'E');
+$('play').onclick = () => { const p = videos.some(v => !v.paused); videos.forEach(v => p ? v.pause() : v.play()); $('play').textContent = p ? 'Reproducir video' : 'Pausa video'; };
+$('sync').onclick = () => videos.forEach(v => { v.currentTime = 0; v.play().catch(() => {}); });
+
+// demo loaded with the page: EN CADA KM frame + chrome puma loop (equirect)
+function loadDemo() {
+  const v = document.createElement('video'); v.src = 'apertura.mp4'; v.loop = true; v.muted = true; v.playsInline = true; v.autoplay = true; v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+  v.addEventListener('loadedmetadata', () => {
+    const t = new THREE.VideoTexture(v); t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; U.tE.value = t;
+    setMode(false); setInfo('Puma Energy · Esfera LED · Apertura', 'ok');
+    v.play().catch(() => { setInfo('Tocá la pantalla para reproducir', 'warn'); const go = () => { videos.forEach(x => x.play().catch(() => {})); setInfo('Puma Energy · Esfera LED · Apertura', 'ok'); }; window.addEventListener('pointerdown', go, { once: true }); });
+  });
+  v.addEventListener('error', () => {});
+  videos.push(v);
+}
+// modes
+function setMode(fish) {
+  U.mode.value = fish ? 1 : 0;
+  $('m-fish').classList.toggle('on', fish); $('m-equi').classList.toggle('on', !fish);
+  $('files-fish').classList.toggle('hidden-mode', !fish); $('files-equi').classList.toggle('hidden-mode', fish);
+  $('m-note').textContent = fish ? 'Dos círculos fisheye 180° (1:1), horizonte por el centro. Cada uno cubre media esfera.'
+                                 : 'Imagen o video equirectangular 2:1 (lienzo 2688×1296). El centro mira al público del frente.';
+}
+$('m-fish').onclick = () => setMode(true); $('m-equi').onclick = () => setMode(false);
+loadDemo();
+
+// layer toggles
+const st = { spin: false };
+function tog(id, fn) { $(id).onclick = () => { const on = !$(id).classList.contains('on'); $(id).classList.toggle('on', on); fn(on); }; }
+tog('t-spin', on => st.spin = on); tog('t-rib', on => U.rib.value = on ? 1 : 0);
+tog('t-path', on => U.path.value = on ? 1 : 0); tog('t-grid', on => U.grid.value = on ? 1 : 0);
+if (innerWidth < 700) { $('sheet').classList.add('hidden'); $('toggle').textContent = 'Mostrar controles'; $('toggle').setAttribute('aria-expanded', 'false'); }
+$('toggle').onclick = () => { const h = $('sheet').classList.toggle('hidden'); $('toggle').setAttribute('aria-expanded', String(!h)); $('toggle').textContent = h ? 'Mostrar controles' : 'Ocultar controles'; };
+
+// camera: orbit around the sphere (drag), zoom (wheel / pinch)
+let az = 0, el = 0.0, dist = 5.2;
+const tgt = new THREE.Vector3(0, CY - 0.35, 0);
+const views = {
+  front: () => { az = 0; el = 0.0; dist = 5.2; tgt.set(0, CY - 0.35, 0); },
+  back: () => { az = Math.PI; el = 0.0; dist = 5.2; tgt.set(0, CY - 0.35, 0); },
+  side: () => { az = Math.PI / 2; el = 0.0; dist = 5.2; tgt.set(0, CY - 0.35, 0); },
+  below: () => { az = 0.25; el = -0.5; dist = 3.2; tgt.set(0, CY, 0); },
+  close: () => { az = 0; el = 0.12; dist = 2.4; tgt.set(0, CY, 0); }
+};
+document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
+  views[b.dataset.v](); document.querySelectorAll('[data-v]').forEach(x => x.classList.toggle('on', x === b));
+});
+function place() {
+  const y = Math.max(0.3, 1.65 + dist * Math.sin(el));            // audience eye height, raised/lowered by the orbit
+  const d = dist * Math.max(1, 0.85 / camera.aspect);            // narrow (phone) screens: step back so the whole ball fits
+  camera.position.set(tgt.x + d * Math.cos(el) * Math.sin(az), y, tgt.z + d * Math.cos(el) * Math.cos(az));
+  camera.lookAt(tgt);
+}
+const pts = new Map(); let pinch0 = 0, dist0 = dist;
+const el_ = renderer.domElement;
+el_.addEventListener('pointerdown', e => { el_.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); dist0 = dist; } });
+el_.addEventListener('pointermove', e => {
+  if (!pts.has(e.pointerId)) return; const p = pts.get(e.pointerId);
+  if (pts.size === 1) { az -= (e.clientX - p.x) * 0.006; el = Math.max(-0.7, Math.min(1.3, el + (e.clientY - p.y) * 0.004)); }
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size === 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0) dist = Math.max(1.7, Math.min(14, dist0 * pinch0 / d)); }
+});
+const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch0 = 0; };
+el_.addEventListener('pointerup', up); el_.addEventListener('pointercancel', up);
+el_.addEventListener('wheel', e => { dist = Math.max(1.7, Math.min(14, dist * (1 + Math.sign(e.deltaY) * 0.08))); e.preventDefault(); }, { passive: false });
+
+function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(view); resize();
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  U.time.value += reduce ? 0 : dt;
+  if (st.spin) sphere.rotation.y += dt * 0.25;
+  place(); renderer.render(scene, camera); requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
