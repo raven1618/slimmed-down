@@ -150,7 +150,9 @@ export function treeCards(U, L, data, a2c) {
         vec4 a = texture2D(uSheet, vA), b = texture2D(uSheet, vB);
         float al = mix(a.a, b.a, vM);
         vec3 rgb = (a.rgb * a.a * (1.0 - vM) + b.rgb * b.a * vM) / max(al, 1e-3);
-        float thr = mix(0.5, 0.3, clamp(length(vW - cameraPosition) / 250.0, 0.0, 1.0));   // far crowns keep their fill
+        float dist = length(vW - cameraPosition);
+        float thr = mix(0.5, 0.3, clamp(dist / 250.0, 0.0, 1.0));          // far crowns keep their fill
+        thr = mix(1.01, thr, smoothstep(3.0, 8.0, dist));                    // a flat picture up close looks wrong: fade it
         #ifdef A2C
         al = clamp((al - thr) / max(fwidth(al), 1e-3) + 0.5, 0.0, 1.0);
         if (al < 0.02) discard;

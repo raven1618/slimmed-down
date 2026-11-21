@@ -3140,7 +3140,19 @@ function buildHouseScene(kind) {
     if (Math.abs(x - (isCabin ? 0 : 0.6)) < halfW + 0.3 && z > rz + 0.1 && z < (isCabin ? 6.6 : 7.0)) y = -0.08;
     return y;
   };
-  const ground = groundMesh(hf, 260, 220, small ? 130 : 200, small ? 110 : 170, new THREE.MeshStandardMaterial({ map: tex(L.tex.grass, 2.5), color: tint, roughness: 1 }));
+  // The walk's ground: lawn, with patches of leaf litter and a slow light-and-dark variation, as in the bake.
+  const gmat = new THREE.MeshStandardMaterial({ map: tex(L.tex.grass, 2.5), color: tint, roughness: 1 }), litter = tex(L.tex.litter, 2.5);
+  gmat.onBeforeCompile = (sh) => {
+    sh.uniforms.uLitter = { value: litter };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vGW;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uLitter; varying vec3 vGW;\n' + LOOK.NOISE)
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        { float n = ohNoise(vGW * 0.35) * 0.55 + ohNoise(vGW * 0.07) * 0.45;
+          vec3 lit = texture2D(uLitter, vMapUv).rgb * vec3(1.0, 0.85, 0.62);
+          diffuseColor.rgb = mix(diffuseColor.rgb, lit, smoothstep(0.56, 0.74, n) * 0.75) * mix(0.8, 1.06, ohNoise(vGW * 0.045)); }`);
+  };
+  const ground = groundMesh(hf, 260, 220, small ? 130 : 200, small ? 110 : 170, gmat);
   scene.add(ground);
 
   // The house itself.
@@ -3278,15 +3290,17 @@ function buildHouseScene(kind) {
     }
     // The walk's trees: pictures of the real tree models, species by height as in the renders.
     const td = [];
-    for (const [x, z] of trees) { const h = 6 + R() * 10, r = R(); td.push(x, z, hf(x, z) - 0.2, h, h >= 14 ? 0 : h >= 9 ? (r < 0.5 ? 0 : 1) : (r < 0.6 ? 2 : 1)); }
+    const cams = VIEWS[kind].map((v) => v[1]);
+    for (const [x, z] of trees) { if (cams.some((c) => Math.hypot(c[0] - x, c[2] - z) < 10)) continue; const h = 6 + R() * 10, r = R(); td.push(x, z, hf(x, z) - 0.2, h, h >= 14 ? 0 : h >= 9 ? (r < 0.5 ? 0 : 1) : (r < 0.6 ? 2 : 1)); }
     scene.add(LOOK.treeCards(U, L, new Float32Array(td), !small));
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v3 = new THREE.Vector3(), s3 = new THREE.Vector3();
 
     const palmSpots = isCabin
       ? [[-9.5, -9, 1.0], [-6, -14, 1.15], [9, -11, 1.1], [14, -7, 1.0], [-24, 3, 1.05], [22, 2, 0.95], [-34, -16, 1.1], [30, -18, 1.0]]
       : [[-16, -12, 1.1], [-10, -16, 1.0], [14, -14, 1.1], [24, -10, 1.0], [-32, 2, 1.05], [30, 4, 0.95], [-40, -18, 1.1]];
-    const pm = new THREE.InstancedMesh(palmGeometry(15), palmMat, palmSpots.length);
-    palmSpots.forEach(([x, z, s], i) => pm.setMatrixAt(i, m4.compose(v3.set(x, hf(x, z) - 0.2, z), q.setFromAxisAngle(UP, R() * 6), s3.set(s, s, s))));
+    const palms = palmSpots.filter(([x, z]) => !cams.some((c) => Math.hypot(c[0] - x, c[2] - z) < 12));     // none right in front of a view
+    const pm = new THREE.InstancedMesh(palmGeometry(15), palmMat, palms.length);
+    palms.forEach(([x, z, s], i) => pm.setMatrixAt(i, m4.compose(v3.set(x, hf(x, z) - 0.2, z), q.setFromAxisAngle(UP, R() * 6), s3.set(s, s, s))));
     pm.castShadow = true; scene.add(pm);
 
     // The walk's grass blades, on a 0.5 m grid, kept off the house, pool, carport and fire pit.
@@ -3308,7 +3322,7 @@ function buildHouseScene(kind) {
 
   // Sky, sun, night: the site's sky and the sun of the bake, as in Walk the site.
   const sunDir = U.uSun.value;
-  const dome = LOOK.addSky(scene, renderer, U, L); scene.environmentIntensity = 1;
+  const dome = LOOK.addSky(scene, renderer, U, L); scene.environmentIntensity = 0.8;      // the open sky, less what trees and slopes hide (as the bake found)
   const starField = stars(1400, 1200); starField.visible = false; scene.add(starField);
   const hemi = new THREE.HemisphereLight(0x6f86b0, 0x5a4a36, 0); scene.add(hemi);       // moonlight only
   const sun = LOOK.sunLight(U), dayCol = sun.color.clone(), dayI = sun.intensity;
@@ -3338,7 +3352,7 @@ function buildHouseScene(kind) {
     sun.intensity = on ? 0.35 : dayI;
     sun.color.copy(on ? new THREE.Color(0x9db5e0) : dayCol);
     sun.position.copy(on ? new THREE.Vector3(-0.4, 0.8, 0.5).normalize() : sunDir).multiplyScalar(60);
-    scene.environmentIntensity = on ? 0.08 : 1;
+    scene.environmentIntensity = on ? 0.08 : 0.8;
     U.uDim.value.set(...(on ? [0.05, 0.06, 0.09] : [1, 1, 1]));         // the sky-lit grass and trees, by moonlight
     lights.forEach((l) => (l.intensity = on ? 14 : 0));
     SM.window.emissiveIntensity = on ? 0.8 : 0;
