@@ -642,7 +642,8 @@ def render(t):
     # ---- 7. logo without the puma; the puma enters ----
     d, cent, top, Q = ball_field(roty(-0.10 * (t - T["kv_flash"])))
     q = 1 - ease((t - T["logo2"]) / 0.5)                    # the hand-off glow settles
-    fr = green_fill(cent, Q) + (bloom(neon(d, SW, 1.0, Q=Q, t=t), 0.8 * q) if q > 0 else neon(d, SW, 1.0, Q=Q, t=t))
+    dk = 1 - 0.5 * ease((t - T["logro"] + 0.4) / 0.8)    # closing: the ball sinks to deep emerald (KV background) so the type reads
+    fr = green_fill(cent, Q) * dk + (bloom(neon(d, SW, 1.0, Q=Q, t=t), 0.8 * q) if q > 0 else neon(d, SW, 0.55 + 0.45 * dk, Q=Q, t=t))
     if t < T["logro"]:
         fr = disc_put(fr, place(BAR_NOCAT, 0.72, 0.5, 0.5), ease((t - T["logo2"]) / 0.4))
         if t >= T["cat_in"]:                            # the chrome puma runs in from the left and lands as the logo cat
@@ -661,8 +662,8 @@ def render(t):
                             ("listos", [("LISTOS PARA", "black", 0.09, W_), ("JUGAR EN", "black", 0.15, W_), ("GRANDE", "black", 0.17, LIME)], "y2027")):
         if T[key] <= t < T[nxt]:
             fr = mg_put(fr, key, t - T[key])
-    if t >= T["kv"]:
-        kv = place(LOGO, 0.62, 0.5, 0.5); fr = disc_put(fr, kv, ease((t - T["kv"]) / 0.5))
+    if t >= T["kv"]:                                    # the KV lockup builds row by row (client's own artwork, animated)
+        fr = mg_put(fr, "kvend", t - T["kv"])
     if t >= T["y2027"]:                                 # 2027: pops in small, grows until it overflows the sphere, dissolves into lime light over the KV
         fr = mg_put(fr, "2027", t - T["y2027"])
     return fr

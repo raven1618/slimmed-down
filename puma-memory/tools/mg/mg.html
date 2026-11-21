@@ -17,14 +17,16 @@ async function init(cfg) {
     const ff = new FontFace(n, `url(${FD}${f})`); await ff.load(); document.fonts.add(ff);
   }
   C = document.getElementById("c"); C.width = W; C.height = W; X = C.getContext("2d");
+  if (cfg.lockup) { const im = new Image(); im.src = cfg.lockup.src; await im.decode(); CFG.LK = im; }
   // layout: fit each line to its width fraction
-  CFG.L = CFG.lines.map(l => {
+  CFG.L = (CFG.lines || []).map(l => {
     let size = 100; X.font = `${size}px ${l.font}`; const w0 = X.measureText(l.text).width;
     size = size * (l.w * W) / w0; X.font = `${size}px ${l.font}`;
     const letters = []; let x = 0;
     for (const ch of l.text) { const cw = X.measureText(ch).width; letters.push({ ch, x, cw }); x += cw; }
     return { ...l, size, width: x, letters };
   });
+  if (!CFG.L.length) { CFG.L.push({ y: W * 0.5, size: W * 0.1, width: CFG.lockup ? CFG.lockup.w * W : W * 0.5, letters: [] }); CFG.L[0].hidden = true; }
   let y = CFG.yTop * W; CFG.L.forEach(l => { l.y = y + l.size * 0.8; y += l.size * 0.86 + W * 0.004; });
   CFG.sparks = Array.from({ length: 70 }, () => ({ u: rnd(), vy: -(0.2 + rnd()) , vx: (rnd() - 0.5) * 0.6, life: 0.5 + rnd() * 0.7, s: 1 + rnd() * 2.5, d: rnd() * 0.25 }));
   return true;
@@ -32,7 +34,27 @@ async function init(cfg) {
 function letterPath(l, li, t, tOut) {
   // returns list of draw ops for each letter with transform
 }
+function drawLockup(t, ctx) {     // the client's KV lockup, row by row, each row in its original position
+  const k = CFG.lockup, im = CFG.LK, sc = k.w * W / im.width, x0 = W / 2 - im.width * sc / 2, y0 = k.cy * W - im.height * sc / 2;
+  k.parts.forEach(pt => {
+    const p = ph(t, CFG.tin + pt.delay, pt.anim === "draw" ? 0.7 : 0.55); if (p <= 0) return;
+    const sy = pt.y0, sh = pt.y1 - pt.y0, dy = y0 + sy * sc, dh = sh * sc, dw = im.width * sc;
+    const steps = p < 1 ? 7 : 1;
+    for (let i = 0; i < steps; i++) {
+      const f = steps > 1 ? i / (steps - 1) - 0.5 : 0;
+      ctx.save();
+      if (pt.anim === "rise") { const e = eOutExpo(p); const o = (1 - e) * dh * 0.9 + f * (1 - e) * dh * 0.5;
+        ctx.globalAlpha = clamp(p * 3) / (steps > 1 ? steps * 0.55 : 1); ctx.beginPath(); ctx.rect(0, dy - dh * 0.1, W, dh * 1.2); ctx.clip(); ctx.drawImage(im, 0, sy, im.width, sh, x0, dy + o, dw, dh); }
+      else if (pt.anim === "draw") { const e = eOutExpo(p); ctx.globalAlpha = clamp(p * 2.5) / (steps > 1 ? steps * 0.4 : 1);
+        const cw = dw * e, cx = W / 2; ctx.beginPath(); ctx.rect(cx - cw / 2, dy - 2, cw, dh + 4); ctx.clip(); ctx.drawImage(im, 0, sy, im.width, sh, x0, dy, dw, dh); }
+      else { const e = eOutBack(p); const s2 = 1.3 - 0.3 * e + f * (1 - clamp(p * 1.5)) * 0.12; ctx.globalAlpha = clamp(p * 2.5) / (steps > 1 ? steps * 0.55 : 1);
+        const cy = dy + dh / 2; ctx.translate(W / 2, cy); ctx.scale(s2, s2); ctx.translate(-W / 2, -cy); ctx.drawImage(im, 0, sy, im.width, sh, x0, dy, dw, dh); }
+      ctx.restore();
+    }
+  });
+}
 function drawLine(l, li, t, ctx, mode) {
+  if (l.hidden) return;
   const cx = W / 2, x0 = cx - l.width / 2, n = l.letters.length;
   const t0 = CFG.tin + l.delay;
   const outStart = CFG.tout + li * 0.06;
@@ -97,12 +119,14 @@ function frame(t) {
   const off = new OffscreenCanvas(W, W), o = off.getContext("2d");
   // 1. text body
   withGrow(o, t, c => CFG.L.forEach((l, li) => drawLine(l, li, t, c, "white")));
+  if (CFG.lockup) drawLockup(t, o);
   // 2. legibility: soft dark shadow under the text
   X.save(); X.filter = `blur(${W * 0.012}px)`; X.globalAlpha = 0.55; X.drawImage(off, 0, W * 0.006);
   X.globalCompositeOperation = "source-in"; X.fillStyle = "#000"; X.fillRect(0, 0, W, W); X.restore();
   const sh = new OffscreenCanvas(W, W), s = sh.getContext("2d");
-  s.filter = `blur(${W * 0.014}px)`; s.globalAlpha = 0.6; s.drawImage(off, 0, W * 0.008); s.globalCompositeOperation = "source-in"; s.fillStyle = "#000"; s.fillRect(0, 0, W, W);
-  X.clearRect(0, 0, W, W); X.drawImage(sh, 0, 0); X.drawImage(off, 0, 0);
+  s.filter = `blur(${W * 0.014}px)`; s.globalAlpha = CFG.shadow || 0.6; s.drawImage(off, 0, W * 0.008); s.globalCompositeOperation = "source-in"; s.fillStyle = "#000"; s.fillRect(0, 0, W, W);
+  X.clearRect(0, 0, W, W); X.drawImage(sh, 0, 0); if (CFG.shadow) X.drawImage(sh, 0, 0); X.drawImage(off, 0, 0);
+  if (CFG.lockup) { X.save(); X.globalCompositeOperation = "lighter"; X.filter = `blur(${W * 0.012}px)`; X.globalAlpha = 0.35; X.drawImage(off, 0, 0); X.restore(); }
   // 2b. lime words carry their own neon glow
   if (CFG.L.some(l => l.glow)) {
     const G = new OffscreenCanvas(W, W), gg = G.getContext("2d");

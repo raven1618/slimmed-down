@@ -109,6 +109,8 @@ The user rejected the numpy-only text and effects as "basic and lame". Everythin
 - **Pre-kick:** no KV before the kick. The last pulse condenses onto the ball on the spot (`BALL_DOWN` 0.35 rad), then the stadium opens radially with a lime edge.
 - **Kick → KV:** the code ball starts at the filmed ball's panel size (1.33→1), the seams flare, the panels light up to KV green. No white flash and no frozen frame.
 - **2027:** pops in small, grows accelerating with zoom blur until it overflows the sphere, then dissolves into lime light over the KV loop.
+- **KV ending:** the client's lockup (`kv/kv_logo_rgba.png`) is animated row by row in its original positions (`cfg_kvend.json`): bar rise, CONVOCADOS rise, A JUGAR EN draw-out with its pitch lines, GRANDE punch, two sweeps. Never retype the KV.
+- **Closing contrast:** from `logro` the ball sinks to deep emerald (fill x0.5, seams x0.55–1) so white type reads.
 
 ## 10. Client preview
 - **Viewer artifact:** "Esfera LED · visor" (private).
