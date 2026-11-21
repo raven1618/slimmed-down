@@ -48,3 +48,12 @@
   - Andrés: placa 2 text 12 frames earlier; placa 3 (huddle) 18 frames earlier plus hold; placa 4 unchanged apart from removing the blur. → Andrés v28
   - Cepede: every placa's text 12 frames earlier plus hold. Placa 5 (Y SE ATREVEN A JUGAR EN GRANDE) holds until f570 and then fades into the ball flash. → Cepede v13
 - **Lesson:** this client prefers text covering faces to face blur.
+
+## Client round, Nov 20 (via Benjamín) + studio voice-overs
+- **Studio VOs** (Drive folder `1x2MMJE9INdrPKWbVxiIQ3rzkfuA_eWoI`): dry, 48 kHz stereo, already timed to the 30 s teasers (speech about 3–27 s). Placed at 0:00 with `tools/sfx_v25_pro.py cfg vo.wav out.wav music_in/Kolomna_30s.wav pro`.
+  - PRO mode: a 60 Hz high-pass, one cut covering the whole take, and ducking driven by the take's own energy.
+- **Wally placa 4:** the first phrase holds longer before LA IA JUEGA EN TU EQUIPO (line delays 0/4/48/52, B4 impact 462, out 552). Keep the word "JUEGA". → Wally v6/v7
+- **Formento:** the left news card "El Niño desafía la previsibilidad de la Hidrovía" is replaced by "Ataque *destruye un oleoducto* clave en Omán" (INTERNACIONAL, `formento/news_in/n14_oman.png`, `tools/cards_formento.json` F3_L2; wings rebuilt with `news_wings.py`). Backups: `cards_formento.bak_nov20`, `formento/cards_bak_nov20`.
+  - The ticker still has the El Niño line. Swap it only if asked. → Formento v8
+- **Manuel "Ex Ministro de Economía":** v5/v6 already read EX MINISTRO DE ECONOMÍA. We still need to ask the client where they saw it wrong.
+- **Review set** (`review_nov20/`, all `_locucion_preview.mp4`): Andrés Silva v29, Cepede v14, Carolina v10, Manuel v6, Wally v7, Roque+Haedo v4, Formento v8.

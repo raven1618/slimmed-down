@@ -268,7 +268,39 @@ def light_over(fr, L, k=1.4, dark=0.45):
     m = np.clip(L.max(-1) / 110.0, 0, 1); m = cv2.GaussianBlur(m, (0, 0), 9 * SC * 2)
     fr = np.clip(fr, 0, 255) * (1 - dark * m[..., None]); Lk = np.clip(L * k, 0, 255)
     return 255 - (255 - fr) * (255 - Lk) / 255
+# client ref (Nov 20, CLEANTEC stage lasers): a bundle of straight parallel laser strands, hot yellow-white cores,
+# saturated lime glow, heavy bloom, bright streaks racing along the beam
+LASER_CORE = np.array([255, 255, 190], np.float32); LASER_LIME = np.array([150, 255, 30], np.float32); LASER_GLOW = np.array([40, 255, 40], np.float32)
+def laser_band(t, inten=1.0):
+    d = LAT - path_lat(LON)                                            # radians from the band centre line
+    ph_ = (LON / (2 * np.pi)) * 360                                    # degrees around the ball
+    out = np.zeros((EH, EW, 3), np.float32)
+    offs = [-0.075, -0.052, -0.031, -0.012, 0.006, 0.024, 0.045, 0.068]   # wider spread: strands read separately
+    for k, o in enumerate(offs):
+        w = (0.0042 + 0.0018 * (k % 3)) / max(SC, 0.5) * 0.5             # strand width: ~1.5-2.5 px at preview, crisp at 2688
+        dd = np.abs(d - o - 0.0025 * np.sin(0.9 * LON + 0.7 * t + k))
+        core = np.exp(-(dd / w) ** 2)
+        # streaks: bright dashes travelling along the strand (left to right, the puma's direction)
+        sp = 140 + 35 * (k % 4); ln = 22 + 9 * (k % 3)
+        streak = 0.18 + 0.82 * np.clip(np.sin((ph_ - sp * t - 37 * k) * np.pi / ln), 0, 1) ** 4
+        a = core * streak * (0.75 + 0.25 * (k % 2))
+        hot = np.exp(-(dd / (w * 0.45)) ** 2) * streak                   # white-yellow hot core inside each strand
+        out += a[..., None] * LASER_LIME * 0.95 + hot[..., None] * LASER_CORE * 0.9
+    # wide lime glow under the bundle
+    g = np.exp(-(np.abs(d) / 0.07) ** 2) * 0.22 + np.exp(-np.abs(d) / 0.12) * 0.08
+    out += g[..., None] * LASER_GLOW * 0.6
+    sm_ = cv2.resize(out, (EW // 4, EH // 4), interpolation=cv2.INTER_AREA)
+    blo = cv2.GaussianBlur(sm_, (0, 0), 2) * 0.7 + cv2.GaussianBlur(sm_, (0, 0), 8) * 0.45
+    return (out + cv2.resize(blo, (EW, EH))) * inten
 def swoosh(t, inten=1.0, rim=False, **_):
+    tl = t - TL["path"]
+    if tl < 1.4:                                                          # the bundle shoots out from the front and back centres
+        reach = ease(max(tl, 0) / 1.4) * math.pi * 0.55
+        dl = np.minimum(np.abs(np.angle(np.exp(1j * LON))), np.abs(np.angle(np.exp(1j * (LON - math.pi)))))
+        m = np.clip((reach - dl) / 0.15, 0, 1)[..., None]
+        return laser_band(t, inten) * m
+    return laser_band(t, inten)
+def swoosh_plates(t, inten=1.0, rim=False, **_):
     pl = _intro_frame(t - TL["path"])
     u = LON / np.pi + 0.5                                             # one plate per half: centre (spark) at the front and back
     v = 0.5 - (LAT - path_lat(LON)) / BANDH
@@ -316,8 +348,8 @@ def wipe(t, t0, dur=0.6):
 # ---------- timeline (seconds; temporary until the VO is recorded) ----------
 TL = dict(pulse0=0.4, pulseN=5, pulse_dt=1.05, open=6.0, ball=7.4, somos=8.6, logo=10.0, path=12.2, globe=13.4,
           txt_global=14.2, txt_40=16.8, txt_cal=19.4, zoom=21.6, py=23.0, km=25.6, entrega=28.4, destino=33.8,
-          calidad=36.6, juntos=39.4, collage=46.4, pulse2=49.2, ballspin=52.6, kv_flash=54.4, logo2=55.0, cat_in=56.0,
-          logro=58.2, hoy=60.0, listos=61.6, y2027=63.8, kv=67.4, end=72.0)
+          calidad=36.6, juntos=39.4, collage=46.4, pulse2=49.2, ballspin=52.6, kick=52.6, kv_flash=57.6, logo2=57.8, cat_in=59.2,
+          logro=61.4, hoy=63.2, listos=64.8, y2027=67.0, kv=70.6, end=75.2)
 ENTREGA = ["2_entrega/p2_cilindro.png", "2_entrega/p3_aerea02.jpg", "2_entrega/p4_convoy.png", "2_entrega/p4_ladario03.jpg", "2_entrega/p5_DSC3209.tif"]
 DESTINO = [("3_destino/p1_eess.jpg", 0.6), ("3_destino/p2_aeropuerto.jpg", 0.25)]   # airport: crop away the airline tail (right)
 IN = R + "esfera_in/"
@@ -330,6 +362,25 @@ def juntos_frame(t):
         w = int(round(1920 * DN / 1080 / 2) * 2); JV = np.frombuffer(raw, np.uint8).reshape(-1, DN, w, 3)
     i = int(min(max(t * 30, 0), len(JV) - 1)); fr = JV[i]; x0 = (fr.shape[1] - DN) // 2
     return fr[:, x0:x0 + DN].astype(np.float32)
+
+FISH = IN + "fisheye/"
+_fc_cache = {}
+def fish_clip(name):
+    if name not in _fc_cache:
+        import os
+        if not os.path.exists(FISH + name): _fc_cache[name] = None
+        else:
+            raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", FISH + name, "-r", "30", "-vf", "scale=640:640", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True).stdout
+            _fc_cache[name] = np.frombuffer(raw, np.uint8).reshape(-1, 640, 640, 3)
+    return _fc_cache[name]
+_m = np.where((P[..., 2] >= 0)[..., None], P, np.stack([-P[..., 0], P[..., 1], -P[..., 2]], -1))   # back half = rotated, not mirrored
+_r = np.arccos(np.clip(_m[..., 2], -1, 1)) / np.pi * 0.985; _ph = np.arctan2(_m[..., 1], _m[..., 0])
+FMX = ((0.5 + _r * np.cos(_ph)) * 640).astype(np.float32); FMY = ((0.5 - _r * np.sin(_ph)) * 640).astype(np.float32)
+def fish_frame(name, tt, speed=1.0):
+    F = fish_clip(name)
+    if F is None: return None
+    i = int(min(max(tt * speed * 30, 0), len(F) - 1))                      # play once, hold the last frame (never loop)
+    return cv2.remap(F[i], FMX, FMY, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
 
 def pulse_layer(t, s, inten):
     """the front pentagon halo at scale s (1 = true panel)."""
@@ -388,21 +439,20 @@ def render(t):
             m, band = wipe(t, T["km"] - 0.6); fr = fr * (1 - m) + band
         return fr
     # ---- 4. photo scenes: text on top, the light path (puma track) below ----
-    scenes = [(T["km"], [("1_km/SAN ANTONIO 03.jpg", 0.62)], [("EN CADA KM", "black", 0.13, W_), ("RECORRIDO", "black", 0.13, W_)], T["entrega"]),
-              (T["entrega"], [(p, 0.5) for p in ENTREGA], [("EN CADA", "black", 0.12, W_), ("ENTREGA", "black", 0.15, W_)], T["destino"]),
-              (T["destino"], DESTINO, [("EN CADA", "black", 0.12, W_), ("DESTINO", "black", 0.15, W_)], T["calidad"]),
-              (T["calidad"], [("4_calidad/RFV1561.jpg", 1.0)], [("CON COMBUSTIBLES", "black", 0.1, W_), ("DE CALIDAD", "black", 0.13, W_)], T["juntos"])]
+    scenes = [(T["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], T["entrega"]),
+              (T["entrega"], ["F2_dolly.mp4", "F3_flyby.mp4", "F4_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("ENTREGA", "black", 0.18, W_)], T["destino"]),
+              (T["destino"], ["F5_anim.mp4", "F6_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("DESTINO", "black", 0.18, W_)], T["calidad"]),
+              (T["calidad"], ["F7_anim.mp4"], [("CON COMBUSTIBLES", "black", 0.11, W_), ("DE CALIDAD", "black", 0.15, W_)], T["juntos"])]
     for i, (t0, photos, lines, t1) in enumerate(scenes):
         if t0 - 0.6 <= t < t1:
             n = len(photos); seg = (t1 - t0) / n; j = int(min(max((t - t0) / seg, 0), n - 1))
-            def pic(jj, tt):
-                p_, fx = photos[jj]; dsc = photo_disc(IN + p_, fx=fx, z=1.08 - 0.06 * ((tt - t0 - jj * seg) / max(seg, 1e-3)))
-                return disc_put(np.zeros((EH, EW, 3), np.float32) + np.array([6, 20, 10], np.float32), rgba(ball_look(dsc)))
+            def pic(jj, tt):                                    # type A fisheye clip, starts when its segment starts
+                return fish_frame(photos[jj], tt - (t0 + jj * seg - 0.45))
             fr = pic(j, t)
             if j > 0 and t < t0 + j * seg + 0.45:              # light sweep between photos of the same line
                 m, band = wipe(t, t0 + j * seg - 0.15, 0.6); fr = pic(j - 1, t) * (1 - m) + fr * m + band
-            fr = light_over(fr, swoosh(t, 1.0, rim=True), 1.6, 0.5); fr = puma_put(fr, t)
-            r, a = text_in(lockup(lines, y_c=0.36), t, t0 + 0.1)
+            fr = light_over(fr, swoosh(t, 1.0), 1.6, 0.5); fr = puma_put(fr, t)   # no edge ribbons (user: too obvious)
+            r, a = text_in(lockup(lines, width=0.70, y_c=0.24), t, t0 + 0.1)
             if a: fr = disc_put(fr, r, a)
             if t >= t1 - 0.6:
                 m, band = wipe(t, t1 - 0.6); fr = fr * (1 - m) + band
@@ -426,7 +476,7 @@ def render(t):
                 c = cv2.warpAffine(card, M, (DN, DN)); c[..., 3] *= p; a = c[..., 3:] / 255
                 L[..., :3] = L[..., :3] * (1 - a) + c[..., :3] * a; L[..., 3:] = np.maximum(L[..., 3:], c[..., 3:])
             fr = disc_put(fr, L)
-        fr = light_over(fr, swoosh(t, 1.0, rim=True), 1.6, 0.5); fr = puma_put(fr, t, 1.0 - ease((t - T["pulse2"] + 0.9) / 0.4))
+        fr = light_over(fr, swoosh(t, 1.0), 1.6, 0.5); fr = puma_put(fr, t, 1.0 - ease((t - T["pulse2"] + 0.9) / 0.4))
         r, a = text_in(lockup([("CONSTRUIMOS", "black", 0.13, W_), ("JUNTOS", "black", 0.17, LIME)], y_c=0.30), t, T["juntos"] + 0.4)
         if a: fr = disc_put(fr, r, a)
         if t >= T["pulse2"] - 0.5: fr *= 1 - ease((t - T["pulse2"] + 0.5) / 0.5)
@@ -442,6 +492,9 @@ def render(t):
             d, cent, top, Q = ball_field(roty(-0.10 * t - 1.6 * acc * acc) @ rotx(0.4 * acc * acc))
             reach = sm(np.cos(p * math.pi * 1.05), np.cos(p * math.pi * 1.05) + 0.15, P[..., 2])[..., None]
             fr = reach * (np.zeros_like(fr) + neon(d, SW, 1.2, Q=Q, t=t)) + pulse_layer(t, 1.0, 1.2 * (1 - p))
+            kt = t - T["kick"]
+            if kt >= 0 and fish_clip("K_kick_v4.mp4") is not None:           # the kick (type A, 5 s, real speed): run-up, strike, ball fills the sphere
+                kf = fish_frame("K_kick_v4.mp4", kt, 1.0); a_ = ease(kt / 0.4); fr = fr * (1 - a_) + kf * a_
             if t >= T["kv_flash"] - 0.4:
                 q = math.sin(math.pi * min(max((t - T["kv_flash"] + 0.4) / 0.6, 0), 1)); fr = fr * (1 - q) + q * 255
         return fr

@@ -54,9 +54,11 @@ Every new frame, animation and render for the 2 m sphere follows these rules. If
 - **Edge ribbons** (vertical light at the side joins) appear only during the client footage, if at all. The user found them too obvious; prefer matching edges.
 - **Renders run one at a time.** Two jobs writing the same file corrupted KM, and four at once ran out of memory.
 
-## 6. Opening timeline (`tools/sphere_render.py`)
+## 6. Opening timeline (`tools/sphere_render.py`, v6 = 75.2 s)
 - Pulses → ball → SOMOS → the path forms (teaser intro plate) → globe → Paraguay → scenes A (KM, ENTREGA ×n, DESTINO ×2, CALIDAD) → CONSTRUIMOS JUNTOS → pulses → kick → KV → logo + puma → end lines → 2027 → KV.
+- Kick section: `kick=52.6` (0.4 s dissolve from the neon pulse ball into the clip, played once at 1×), `kv_flash=57.6` (white flash peaks over the clip's last frames), `logo2=57.8` (the flash lands straight on the green KV ball + logo; no frozen frame). Everything after moved +3.2 s: cat_in 59.2, logro 61.4, hoy 63.2, listos 64.8, y2027 67.0, kv 70.6, end 75.2.
 - The timing is temporary until the VO exists.
+- Viewer: artifact "Esfera LED · visor" (https://claude.ai/artifact/UEdhx8XW4gcntb91oaXymv) plays `apertura_v6.mp4`. Front/back preview: `review_esfera/Esfera_apertura_v6_vista_frente_dorso.mp4`.
 
 ## 7. Current asset status
 | ID | Frame | Animation | Notes |
@@ -64,9 +66,26 @@ Every new frame, animation and render for the 2 m sphere follows these rules. If
 | F1 KM | ✓ | ✓ 5 s clip (truck pulls out) | 10 s take went static; faint sky seam to blend |
 | F2 LPG | ✓ | ✓ dolly-in | |
 | F3 storage plant | ✓ | 2 takes (push-in, fly-by) | pick one |
-| F4 river | ✓ | running (fly-by) | |
-| F5 service station | ✓ | running (push-in + car) | |
-| F6 airport | ✓ regen (plain white jet) | running (track) | first frame had an airline livery |
-| F7 quality | ✓ | running (dolly-in) | |
-| P8 kick | **redo as type A** | — | first version was a flat overlay (breaks rule 2) |
+| F4 river | ✓ | ✓ fly-by (weak motion) | retake optional, 15 credits |
+| F5 service station | ✓ | ✓ push-in + car | |
+| F6 airport | ✓ regen (plain white jet) | ✓ track | first frame had an airline livery |
+| F7 quality | ✓ | ✓ dolly-in | |
+| P8 kick | ✓ start `243cf2a8` (K9b) · end `fd4f7697` (K9 zoom upload) | ✓ Seedance `612d09f4` → `K_kick_v4.mp4`, 5 s | in opening v6 at 52.6–57.6 s; face lowered, dim in post if wanted |
 | Puma | ✓ 4K type B overlay | ✓ | |
+
+## 8. Kick shot: what worked (Nov 21) and the mistakes not to repeat
+**Script:** "los pulsos se transforman en pelota, luego viene una persona chuta la pelota y la pelota se transforma en el KV." The ball must BE the KV ball from the first frame.
+- **Ball:** the KV ball. It is deep emerald leather with classic pentagon/hexagon soccer panels and glowing lime neon seams, no logos. Never a white ball (it can't turn into the KV) and never volleyball-style strip panels.
+- **Camera:** goalkeeper's view, low on the turf in the goalmouth, about 3 m from the ball, with the player **running straight at the lens**. A camera behind the player sends the ball away from the lens, which contradicts the end frame.
+- **Pose:** the last stride of the run-up. The front boot lands beside the ball and the back boot pushes off with the heel lifting; the knee is not cocked high. Head down, eyes on the ball, arms swinging naturally.
+  - Words like "diagonally from the right side" or "shoulders turned" made him run sideways in profile. Say "running straight toward the camera, front view, chest facing the lens".
+  - A symmetrical "ready stance" looked like a mannequin.
+- **Whole person:** show the full player at a distance. Cropping or flaring away the head left a "pair of legs without a body". Accept a small, lowered face; dim it in post if needed.
+- **Filter:** anatomy-heavy wording ("bare muscular legs", "from the waist down", "hips") got flagged NSFW. Describe the player by kit only.
+- **Turf:** "striped turf" plus the fisheye gave incoherent zig-zag colours. Use one even shade of green, no mowing stripes, only the penalty spot and the box line. "Chalk dust" gave a powder cloud; the spot is a small flat painted disc.
+- **Stadium:** symmetrical, with the far goal centred behind the player, one continuous ring of stands, four identical floodlight towers, plain boards and dark scoreboards.
+- **References:** an attached reference image copies its pose. Don't attach a take whose pose is wrong.
+- **End frame:** the ball must fill about 90% of the circle. A generated end frame with the ball at about 55% was fixed for free by zooming 1.65× in post and re-masking the circle (`K9_end_zoom.png`).
+- **Animation:** Seedance 2.5 `omni_reference`, start + end image, 480p, 5 s, 15 credits. The prompt came from the Seedance skill (Chinese + English): locked camera, real boot-to-ball contact, about 25% slow motion on impact, then the ball flies at the lens.
+- **QC:** before showing the user, check every frame at 100% AND on the sphere (`tools/fish2equi.py` + `TURN=20 sphere_turntable.py`). Show the flat frame first; the turntable takes minutes.
+- **Spend on the redo:** frames about 30 credits (10 takes), animation 15. The Kling job with the old white ball (7.5) was never used.
