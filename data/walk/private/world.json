@@ -132,12 +132,13 @@
   },
   {
    "name": "The mango tree",
-   "x": -165.5,
-   "z": -592.3,
+   "x": -159.5,
+   "z": -590.3,
    "look": [
     -181.5,
     -598.3
-   ]
+   ],
+   "pitch": 0.12
   }
  ],
  "credits": "Trees, textures and sky: Poly Haven (CC0). Terrain, trees and parcel: the site data and the survey."

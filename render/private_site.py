@@ -186,7 +186,7 @@ world = {
     **{k: QW[k] for k in ('sun', 'sunLight', 'ambient', 'lightScale', 'skyScale', 'spriteScale', 'sprites', 'grassAlbedo')},
     'trees': len(tx), 'residence': RES, 'rocks': [[x, z, y, w_, d_, h_, rot] for (x, z, w_, d_, h_, rot), y in zip(rocks, rock_y)],
     'parcel': [[round(x, 2), round(z, 2)] for x, z in RING],
-    'spots': [spot('The homesite', *at(-1, 30), *at(-1, 0)), spot('The terrace', *at(-2, 5.4), *at(-2, 60)), spot('The mango tree', mx + 16, mz + 6, mx, mz)],
+    'spots': [spot('The homesite', *at(-1, 30), *at(-1, 0)), spot('The terrace', *at(-2, 5.4), *at(-2, 60)), {**spot('The mango tree', mx + 22, mz + 8, mx, mz), 'pitch': 0.12}],
     'credits': 'Trees, textures and sky: Poly Haven (CC0). Terrain, trees and parcel: the site data and the survey.',
 }
 json.dump(world, open(f'{OUT}/world.json', 'w'), indent=1)

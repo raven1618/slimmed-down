@@ -195,7 +195,7 @@ export async function build(ctx) {
   const rocks = [];
   if (W.rocks) {
     const t = (k) => { const c = L.tex[k].clone(); c.needsUpdate = true; return c; };
-    const rockMat = new THREE.MeshStandardMaterial({ map: t('wall'), normalMap: t('wallN'), color: new THREE.Color().setRGB(0.6, 0.58, 0.55), roughness: 0.92 });
+    const rockMat = new THREE.MeshStandardMaterial({ map: t('plaster'), normalMap: t('wallN'), color: new THREE.Color().setRGB(0.5, 0.5, 0.52), roughness: 0.9 });   // grey granite
     W.rocks.forEach(([x, z, y, w, d, h, rot], k) => {
       const geo = new THREE.IcosahedronGeometry(1, 5), p = geo.attributes.position, v = new THREE.Vector3();
       for (let i = 0; i < p.count; i++) {                 // a weathered granite lump: lumpy, flat underneath
@@ -257,15 +257,15 @@ export async function build(ctx) {
     const c = cabins[Math.min(3, cabins.length - 1)], off = c.d / 2 + 2.2;
     return { x: c.cx + c.F[0] * off, z: c.cz + c.F[1] * off };
   };
-  const SPOTS = W.spots ? W.spots.map((p) => ({ name: p.name, at: () => ({ x: p.x, z: p.z }), look: p.look })) : [
+  const SPOTS = W.spots ? W.spots.map((p) => ({ name: p.name, at: () => ({ x: p.x, z: p.z }), look: p.look, pitch: p.pitch })) : [
     { name: 'Arrival', at: () => ({ x: 392, z: 834 }), look: [350, 892] },
     { name: 'Lagoon shore', at: () => ({ x: 384.2, z: 860.4 }), bearing: 280 },
     { name: 'Cabin deck', at: deckSpot, look: [lx, lz] },
   ];
   function goTo(s) {
-    const p = s.at(), y = feetAt(p.x, p.z, 1e4) ?? hAt(p.x, p.z);
+    const p = s.at(), y = feetAt(p.x, p.z, hAt(p.x, p.z) + 0.5) ?? hAt(p.x, p.z);      // from the ground: a deck, not the roof above it
     Object.assign(P, { x: p.x, z: p.z, feet: y, feetT: y });
-    if (s.look) lookAt(p.x, p.z, s.look[0], s.look[1]);
+    if (s.look) lookAt(p.x, p.z, s.look[0], s.look[1], s.pitch ?? -0.04);
     else { P.yaw = (-s.bearing * Math.PI) / 180; P.pitch = -0.04; }
     spotsEl.querySelectorAll('button').forEach((b) => b.setAttribute('aria-current', String(b.textContent === s.name)));
   }
