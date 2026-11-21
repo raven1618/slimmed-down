@@ -1,0 +1,155 @@
+<!doctype html><html><body style="margin:0;background:transparent">
+<canvas id="c"></canvas>
+<script>
+const FD = "file:///tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/drive-dl/";
+let W = 1296, C, X, CFG;
+const LIME = [140, 255, 40];
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const eOutExpo = t => t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+const eOutBack = t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+const eInCubic = t => t * t * t;
+const ph = (t, a, d) => clamp((t - a) / d);
+// deterministic random
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+async function init(cfg) {
+  CFG = cfg; W = cfg.W;
+  for (const [n, f] of [["GBlack", "GothamCondensed-Black.otf"], ["GBold", "GothamCondensed-Bold.otf"]]) {
+    const ff = new FontFace(n, `url(${FD}${f})`); await ff.load(); document.fonts.add(ff);
+  }
+  C = document.getElementById("c"); C.width = W; C.height = W; X = C.getContext("2d");
+  // layout: fit each line to its width fraction
+  CFG.L = CFG.lines.map(l => {
+    let size = 100; X.font = `${size}px ${l.font}`; const w0 = X.measureText(l.text).width;
+    size = size * (l.w * W) / w0; X.font = `${size}px ${l.font}`;
+    const letters = []; let x = 0;
+    for (const ch of l.text) { const cw = X.measureText(ch).width; letters.push({ ch, x, cw }); x += cw; }
+    return { ...l, size, width: x, letters };
+  });
+  let y = CFG.yTop * W; CFG.L.forEach(l => { l.y = y + l.size * 0.8; y += l.size * 0.86 + W * 0.004; });
+  CFG.sparks = Array.from({ length: 70 }, () => ({ u: rnd(), vy: -(0.2 + rnd()) , vx: (rnd() - 0.5) * 0.6, life: 0.5 + rnd() * 0.7, s: 1 + rnd() * 2.5, d: rnd() * 0.25 }));
+  return true;
+}
+function letterPath(l, li, t, tOut) {
+  // returns list of draw ops for each letter with transform
+}
+function drawLine(l, li, t, ctx, mode) {
+  const cx = W / 2, x0 = cx - l.width / 2, n = l.letters.length;
+  const t0 = CFG.tin + l.delay;
+  const outStart = CFG.tout + li * 0.06;
+  ctx.font = `${l.size}px ${l.font}`; ctx.textBaseline = "alphabetic";
+  l.letters.forEach((g, i) => {
+    let a, dy, sc = 1, blur = 0, track = 0;
+    if (l.anim === "count") {
+      const p = ph(t, t0, 0.35); const e = eOutBack(p); sc = 0.6 + 0.4 * e; dy = 0; a = clamp(p * 2.5); blur = (1 - clamp(p * 1.5)) * l.size * 0.3;
+    } else if (l.anim === "rise") {
+      const p = ph(t, t0 + i * l.stagger, 0.55); const e = eOutExpo(p);
+      dy = (1 - e) * l.size * 0.95; a = clamp(p * 3); blur = (1 - e) * l.size * 0.5;
+      track = (1 - e) * l.size * 0.25 * (i - (n - 1) / 2) / n;
+    } else if (l.anim === "slide") {   // letters slide in from the left (the puma's direction) with horizontal smear
+      const p = ph(t, t0 + i * l.stagger, 0.6); const e = eOutExpo(p);
+      dy = 0; a = Math.pow(e, 2.5); blur = 0; track = -(1 - e) * l.size * (1.2 + 0.15 * (n - i));
+      g._hx = (1 - e) * l.size * 0.9;
+    } else {  // punch: whole word scales in from 1.3 with blur, letters land with tiny stagger
+      const p = ph(t, t0 + Math.abs(i - (n - 1) / 2) * l.stagger, 0.45); const e = eOutBack(p);
+      sc = 1.35 - 0.35 * e; dy = 0; a = clamp(p * 2.5); blur = (1 - clamp(p * 1.6)) * l.size * 0.35;
+      track = (1 - eOutExpo(p)) * l.size * 0.6 * (i - (n - 1) / 2) / n;
+    }
+    // exit: letters lift and dissolve upward with blur, staggered
+    const q = ph(t, outStart + i * 0.025, 0.4); const eq = eInCubic(q);
+    dy -= eq * l.size * 0.7; a *= 1 - q; blur += eq * l.size * 0.4;
+    if (a <= 0.003) return;
+    const gx = x0 + g.x + g.cw / 2 + track, gy = l.y + dy;
+    const hx = g._hx || 0; g._hx = 0;
+    const steps = (blur > 2 || hx > 2) ? 7 : 1;
+    for (let k = 0; k < steps; k++) {       // motion blur: smear along the motion
+      const f = steps > 1 ? (k / (steps - 1) - 0.5) : 0, o = f * blur, ox = (f - 0.5) * hx;
+      ctx.save(); ctx.globalAlpha = a / (steps > 1 ? steps * 0.55 : 1);
+      ctx.translate(gx + ox, gy + o - l.size * 0.35); ctx.scale(sc, sc); ctx.translate(-g.cw / 2, l.size * 0.35);
+      ctx.fillStyle = mode === "white" ? l.color : mode; ctx.fillText(g.ch, 0, 0); ctx.restore();
+    }
+  });
+}
+function relayout(l, text) {
+  X.font = `${l.size}px ${l.font}`; const letters = []; let x = 0;
+  for (const ch of text) { const cw = X.measureText(ch).width; letters.push({ ch, x, cw }); x += cw; }
+  l.letters = letters; l.width = x;
+}
+function growScale(t) {          // 2027: pops in small, then grows (accelerating) until it overflows the sphere
+  const g = CFG.grow; if (!g) return 1;
+  const pop = eOutBack(ph(t, g.t0, 0.35)) * g.s0;
+  const q = ph(t, g.t0 + 0.35, g.dur); const acc = q < 0.5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2;
+  return Math.max(pop, 1e-3) * Math.pow(g.s1 / g.s0, acc);
+}
+function withGrow(ctx, t, fn) {
+  if (!CFG.grow) { fn(ctx); return; }
+  const s = growScale(t), yc = CFG.L[0].y - CFG.L[0].size * 0.35;
+  const sPrev = growScale(t - 1 / 30), k = Math.min(6, Math.max(1, Math.round(Math.abs(s - sPrev) / s * 40)));
+  for (let i = 0; i < k; i++) {                       // zoom motion blur: copies between last and current scale
+    const si = sPrev + (s - sPrev) * (i + 1) / k;
+    ctx.save(); ctx.globalAlpha = 1 / k * (k > 1 ? 1.6 : 1); ctx.translate(W / 2, yc); ctx.scale(si, si); ctx.translate(-W / 2, -yc); fn(ctx); ctx.restore();
+  }
+}
+function frame(t) {
+  X.clearRect(0, 0, W, W);
+  CFG.L.forEach(l => { if (l.anim === "count") {            // number rolls up to its value, then holds
+    const p = ph(t, CFG.tin + l.delay, 0.9), v = Math.round(l.value * (1 - Math.pow(1 - p, 3)));
+    relayout(l, (l.prefix || "") + v); l._cnt = p; } });
+  const off = new OffscreenCanvas(W, W), o = off.getContext("2d");
+  // 1. text body
+  withGrow(o, t, c => CFG.L.forEach((l, li) => drawLine(l, li, t, c, "white")));
+  // 2. legibility: soft dark shadow under the text
+  X.save(); X.filter = `blur(${W * 0.012}px)`; X.globalAlpha = 0.55; X.drawImage(off, 0, W * 0.006);
+  X.globalCompositeOperation = "source-in"; X.fillStyle = "#000"; X.fillRect(0, 0, W, W); X.restore();
+  const sh = new OffscreenCanvas(W, W), s = sh.getContext("2d");
+  s.filter = `blur(${W * 0.014}px)`; s.globalAlpha = 0.6; s.drawImage(off, 0, W * 0.008); s.globalCompositeOperation = "source-in"; s.fillStyle = "#000"; s.fillRect(0, 0, W, W);
+  X.clearRect(0, 0, W, W); X.drawImage(sh, 0, 0); X.drawImage(off, 0, 0);
+  // 2b. lime words carry their own neon glow
+  if (CFG.L.some(l => l.glow)) {
+    const G = new OffscreenCanvas(W, W), gg = G.getContext("2d");
+    withGrow(gg, t, c => CFG.L.forEach((l, li) => { if (l.glow) drawLine(l, li, t, c, l.glowColor || l.color); }));
+    X.save(); X.globalCompositeOperation = "lighter"; X.filter = `blur(${W * 0.008}px)`; X.globalAlpha = 0.7; X.drawImage(G, 0, 0);
+    X.filter = `blur(${W * 0.025}px)`; X.globalAlpha = 0.45; X.drawImage(G, 0, 0); X.restore();
+  }
+  // 3. light sweep across the letters (hot white-lime band, masked by the text) + bloom
+  for (const st of [].concat(CFG.sweep)) { const sw = ph(t, st, 0.7);
+  if (sw > 0 && sw < 1) {
+    const L = new OffscreenCanvas(W, W), l = L.getContext("2d");
+    l.drawImage(off, 0, 0); l.globalCompositeOperation = "source-in";
+    const xs = -0.3 * W + 1.6 * W * eOutExpo(sw) * 0.9 + sw * 0.1 * W;
+    const g = l.createLinearGradient(xs - W * 0.12, 0, xs + W * 0.12, W * 0.12);
+    g.addColorStop(0, "rgba(140,255,40,0)"); g.addColorStop(0.4, "rgba(170,255,80,0.9)"); g.addColorStop(0.5, "rgba(255,255,230,1)");
+    g.addColorStop(0.6, "rgba(170,255,80,0.9)"); g.addColorStop(1, "rgba(140,255,40,0)"); l.fillStyle = g; l.fillRect(0, 0, W, W);
+    X.drawImage(L, 0, 0);
+    X.save(); X.globalCompositeOperation = "lighter"; X.filter = `blur(${W * 0.01}px)`; X.globalAlpha = 0.9; X.drawImage(L, 0, 0);
+    X.filter = `blur(${W * 0.03}px)`; X.globalAlpha = 0.6; X.drawImage(L, 0, 0); X.restore();
+  } }
+  // 4. neon underline: draws from the centre outward, flares, settles; sparks fly off its ends
+  const ul = CFG.L[CFG.L.length - 1]; const up = CFG.underline == null ? 0 : eOutExpo(ph(t, CFG.underline, 0.6)); const uo = 1 - ph(t, CFG.tout, 0.35);
+  if (up > 0 && uo > 0) {
+    const y = ul.y + ul.size * 0.14, half = ul.width * 0.5 * up, cx = W / 2;
+    const flare = 1 + 1.5 * Math.exp(-Math.pow((t - CFG.underline - 0.25) / 0.18, 2));
+    X.save(); X.globalCompositeOperation = "lighter"; X.globalAlpha = uo;
+    for (const [w, al, bl] of [[W * 0.004, 1, 0], [W * 0.008, 0.55 * flare, W * 0.006], [W * 0.02, 0.35 * flare, W * 0.02]]) {
+      X.filter = bl ? `blur(${bl}px)` : "none"; X.strokeStyle = `rgba(${LIME},${Math.min(al, 1)})`; X.lineWidth = w; X.lineCap = "round";
+      X.beginPath(); X.moveTo(cx - half, y); X.lineTo(cx + half, y); X.stroke();
+    }
+    X.filter = "none"; X.fillStyle = "rgba(255,255,235,0.95)"; X.fillRect(cx - half, y - W * 0.0012, half * 2, W * 0.0024);
+    CFG.sparks.forEach(p => {          // sparks born at the drawing ends
+      const age = t - CFG.underline - p.d; if (age < 0 || age > p.life) return;
+      const side = p.u < 0.5 ? -1 : 1, x = cx + side * ul.width * 0.5 * eOutExpo(clamp((CFG.underline + p.d - CFG.underline) / 0.6)) + p.vx * age * W * 0.15;
+      const yy = y + p.vy * age * W * 0.12 + age * age * W * 0.08; const al = (1 - age / p.life) * uo;
+      X.fillStyle = `rgba(200,255,120,${al})`; X.beginPath(); X.arc(x, yy, p.s * W / 1296, 0, 7); X.fill();
+    });
+    X.restore();
+  }
+  if (CFG.outGlow != null) {
+    const a = Math.exp(-Math.pow((t - CFG.outGlow) / 0.32, 2));
+    if (a > 0.004) {
+      const rg = X.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W * 0.7);
+      rg.addColorStop(0, `rgba(235,255,200,${0.85 * a})`); rg.addColorStop(0.35, `rgba(140,255,40,${0.6 * a})`); rg.addColorStop(1, `rgba(60,200,40,${0.25 * a})`);
+      X.save(); X.globalCompositeOperation = "lighter"; X.fillStyle = rg; X.fillRect(0, 0, W, W); X.restore();
+    }
+  }
+  return C.toDataURL("image/png");
+}
+</script></body></html>

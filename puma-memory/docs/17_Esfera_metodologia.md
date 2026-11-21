@@ -70,7 +70,10 @@ Every new frame, animation and render for the 2 m sphere follows these rules. If
 | F5 service station | ✓ | ✓ push-in + car | |
 | F6 airport | ✓ regen (plain white jet) | ✓ track | first frame had an airline livery |
 | F7 quality | ✓ | ✓ dolly-in | |
-| P8 kick | ✓ start `243cf2a8` (K9b) · end `fd4f7697` (K9 zoom upload) | ✓ Seedance `612d09f4` → `K_kick_v4.mp4`, 5 s | in opening v6 at 52.6–57.6 s; face lowered, dim in post if wanted |
+| P8 kick | ✓ start `3935dcac` · end `708df052` (KV ball ref `4b1f5be5`) | ✓ Seedance `cd5f981c` → `K_kick_v5.mp4`, 5 s, no burst | small ball drifts to smaller panels early; KV pattern once large |
+| J1 terminal | ✓ `c774b8f1` (client still 5.5 s) | ✓ `8be33fbf` road run + crane up | CONSTRUIMOS JUNTOS |
+| J2 tankers | ✓ `16bf97a1` (client still 10 s) | ✓ `75129b83` glide + rise, sun emerges (first take `5546cd69` warped) | CONSTRUIMOS JUNTOS |
+| J3 mirrored city | ✓ `a82c77a8` (client still 11 s) | ✓ `2ee35652` forward glide | CONSTRUIMOS JUNTOS |
 | Puma | ✓ 4K type B overlay | ✓ | |
 
 ## 8. Kick shot: what worked (Nov 21) and the mistakes not to repeat
@@ -89,3 +92,25 @@ Every new frame, animation and render for the 2 m sphere follows these rules. If
 - **Animation:** Seedance 2.5 `omni_reference`, start + end image, 480p, 5 s, 15 credits. The prompt came from the Seedance skill (Chinese + English): locked camera, real boot-to-ball contact, about 25% slow motion on impact, then the ball flies at the lens.
 - **QC:** before showing the user, check every frame at 100% AND on the sphere (`tools/fish2equi.py` + `TURN=20 sphere_turntable.py`). Show the flat frame first; the turntable takes minutes.
 - **Spend on the redo:** frames about 30 credits (10 takes), animation 15. The Kling job with the old white ball (7.5) was never used.
+
+## 9. Motion graphics + effects (Nov 21) — the standard now
+The user rejected the numpy-only text and effects as "basic and lame". Everything typographic is now a **browser-rendered motion-graphics layer**.
+- **Pipeline:** `tools/mg/mg.html` (canvas, Gotham from `drive-dl/`) + `mg_render.js` (Playwright, 30 fps PNG with alpha) → `mg/seq_<key>/`. `sphere_render.mg_put(fr, key, t - start)` maps a sequence onto the front and back discs. Configs: `tools/mg/cfg_<key>.json`; landing times are in `meta.json`.
+- **Entrances:** `rise` (per-letter mask rise with vertical motion blur), `punch` (scale 1.35→1 with overshoot, letters converge), `slide` (from the left, the puma's direction, horizontal smear), `count` (+40 counts up), `grow` (2027 grows until it overflows, with zoom blur).
+- **Accents:** lime light sweep masked to the letters, neon underline drawing out from the centre with sparks, lime glow on green words, soft shadow, staggered lift-and-blur exit.
+- **The beam answers every landing:** `beam_boost(t)` multiplies the light band by up to 2.1 around each landing.
+- **Transitions:** `reveal()` is a seam reveal. The KV ball's net draws onto the outgoing shot and the next shot flips in panel by panel from the centre, with bloom. There are no band wipes any more.
+- **Layout (client pitch):** the light band sits low (`PATH_B` 30°). Footage and text take the top; below the band it's black with spilled glow and drifting lime streaks (`lower_black`), from KM through CONSTRUIMOS JUNTOS.
+- **Front/back rules learned:**
+  - A rotated copy (`SYM`) makes a seam at the side joins. Use it only where content must match front and back (fisheye clips, pulses, the globe zoom with a dark side fade).
+  - The KV ball must be the true sphere (`ball_field`), which has no seam.
+  - `pole_scaled()` zooms each hemisphere about its own pole.
+  - Check side joins with `tools/side_check.py`.
+- **Pre-kick:** no KV before the kick. The last pulse condenses onto the ball on the spot (`BALL_DOWN` 0.35 rad), then the stadium opens radially with a lime edge.
+- **Kick → KV:** the code ball starts at the filmed ball's panel size (1.33→1), the seams flare, the panels light up to KV green. No white flash and no frozen frame.
+- **2027:** pops in small, grows accelerating with zoom blur until it overflows the sphere, then dissolves into lime light over the KV loop.
+
+## 10. Client preview
+- **Viewer artifact:** "Esfera LED · visor" (private).
+- **Client link:** Netlify from GitHub. Repo branch `claude/gifted-shannon-c1nwsj`; `netlify.toml` publishes `esfera_site/` (index.html, local three.min.js, apertura.mp4). It autoplays muted on a loop; if autoplay is blocked, the first tap starts it. To update, replace `esfera_site/apertura.mp4` and push.
+- **On hold until the client approves the video:** sound, 4K master/upscales, face dim on the kick clip.

@@ -59,6 +59,29 @@ def ball_field(Rm):
     top = np.where(s1 >= s2, idx[:, 0], idx[:, 1]); a, b = np.maximum(s1, s2), np.minimum(s1, s2)
     return (a - b).reshape(EH, EW), a.reshape(EH, EW), top.reshape(EH, EW), Q.reshape(EH, EW, 3)
 
+def ball_field_dirs(D, Rm):
+    """ball_field for arbitrary display directions D (EHxEWx3)."""
+    Q = D.reshape(-1, 3) @ Rm.T
+    s_ = Q @ NF.T
+    idx = np.argpartition(-s_, 1, axis=1)[:, :2]
+    s1 = np.take_along_axis(s_, idx[:, :1], 1)[:, 0]; s2 = np.take_along_axis(s_, idx[:, 1:2], 1)[:, 0]
+    top = np.where(s1 >= s2, idx[:, 0], idx[:, 1]); a, b = np.maximum(s1, s2), np.minimum(s1, s2)
+    return (a - b).reshape(EH, EW), a.reshape(EH, EW), top.reshape(EH, EW), Q.reshape(EH, EW, 3)
+SYM = np.where((P[..., 2] >= 0)[..., None], P, np.stack([-P[..., 0], P[..., 1], -P[..., 2]], -1)).astype(np.float32)   # back = front rotated (same content)
+_th = np.arccos(np.clip(SYM[..., 2], -1, 1)); _phi = np.arctan2(SYM[..., 1], SYM[..., 0])
+def sym_scaled(sc):
+    """SYM directions with the ball shrunk to angular size sc (1 = fills the hemisphere); returns dirs, inside mask."""
+    th2 = np.minimum(_th / sc, np.pi / 2)
+    D = np.stack([np.sin(th2) * np.cos(_phi), np.sin(th2) * np.sin(_phi), np.cos(th2)], -1).astype(np.float32)
+    return D, sm(np.pi / 2 * sc + 0.01, np.pi / 2 * sc - 0.01, _th)
+
+_pz = P[..., 2]; _pth = np.arccos(np.clip(np.abs(_pz), 0, 1)); _paz = np.arctan2(P[..., 1], P[..., 0])
+def pole_scaled(sc):
+    """true directions zoomed about each hemisphere's own pole (sc>1 = ball bigger); = P at sc 1 (no side seam)."""
+    th2 = np.minimum(_pth / sc, np.pi / 2)
+    D = np.stack([np.sin(th2) * np.cos(_paz), np.sin(th2) * np.sin(_paz), np.sign(_pz + 1e-9) * np.cos(th2)], -1).astype(np.float32)
+    return D, sm(np.pi / 2 * sc + 0.01, np.pi / 2 * sc - 0.01, _pth)
+
 def neon(d, w, inten=1.0, strands=3, Q=None, t=0.0):
     """multi-strand light along d=0 (white core, green glow) -> RGB layer."""
     g = np.zeros(d.shape, np.float32); c = np.zeros(d.shape, np.float32)
@@ -100,6 +123,28 @@ def font(k, s):
     if (k, s) not in _fc: _fc[(k, s)] = ImageFont.truetype(FONT[k], s)
     return _fc[(k, s)]
 _tc = {}
+# ---------- motion-graphics text layer (browser-rendered PNG sequences, mg/seq_<key>) ----------
+import json as _json, os as _os
+MGD = R + "mg/"; MG_META = _json.load(open(MGD + "meta.json")) if _os.path.exists(MGD + "meta.json") else {}
+_mgc = {}
+def mg(key, tt):
+    """RGBA DNxDN text layer of beat `key` at tt seconds after its start (None outside the sequence)."""
+    d = MGD + f"seq_{key}"
+    if not _os.path.isdir(d) or tt < 0: return None
+    fs = _mgc.setdefault(("ls", key), sorted(_os.listdir(d))); k = int(round(tt * 30))
+    if k >= len(fs): return None
+    if (key, k) not in _mgc:
+        im = cv2.imread(d + "/" + fs[k], cv2.IMREAD_UNCHANGED)
+        if im.shape[0] != DN: im = cv2.resize(im, (DN, DN), interpolation=cv2.INTER_AREA)
+        im = im.astype(np.float32); _mgc[(key, k)] = np.dstack([im[..., 2], im[..., 1], im[..., 0], im[..., 3]])
+        if len(_mgc) > 400: [_mgc.pop(x) for x in list(_mgc)[1:200] if x[0] != "ls"]
+    return _mgc[(key, k)]
+def mg_put(fr, key, tt, alpha=1.0):
+    L = mg(key, tt); return fr if L is None else disc_put(fr, L, alpha)
+def beam_boost(t):
+    """the light path answers every text landing."""
+    return 1.0 + 1.1 * sum(math.exp(-((t - m["land"]) / 0.28) ** 2) for m in MG_META.values())
+
 def lockup(lines, width=0.62, y_c=0.47, gap=0.02):
     """KV-style lockup on a transparent DN disc. lines: [(text, weight, rel_height, colour)] ; fitted to width*DN."""
     key = (tuple(lines), width, y_c)
@@ -184,8 +229,17 @@ def look_at(lo, la):
     """rotation taking geographic direction (lo,la) to the display front (+z)."""
     return rotx(math.radians(la)) @ roty(-math.radians(lo))
 def globe(t, lo_c, la_c, zoom, arcs=0.0, py_glow=0.0, dim=1.0):
-    """display -> geographic: azimuthal zoom about the front, then inverse look_at."""
-    z = np.clip(P[..., 2], -1, 1); th = np.arccos(z); az = np.arctan2(P[..., 1], P[..., 0])
+    """front: the real globe; while zooming in, the back crossfades to the same view as the front (rotated copy)."""
+    fr = _globe(P, t, lo_c, la_c, zoom, arcs, py_glow)
+    w = sm(1.0, 1.45, zoom)
+    if w > 0:
+        back = (P[..., 2] < 0)[..., None] * w
+        fs = _globe(SYM, t, lo_c, la_c, zoom, arcs, py_glow) * sm(0.0, 0.2, np.abs(P[..., 2]))[..., None]   # soft edge at the side joins
+        fr = fr * (1 - back) + fs * back
+    return fr * dim
+def _globe(B, t, lo_c, la_c, zoom, arcs, py_glow):
+    """display directions B -> geographic: azimuthal zoom about +z, then inverse look_at."""
+    z = np.clip(B[..., 2], -1, 1); th = np.arccos(z); az = np.arctan2(B[..., 1], B[..., 0])
     th2 = th / zoom; D = np.stack([np.sin(th2) * np.cos(az), np.sin(th2) * np.sin(az), np.cos(th2)], -1)
     Gm = look_at(lo_c, la_c); Dg = D.reshape(-1, 3) @ Gm                     # = Gm^T applied
     glo = np.degrees(np.arctan2(Dg[:, 0], Dg[:, 2])); gla = np.degrees(np.arcsin(np.clip(Dg[:, 1], -1, 1)))
@@ -193,7 +247,7 @@ def globe(t, lo_c, la_c, zoom, arcs=0.0, py_glow=0.0, dim=1.0):
     smp = lambda L: cv2.remap(L, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_WRAP)
     land, coast, bord, py = smp(G_LAND), smp(G_COAST), smp(G_BORDER), smp(G_PY)
     ocean = np.array([4, 14, 18], np.float32); lc = np.array([10, 60, 30], np.float32)
-    lit = 0.55 + 0.45 * np.clip(P[..., 2], 0, 1)
+    lit = 0.55 + 0.45 * np.clip(B[..., 2], 0, 1)
     fr = (ocean * (1 - land[..., None]) + lc * land[..., None]) * lit[..., None]
     fr += coast[..., None] * GREEN * 0.9 + bord[..., None] * GREEN * 0.25
     if py_glow > 0:
@@ -213,7 +267,7 @@ def globe(t, lo_c, la_c, zoom, arcs=0.0, py_glow=0.0, dim=1.0):
             cv2.circle(L, tuple(map(int, seg[-1])), 9, 1.0, -1, cv2.LINE_AA)
         L = np.maximum(L, cv2.GaussianBlur(L, (0, 0), 6) * 1.5)
         fr += np.clip(smp(L), 0, 1.5)[..., None] * (GREEN * 0.8 + 40)
-    return fr * dim
+    return fr
 
 # ---------- photo discs ----------
 _pc = {}
@@ -237,7 +291,7 @@ def rgba(rgb, a=None):
 # swoosh: the KV light path around the ball (tilted great circle bands, moving) — also the puma's track
 # client mockup: one diagonal band under the puma (a tilted ring: low on the left, rising to the right for the front
 # audience) + multi-strand ribbons around the rim of the ball = the side meridians where the front and back views meet.
-PATH_B, PATH_A = math.radians(24), math.radians(14)              # band latitude at the front/back centre, tilt amplitude
+PATH_B, PATH_A = math.radians(30), math.radians(10)              # band latitude at the front/back centre, tilt amplitude
 def path_lat(lon): return -PATH_B + 0.5 * PATH_A * np.sin(2 * lon)    # rises to the right through BOTH the front (0) and back (180) centres
 # real light: the teaser Seedance plates (organic multi-strand KV light) mapped along the band and the rims
 def _plate(name, w=1280):
@@ -293,6 +347,7 @@ def laser_band(t, inten=1.0):
     blo = cv2.GaussianBlur(sm_, (0, 0), 2) * 0.7 + cv2.GaussianBlur(sm_, (0, 0), 8) * 0.45
     return (out + cv2.resize(blo, (EW, EH))) * inten
 def swoosh(t, inten=1.0, rim=False, **_):
+    inten = inten * beam_boost(t)
     tl = t - TL["path"]
     if tl < 1.4:                                                          # the bundle shoots out from the front and back centres
         reach = ease(max(tl, 0) / 1.4) * math.pi * 0.55
@@ -339,6 +394,44 @@ def puma_put(fr, t, alpha=1.0, centres=(0.0, math.pi)):
         reg = fr[y0:y1][:, cols]; fr[y0:y1][:, cols] = reg * (1 - al) + img * alpha
     return fr
 
+# ---------- seam reveal: the KV ball's seams draw on, the next scene appears panel by panel (centre -> rim) ----------
+_RD, _RC, _RT, _RQ = ball_field(np.eye(3, dtype=np.float32))
+_pd = NF[_RT] / np.linalg.norm(NF[_RT], axis=-1, keepdims=True)
+_jit = ((np.sin(_RT * 12.9898) * 43758.5453) % 1.0).astype(np.float32)
+RV_DELAY = (1 - np.abs(_pd[..., 2])) * 0.75 + _jit * 0.12            # same order on the front and the back (|z|)
+RV_W = 0.32; RV_K = 0.87 + RV_W
+def reveal(old, new, t, ts, dur=0.8):
+    """old -> new through the ball pattern; returns the composite with the seam light (bloomed) screened on top."""
+    p = min(max((t - ts) / dur, 0.0), 1.0)
+    if p >= 1: return new
+    if p <= 0: return old
+    loc = np.clip((p * RV_K - RV_DELAY) / RV_W, 0, 1)
+    m = (loc * loc * (3 - 2 * loc))[..., None]
+    out = old * (1 - m) + new * m
+    out = out * (1 + 0.35 * np.sin(np.pi * loc)[..., None] * m)            # each panel glints as it turns over
+    seam = 0.35 * math.sin(math.pi * p) + 1.1 * np.sin(np.pi * loc)       # the net draws on, each panel's edge flares as it flips
+    L = neon(_RD, SW, 1.0, Q=_RQ, t=t) * seam[..., None]
+    L = bloom(L, 0.8)
+    Lk = np.clip(L, 0, 255); return 255 - (255 - np.clip(out, 0, 255)) * (255 - Lk) / 255
+
+# ---------- below the light path: black with soft lime light (client pitch) ----------
+def lower_black(fr, t, alpha=1.0):
+    if alpha <= 0: return fr
+    d = LAT - path_lat(LON)                                              # radians, negative below the band
+    m = sm(0.0, -0.10, d)[..., None] * alpha
+    out = fr * (1 - m)
+    dep = np.clip(-d, 0, None)
+    ph_ = (LON / (2 * np.pi)) * 360; fx = np.zeros_like(d)
+    for k, o in enumerate((0.13, 0.21, 0.31, 0.44)):                   # thin streaks drifting left -> right, fading with depth
+        dd = np.abs(dep - o - 0.012 * np.sin(1.3 * LON + 0.5 * t + k))
+        dash = 0.25 + 0.75 * np.clip(np.sin((ph_ - (60 + 18 * k) * t - 53 * k) * np.pi / 40), 0, 1) ** 3
+        fx += np.exp(-(dd / (0.0045 / max(SC, 0.5) * 0.5)) ** 2) * dash * (0.55 - 0.1 * k)
+    glow = np.exp(-dep / 0.09) * 0.35 + np.exp(-dep / 0.3) * 0.08          # the band's light spilling down
+    L = (fx[..., None] * LASER_LIME * 0.55 + glow[..., None] * LASER_GLOW * 0.5) * (d < 0)[..., None]
+    sm_ = cv2.resize(L, (EW // 4, EH // 4), interpolation=cv2.INTER_AREA)
+    L = L + cv2.resize(cv2.GaussianBlur(sm_, (0, 0), 3), (EW, EH)) * 0.6
+    return out + L * m
+
 def wipe(t, t0, dur=0.6):
     """light sweep across the sphere (left->right over the front): returns mask of NEW scene + light band."""
     p = (t - t0) / dur; xpos = -1.25 + 2.5 * ease(p)
@@ -348,7 +441,7 @@ def wipe(t, t0, dur=0.6):
 # ---------- timeline (seconds; temporary until the VO is recorded) ----------
 TL = dict(pulse0=0.4, pulseN=5, pulse_dt=1.05, open=6.0, ball=7.4, somos=8.6, logo=10.0, path=12.2, globe=13.4,
           txt_global=14.2, txt_40=16.8, txt_cal=19.4, zoom=21.6, py=23.0, km=25.6, entrega=28.4, destino=33.8,
-          calidad=36.6, juntos=39.4, collage=46.4, pulse2=49.2, ballspin=52.6, kick=52.6, kv_flash=57.6, logo2=57.8, cat_in=59.2,
+          calidad=36.6, juntos=39.4, collage=46.4, pulse2=49.2, ballspin=52.6, kick=52.6, kv_flash=57.6, logo2=58.2, cat_in=59.2,
           logro=61.4, hoy=63.2, listos=64.8, y2027=67.0, kv=70.6, end=75.2)
 ENTREGA = ["2_entrega/p2_cilindro.png", "2_entrega/p3_aerea02.jpg", "2_entrega/p4_convoy.png", "2_entrega/p4_ladario03.jpg", "2_entrega/p5_DSC3209.tif"]
 DESTINO = [("3_destino/p1_eess.jpg", 0.6), ("3_destino/p2_aeropuerto.jpg", 0.25)]   # airport: crop away the airline tail (right)
@@ -382,12 +475,70 @@ def fish_frame(name, tt, speed=1.0):
     i = int(min(max(tt * speed * 30, 0), len(F) - 1))                      # play once, hold the last frame (never loop)
     return cv2.remap(F[i], FMX, FMY, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
 
-def pulse_layer(t, s, inten):
-    """the front pentagon halo at scale s (1 = true panel)."""
-    z = np.maximum(P[..., 2], 1e-3); q = P[..., :2] / z[..., None]
-    pd = np.max(np.stack([q @ U[i] for i in range(5)], 0), 0) - s * A0
-    pd = np.where(P[..., 2] > 0.05, pd, 9)
-    return neon(pd, 0.012 + 0.01 * s, inten, strands=3, Q=P, t=t * 3)
+def pulse_layer(t, s, inten, down=0.0, echo=1.0):
+    """the pentagon halo at scale s (1 = true panel) on the front AND the back (rotated copy), with echo rings,
+    a soft inner glow and bloom; `down` (rad) moves its centre below the front/back centre."""
+    D = SYM if down == 0 else SYM @ rotx(-down).T
+    zz = np.maximum(D[..., 2], 1e-3); q = D[..., :2] / zz[..., None]; ok = D[..., 2] > 0.05
+    base = np.max(np.stack([q @ U[i] for i in range(5)], 0), 0)
+    pdist = lambda sc: np.where(ok, base - sc * A0, 9)
+    w = 0.012 + 0.01 * s; pd = pdist(s)
+    L = neon(pd, w, inten, strands=3, Q=P, t=t * 3)
+    if echo > 0:                                                  # trailing echo rings ride outward and fade
+        L += neon(pdist(s * 1.22), w * 1.5, inten * 0.30 * echo, strands=2, Q=P, t=t * 2) + neon(pdist(s * 1.5), w * 2.2, inten * 0.12 * echo, strands=1)
+    L += (sm(0.0, -0.06, pd) * 0.10 * inten)[..., None] * GREEN    # the pentagon's face breathes with light
+    return bloom(L, 0.8)
+
+KICK = "K_kick_v5.mp4"
+BALL_DOWN = 0.35                                                       # the ball on the spot sits ~20 deg below the centre of the kick clip
+_bc = np.array([0, -math.sin(BALL_DOWN), math.cos(BALL_DOWN)], np.float32); BALL_ANG = np.arccos(np.clip(SYM @ _bc, -1, 1))
+SCN_KEY = ["km", "entrega", "destino", "calidad", "juntos"]
+SCN = [(lambda: TL["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], lambda: TL["entrega"]),
+       (lambda: TL["entrega"], ["F2_dolly.mp4", "F3_flyby.mp4", "F4_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("ENTREGA", "black", 0.18, W_)], lambda: TL["destino"]),
+       (lambda: TL["destino"], ["F5_anim.mp4", "F6_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("DESTINO", "black", 0.18, W_)], lambda: TL["calidad"]),
+       (lambda: TL["calidad"], ["F7_anim.mp4"], [("CON COMBUSTIBLES", "black", 0.11, W_), ("DE CALIDAD", "black", 0.15, W_)], lambda: TL["juntos"]),
+       (lambda: TL["juntos"], ["J1_anim.mp4", "J2_anim.mp4", "J3_anim.mp4"], [], lambda: TL["pulse2"])]      # CONSTRUIMOS JUNTOS: client video re-made as 3 fisheye scenes
+def scene_foot(i, t):
+    t0, photos, _, t1 = SCN[i][0](), SCN[i][1], SCN[i][2], SCN[i][3]()
+    n = len(photos); seg = (t1 - t0) / n; j = int(min(max((t - t0) / seg, 0), n - 1))
+    pic = lambda jj: fish_frame(photos[jj], t - (t0 + jj * seg - 0.45))
+    f = pic(j)
+    if j > 0 and t < t0 + j * seg + 0.45:                   # seam reveal between photos of the same line
+        f = reveal(pic(j - 1), f, t, t0 + j * seg - 0.35, 0.8)
+    return f
+def scene_full(i, t):
+    t0, t1 = SCN[i][0](), SCN[i][3]()
+    fr = lower_black(scene_foot(i, t), t)
+    fr = light_over(fr, swoosh(t, 1.0), 1.6, 0.5); fr = puma_put(fr, t)
+    fr = mg_put(fr, SCN_KEY[i], t - t0)
+    return fr
+def juntos_full(t):
+    v = juntos_frame(t - TL["juntos"]); fr = disc_put(np.zeros((EH, EW, 3), np.float32), rgba(ball_look(v)))
+    fr = lower_black(fr, t); fr = light_over(fr, swoosh(t, 1.0), 1.6, 0.5); return puma_put(fr, t)
+def kick_to_kv(fr, t):
+    """filmed ball -> KV ball: the code ball crossfades in with a soft radial blur, its seams swell, the panels light up to KV green."""
+    T = TL; p = (t - (T["kv_flash"] - 0.3)) / 0.3                    # 0..1 crossfade from the clip
+    q = (t - T["kv_flash"]) / (T["logo2"] - T["kv_flash"])          # 0..1 the panels fill to KV green
+    Rb = roty(-0.10 * max(t - T["kv_flash"], 0.0))
+    if p < 1:                                                        # start at the filmed ball's size (~0.86 of the circle) so the patterns line up
+        D, inside = pole_scaled(1.33 - 0.33 * ease(p)); d, cent, top, Q = ball_field_dirs(D, Rb)   # filmed panels read ~1.33x larger
+    else:
+        d, cent, top, Q = ball_field(Rb); inside = 1.0
+    if p < 1:                                                        # soft radial (zoom) blur on the filmed ball as it hits the lens
+        sm_ = cv2.resize(np.clip(fr, 0, 255), (EW // 2, EH // 2))
+        acc = sm_.copy()
+        for k in (1.02, 1.045, 1.07):
+            M = np.float32([[k, 0, (1 - k) * EW / 4], [0, k, (1 - k) * EH / 4]]); acc += cv2.warpAffine(sm_, M, (EW // 2, EH // 2), borderMode=cv2.BORDER_REFLECT)
+        fr = fr * (1 - 0.6 * ease(p)) + cv2.resize(acc / 4, (EW, EH)) * 0.6 * ease(p)
+        hot = np.clip(fr - 150, 0, None) * 2.2                         # the filmed seams flare as the code ball takes over (hides the swap)
+        fr = fr + bloom(hot, 1.2) * math.sin(math.pi * p) * 0.9
+    fill = 0.45 + 0.55 * ease(q)
+    seams = 1.0 + 1.0 * math.sin(math.pi * min(max(p * 0.6 + q * 0.6, 0), 1))    # the seams swell to hot, then settle
+    ball = green_fill(cent, Q) * fill + bloom(neon(d, SW, seams, Q=Q, t=t), 0.4 + 0.4 * ease(q))
+    a = (ease(p) if q <= 0 else 1.0) * inside
+    a = a[..., None] if np.ndim(a) == 2 else a
+    out = fr * (1 - a) + ball * a
+    return out + bloom(neon(d, SW, 1.0, Q=Q, t=t), 0.8) * math.sin(math.pi * min(max(p, 0), 1)) * 0.5
 
 def render(t):
     T = TL; fr = np.zeros((EH, EW, 3), np.float32)
@@ -409,8 +560,7 @@ def render(t):
     # ---- 2. green ball + SOMOS / PUMA ENERGY ----
     if t < T["path"] + 0.6:
         d, cent, top, Q = ball_field(spin); fr = green_fill(cent, Q) + neon(d, SW, 1.0, Q=Q, t=t)
-        r, a = text_in(lockup([("SOMOS", "black", 0.16, W_)], y_c=0.40), t, T["somos"], T["path"] - 0.2)
-        if a: fr = disc_put(fr, r, a)
+        fr = mg_put(fr, "somos", t - T["somos"])
         lb = place(BAR_NOCAT if t < T["logo"] + 0.6 else LOGO_BAR, 0.62, 0.5, 0.56)
         r, a = text_in(lb, t, T["somos"] + 0.35, T["path"] - 0.2)
         if a: fr = disc_put(fr, r, a)
@@ -433,29 +583,19 @@ def render(t):
                                 ("txt_40", [("+40", "black", 0.26, LIME), ("PAÍSES", "black", 0.14, W_)], "txt_cal"),
                                 ("txt_cal", [("CALIDAD", "black", 0.15, W_), ("INTERNACIONAL", "black", 0.12, LIME)], "zoom"),
                                 ("py", [("Y EN", "bold", 0.08, W_), ("PARAGUAY", "black", 0.17, W_)], "km")):
-            r, a = text_in(lockup(lines, y_c=0.42 if key != "py" else 0.30), t, T[key], T[nxt] - 0.25)
-            if a: fr = disc_put(fr, r, a)
-        if t >= T["km"] - 0.6:
-            m, band = wipe(t, T["km"] - 0.6); fr = fr * (1 - m) + band
+            if T[key] <= t < T[nxt]: fr = mg_put(fr, {"txt_global": "global", "txt_40": "40", "txt_cal": "cal", "py": "py"}[key], t - T[key])
+        if t >= T["km"] - 0.8:
+            fr = reveal(fr, scene_full(0, t), t, T["km"] - 0.8, 0.8)
         return fr
-    # ---- 4. photo scenes: text on top, the light path (puma track) below ----
-    scenes = [(T["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], T["entrega"]),
-              (T["entrega"], ["F2_dolly.mp4", "F3_flyby.mp4", "F4_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("ENTREGA", "black", 0.18, W_)], T["destino"]),
-              (T["destino"], ["F5_anim.mp4", "F6_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("DESTINO", "black", 0.18, W_)], T["calidad"]),
-              (T["calidad"], ["F7_anim.mp4"], [("CON COMBUSTIBLES", "black", 0.11, W_), ("DE CALIDAD", "black", 0.15, W_)], T["juntos"])]
-    for i, (t0, photos, lines, t1) in enumerate(scenes):
-        if t0 - 0.6 <= t < t1:
-            n = len(photos); seg = (t1 - t0) / n; j = int(min(max((t - t0) / seg, 0), n - 1))
-            def pic(jj, tt):                                    # type A fisheye clip, starts when its segment starts
-                return fish_frame(photos[jj], tt - (t0 + jj * seg - 0.45))
-            fr = pic(j, t)
-            if j > 0 and t < t0 + j * seg + 0.45:              # light sweep between photos of the same line
-                m, band = wipe(t, t0 + j * seg - 0.15, 0.6); fr = pic(j - 1, t) * (1 - m) + fr * m + band
-            fr = light_over(fr, swoosh(t, 1.0), 1.6, 0.5); fr = puma_put(fr, t)   # no edge ribbons (user: too obvious)
-            r, a = text_in(lockup(lines, width=0.70, y_c=0.24), t, t0 + 0.1)
-            if a: fr = disc_put(fr, r, a)
-            if t >= t1 - 0.6:
-                m, band = wipe(t, t1 - 0.6); fr = fr * (1 - m) + band
+    # ---- 4. photo scenes: text in the sky, the light path low, black below it ----
+    for i in range(len(SCN)):
+        t0, t1 = SCN[i][0](), SCN[i][3]()
+        if t0 <= t < t1:
+            fr = scene_full(i, t)
+            if i + 1 < len(SCN) and t >= t1 - 0.8:              # seam reveal into the next scene
+                fr = reveal(fr, scene_full(i + 1, t), t, t1 - 0.8, 0.8)
+            elif i + 1 == len(SCN) and t >= t1 - 0.6:           # the last scene fades out into the pulses
+                fr = fr * (1 - ease((t - t1 + 0.6) / 0.5))
             return fr
     # ---- 5. construimos juntos (video seconds 4-11) + collage ----
     if t < T["pulse2"]:
@@ -476,9 +616,9 @@ def render(t):
                 c = cv2.warpAffine(card, M, (DN, DN)); c[..., 3] *= p; a = c[..., 3:] / 255
                 L[..., :3] = L[..., :3] * (1 - a) + c[..., :3] * a; L[..., 3:] = np.maximum(L[..., 3:], c[..., 3:])
             fr = disc_put(fr, L)
+        fr = lower_black(fr, t, 1.0 if t < T["collage"] else 1.0 - ease((t - T["collage"]) / 0.5))
         fr = light_over(fr, swoosh(t, 1.0), 1.6, 0.5); fr = puma_put(fr, t, 1.0 - ease((t - T["pulse2"] + 0.9) / 0.4))
-        r, a = text_in(lockup([("CONSTRUIMOS", "black", 0.13, W_), ("JUNTOS", "black", 0.17, LIME)], y_c=0.30), t, T["juntos"] + 0.4)
-        if a: fr = disc_put(fr, r, a)
+        fr = mg_put(fr, "juntos", t - T["juntos"])
         if t >= T["pulse2"] - 0.5: fr *= 1 - ease((t - T["pulse2"] + 0.5) / 0.5)
         return fr
     # ---- 6. pulses again -> the pulses become the ball -> (kick: PLACEHOLDER) -> KV ----
@@ -488,18 +628,21 @@ def render(t):
             ph_ = k % 1; s = 0.2 + (0.35 + 0.12 * int(k)) * math.sin(math.pi * min(ph_ / 0.8, 1)) ** 0.7
             fr += pulse_layer(t, s, 0.5 + 0.9 * math.sin(math.pi * min(ph_ / 0.8, 1)))
         else:
-            p = ease((t - T["pulse2"] - 2.4) / 1.0); acc = max(0.0, t - T["ballspin"])
-            d, cent, top, Q = ball_field(roty(-0.10 * t - 1.6 * acc * acc) @ rotx(0.4 * acc * acc))
-            reach = sm(np.cos(p * math.pi * 1.05), np.cos(p * math.pi * 1.05) + 0.15, P[..., 2])[..., None]
-            fr = reach * (np.zeros_like(fr) + neon(d, SW, 1.2, Q=Q, t=t)) + pulse_layer(t, 1.0, 1.2 * (1 - p))
+            pp = ease((t - T["pulse2"] - 2.4) / (T["kick"] - T["pulse2"] - 2.4))       # the last pulse condenses onto the ball on the spot
+            fr += pulse_layer(t, 0.55 * (1 - pp) + 0.07 * pp, 0.9 + 1.6 * pp, down=BALL_DOWN * pp, echo=1 - pp)
             kt = t - T["kick"]
-            if kt >= 0 and fish_clip("K_kick_v4.mp4") is not None:           # the kick (type A, 5 s, real speed): run-up, strike, ball fills the sphere
-                kf = fish_frame("K_kick_v4.mp4", kt, 1.0); a_ = ease(kt / 0.4); fr = fr * (1 - a_) + kf * a_
-            if t >= T["kv_flash"] - 0.4:
-                q = math.sin(math.pi * min(max((t - T["kv_flash"] + 0.4) / 0.6, 0), 1)); fr = fr * (1 - q) + q * 255
+            if kt >= 0 and fish_clip(KICK) is not None:                      # the stadium opens out of the ball: radial reveal with a lime edge
+                kf = fish_frame(KICK, kt, 1.0)
+                rad = 1.75 * ease(kt / 0.8); m = sm(rad, rad - 0.22, BALL_ANG)[..., None]
+                edge = np.exp(-((BALL_ANG - rad) / 0.035) ** 2) * (kt < 0.8)
+                fr = fr * (1 - m) + kf * m + bloom(edge[..., None] * (GREEN + 70), 0.8) * 0.9
+            if t >= T["kv_flash"] - 0.3:                                       # the KV ball (code, pentagon facing front) takes over the filmed ball
+                fr = kick_to_kv(fr, t)
         return fr
     # ---- 7. logo without the puma; the puma enters ----
-    d, cent, top, Q = ball_field(spin); fr = green_fill(cent, Q) + neon(d, SW, 1.0, Q=Q, t=t)
+    d, cent, top, Q = ball_field(roty(-0.10 * (t - T["kv_flash"])))
+    q = 1 - ease((t - T["logo2"]) / 0.5)                    # the hand-off glow settles
+    fr = green_fill(cent, Q) + (bloom(neon(d, SW, 1.0, Q=Q, t=t), 0.8 * q) if q > 0 else neon(d, SW, 1.0, Q=Q, t=t))
     if t < T["logro"]:
         fr = disc_put(fr, place(BAR_NOCAT, 0.72, 0.5, 0.5), ease((t - T["logo2"]) / 0.4))
         if t >= T["cat_in"]:                            # the chrome puma runs in from the left and lands as the logo cat
@@ -517,15 +660,11 @@ def render(t):
                             ("hoy", [("EMPIEZA", "black", 0.1, W_), ("HOY", "black", 0.24, W_)], "listos"),
                             ("listos", [("LISTOS PARA", "black", 0.09, W_), ("JUGAR EN", "black", 0.15, W_), ("GRANDE", "black", 0.17, LIME)], "y2027")):
         if T[key] <= t < T[nxt]:
-            r, a = text_in(lockup(lines, y_c=0.47), t, T[key], T[nxt] - 0.2)
-            if a: fr = disc_put(fr, r, a)
-    if T["y2027"] <= t < T["kv"]:
-        p = (t - T["y2027"]) / (T["kv"] - T["y2027"]); s = 0.25 + 1.35 * ease(min(p / 0.8, 1)) ** 1.6     # grows to fill the visible face (no wrap)
-        L = lockup([("2027", "black", 0.3, W_)], width=0.7, y_c=0.5); M = cv2.getRotationMatrix2D((DN / 2, DN / 2), 0, s)
-        r = cv2.warpAffine(L, M, (DN, DN)); fr = disc_put(fr, r, ease(p / 0.1))
-        q = math.sin(math.pi * min(max((p - 0.82) / 0.18, 0), 1)) if p < 1 else 0; fr = fr * (1 - q) + 255 * q   # flash into the KV
+            fr = mg_put(fr, key, t - T[key])
     if t >= T["kv"]:
         kv = place(LOGO, 0.62, 0.5, 0.5); fr = disc_put(fr, kv, ease((t - T["kv"]) / 0.5))
+    if t >= T["y2027"]:                                 # 2027: pops in small, grows until it overflows the sphere, dissolves into lime light over the KV
+        fr = mg_put(fr, "2027", t - T["y2027"])
     return fr
 
 def front_view(eq, n=540, back=False):
