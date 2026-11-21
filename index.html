@@ -3111,9 +3111,15 @@ function groundMesh(heightFn, w, d, segW, segD, mat) {
 function buildHouseScene(kind) {
   const scene = new THREE.Scene();
   const SM = sceneMaterials();
+  // The site's look (js/look.js), as in Walk the site: the Blender sky and sun, AgX colour, photo textures,
+  // the same trees, grass and effects. Earth walls, deck and roof take the walk's textures (2 m tiles).
+  const L = LOOKA, U = LOOK.uniforms(L), tint = new THREE.Color().setRGB(...LOOK.GRASS_TINT);
+  const tex = (t, r) => { const c = t.clone(); c.repeat.set(r, r); c.needsUpdate = true; return c; };
+  SM.earth = new THREE.MeshStandardMaterial({ map: tex(L.tex.plaster, 2), roughness: 0.95 });
+  SM.deck = new THREE.MeshStandardMaterial({ map: tex(L.tex.planks, 1.5), roughness: 0.8 });
+  SM.roofGrass = new THREE.MeshStandardMaterial({ map: tex(L.tex.grass, 2.5), color: tint, roughness: 0.95 });
   const lights = [], glows = [];
   const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 3000);
-  scene.environment = ENV; scene.environmentIntensity = 0.45;
 
   const isCabin = kind === 'cabin';
   // Ground: flat in front, rising into the hill behind the house, with earth berms at the ends.
@@ -3134,7 +3140,7 @@ function buildHouseScene(kind) {
     if (Math.abs(x - (isCabin ? 0 : 0.6)) < halfW + 0.3 && z > rz + 0.1 && z < (isCabin ? 6.6 : 7.0)) y = -0.08;
     return y;
   };
-  const ground = groundMesh(hf, 260, 220, small ? 130 : 200, small ? 110 : 170, new THREE.MeshStandardMaterial({ map: T.grass, roughness: 1 }));
+  const ground = groundMesh(hf, 260, 220, small ? 130 : 200, small ? 110 : 170, new THREE.MeshStandardMaterial({ map: tex(L.tex.grass, 2.5), color: tint, roughness: 1 }));
   scene.add(ground);
 
   // The house itself.
@@ -3255,12 +3261,10 @@ function buildHouseScene(kind) {
     scene.add(pit);
   }
 
-  // Trees on the slope behind, palms in the field like the ones on site, grass tufts in front.
+  // Trees on the slope behind, palms in the field like the ones on site, grass in front.
+  let blades = null;
   {
     const R = rng(isCabin ? 41 : 42);
-    const canopy = lumpySphere(small ? 1 : 2, 0.24);
-    const tmat = foliage(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }), { scale: 1.5, wind: 0.035, trans: 0.35 });
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3c, roughness: 1 });
     const trees = [];
     for (let i = 0; i < 260; i++) {
       const x = (R() - 0.5) * 220, z = -12 - R() * 90;
@@ -3272,19 +3276,11 @@ function buildHouseScene(kind) {
       const s = R() < 0.5 ? -1 : 1, x = s * (halfW + 22 + R() * 70), z = -10 + R() * 40;
       trees.push([x, z]);
     }
-    const tm = new THREE.InstancedMesh(canopy, tmat, trees.length);
-    const tk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.22, 0.32, 1, 6), trunkMat, trees.length);
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v3 = new THREE.Vector3(), s3 = new THREE.Vector3(), col = new THREE.Color();
-    trees.forEach(([x, z], i) => {
-      const y = hf(x, z), r = 2.4 + R() * 3.2, th = 2.5 + R() * 4;
-      tm.setMatrixAt(i, m4.compose(v3.set(x, y + th + r * 0.7, z), q.setFromAxisAngle(UP, R() * 6), s3.set(r, r * (0.8 + R() * 0.3), r)));
-      const pick = R();
-      if (pick < 0.03) col.setHSL(0.92, 0.5, 0.62); else col.setHSL(0.24 + R() * 0.07, 0.3 + R() * 0.15, 0.16 + R() * 0.12);
-      tm.setColorAt(i, col);
-      tk.setMatrixAt(i, m4.compose(v3.set(x, y + th / 2 + 0.3, z), q.identity(), s3.set(1, th + 1, 1)));
-    });
-    tm.castShadow = tk.castShadow = true; tm.receiveShadow = true;
-    scene.add(tm, tk);
+    // The walk's trees: pictures of the real tree models, species by height as in the renders.
+    const td = [];
+    for (const [x, z] of trees) { const h = 6 + R() * 10, r = R(); td.push(x, z, hf(x, z) - 0.2, h, h >= 14 ? 0 : h >= 9 ? (r < 0.5 ? 0 : 1) : (r < 0.6 ? 2 : 1)); }
+    scene.add(LOOK.treeCards(U, L, new Float32Array(td), !small));
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v3 = new THREE.Vector3(), s3 = new THREE.Vector3();
 
     const palmSpots = isCabin
       ? [[-9.5, -9, 1.0], [-6, -14, 1.15], [9, -11, 1.1], [14, -7, 1.0], [-24, 3, 1.05], [22, 2, 0.95], [-34, -16, 1.1], [30, -18, 1.0]]
@@ -3293,42 +3289,37 @@ function buildHouseScene(kind) {
     palmSpots.forEach(([x, z, s], i) => pm.setMatrixAt(i, m4.compose(v3.set(x, hf(x, z) - 0.2, z), q.setFromAxisAngle(UP, R() * 6), s3.set(s, s, s))));
     pm.castShadow = true; scene.add(pm);
 
-    const tuft = tuftGeometry(0.5);
-    const gm = new THREE.MeshStandardMaterial({ roughness: 1, vertexColors: true });
-    const N = small ? 4000 : 9000;
-    const tf = new THREE.InstancedMesh(tuft, gm, N);
-    let n = 0;
-    for (let i = 0; i < N * 3 && n < N; i++) {
-      const x = (R() - 0.5) * 100, z = -16 + R() * 64;
+    // The walk's grass blades, on a 0.5 m grid, kept off the house, pool, carport and fire pit.
+    const G0 = [-70, -50], GS = 0.5, GX = 281, GZ = 221, gh = new Float32Array(GX * GZ), gmask = new Uint8Array(GX * GZ);
+    for (let j = 0; j < GZ; j++) for (let i = 0; i < GX; i++) {
+      const x = G0[0] + i * GS, z = G0[1] + j * GS, k = j * GX + i;
+      gh[k] = hf(x, z);
       const onHouse = Math.abs(x - (isCabin ? 0 : 0.6)) < halfW + 1.2 && z > -7 && z < (isCabin ? 7.2 : 8.2);
       const onPool = !isCabin && x > -11.5 && x < 3 && z > 5.5 && z < 12;
       const onCar = Math.abs(x - cpX) < cpW / 2 + 0.6 && Math.abs(z - (isCabin ? 6 : 7)) < 3.4;
       const onPit = isCabin && Math.hypot(x - 9.5, z - 9.5) < 2.8;
-      if (onHouse || onPool || onCar || onPit) continue;
-      const s = 0.7 + R() * 0.9;
-      tf.setMatrixAt(n, m4.compose(v3.set(x, hf(x, z) - 0.03, z), q.setFromAxisAngle(UP, R() * 6), s3.set(s, s * (0.7 + R() * 0.8), s)));
-      tf.setColorAt(n, col.setHSL(0.17 + R() * 0.08, 0.32 + R() * 0.2, 0.3 + R() * 0.16, THREE.SRGBColorSpace));
-      n++;
+      gmask[k] = onHouse || onPool || onCar || onPit ? 0 : 255;
     }
-    tf.count = n; scene.add(tf);
+    const maskTex = new THREE.DataTexture(gmask, GX, GZ, THREE.RedFormat, THREE.UnsignedByteType);
+    maskTex.unpackAlignment = 1; maskTex.magFilter = maskTex.minFilter = THREE.LinearFilter; maskTex.needsUpdate = true;
+    blades = LOOK.grass(U, L, { heights: gh, grid: [GX, GZ], origin: G0, step: GS, mask: maskTex, radius: small ? 13 : 20, count: small ? 26000 : 80000 });
+    scene.add(blades);
   }
 
-  // Sky, sun, night.
-  const sunDir = new THREE.Vector3(0.62, 0.24, 0.75).normalize();
-  const sky = skyDome(0x7ea6cf, 0xf0d7ad, sunDir); sky.scale.setScalar(1500); scene.add(sky);
-  const dayEnv = skyEnvironment(sunDir);
-  scene.environment = dayEnv; scene.environmentIntensity = 0.85;
+  // Sky, sun, night: the site's sky and the sun of the bake, as in Walk the site.
+  const sunDir = U.uSun.value;
+  const dome = LOOK.addSky(scene, renderer, U, L); scene.environmentIntensity = 1;
   const starField = stars(1400, 1200); starField.visible = false; scene.add(starField);
-  const hemi = new THREE.HemisphereLight(0xd6e4f2, 0x5a4a36, 1.0); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffc386, 3.8);
+  const hemi = new THREE.HemisphereLight(0x6f86b0, 0x5a4a36, 0); scene.add(hemi);       // moonlight only
+  const sun = LOOK.sunLight(U), dayCol = sun.color.clone(), dayI = sun.intensity;
   sun.position.copy(sunDir).multiplyScalar(60);
   sun.castShadow = true;
   sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
   const sc = sun.shadow.camera; const ext = isCabin ? 26 : 34; sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 10; sc.far = 160;
   sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
   scene.add(sun, sun.target);
-  scene.fog = new THREE.Fog(0xe7d6b6, 90, 420);
-  scene.background = new THREE.Color(0xe7d6b6);
+  const HAZE = LOOK.horizonColor(L), NIGHT = new THREE.Color(0x111a26);
+  scene.fog = new THREE.FogExp2(HAZE.clone(), 1 / 700);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.dampingFactor = 0.07;
@@ -3340,18 +3331,15 @@ function buildHouseScene(kind) {
   let night = false;
   function setNight(on) {
     night = on;
-    sky.material.uniforms.top.value.set(on ? 0x050913 : 0x7ea6cf);
-    sky.material.uniforms.horizon.value.set(on ? 0x1b2536 : 0xf0d7ad);
-    sky.material.uniforms.sunAmt.value = on ? 0 : 1;
+    dome.visible = !on; scene.background = on ? NIGHT : null;
     starField.visible = on;
-    scene.fog.color.set(on ? 0x111a26 : 0xe7d6b6);
-    scene.background.set(on ? 0x111a26 : 0xe7d6b6);
-    hemi.intensity = on ? 0.18 : 1.0;
-    hemi.color.set(on ? 0x6f86b0 : 0xd6e4f2);
-    sun.intensity = on ? 0.35 : 3.8;
-    sun.color.set(on ? 0x9db5e0 : 0xffc386);
+    scene.fog.color.copy(on ? NIGHT : HAZE);
+    hemi.intensity = on ? 0.18 : 0;
+    sun.intensity = on ? 0.35 : dayI;
+    sun.color.copy(on ? new THREE.Color(0x9db5e0) : dayCol);
     sun.position.copy(on ? new THREE.Vector3(-0.4, 0.8, 0.5).normalize() : sunDir).multiplyScalar(60);
-    scene.environmentIntensity = on ? 0.08 : 0.85;
+    scene.environmentIntensity = on ? 0.08 : 1;
+    U.uDim.value.set(...(on ? [0.05, 0.06, 0.09] : [1, 1, 1]));         // the sky-lit grass and trees, by moonlight
     lights.forEach((l) => (l.intensity = on ? 14 : 0));
     SM.window.emissiveIntensity = on ? 0.8 : 0;
     SM.lamp.emissiveIntensity = on ? 3 : 0;
@@ -3361,7 +3349,7 @@ function buildHouseScene(kind) {
   }
 
   const anchors = SPOTS[kind].map((s) => ({ ...s, anchor: new THREE.Vector3(...s.at) }));
-  return { scene, camera, controls, setNight, isNight: () => night, anchors, tick(t) { if (night) glows.forEach((gl, i) => { gl.material.opacity = 0.75 + 0.2 * Math.sin(t * (i === glows.length - 1 && isCabin ? 9 : 2) + i); }); } };
+  return { scene, camera, controls, setNight, isNight: () => night, anchors, tick(t) { U.uTime.value = t; if (blades) blades.material.uniforms.uCam.value.copy(controls.target); if (night) glows.forEach((gl, i) => { gl.material.opacity = 0.75 + 0.2 * Math.sin(t * (i === glows.length - 1 && isCabin ? 9 : 2) + i); }); } };
 }
 
 let _glow;
@@ -4659,6 +4647,14 @@ const LEDES = {
 const EYEBROWS = { cerro: small ? 'Cerro Kavaju · Cordillera, Paraguay' : 'Cerro Kavaju · Cordillera, Paraguay · UTM 21S', cabin: 'Designs · The cabin', residence: 'Designs · The residence' };
 
 let HOME;
+/* The Designs scenes are drawn with the walk's look (js/look.js), loaded the first time a design opens. */
+let LOOK = null, LOOKA = null;
+function withLook(then) {
+  $('loader').classList.add('is-on'); loaderText.textContent = 'Loading the design';
+  import('./js/look.js').then((mod) => { LOOK = mod; return mod.loadLook(); })
+    .then((a) => { LOOKA = a; $('loader').classList.remove('is-on'); then(); })
+    .catch((err) => { console.error(err); $('loader').classList.remove('is-on'); });
+}
 function setMode(m) {
   if (!planEl.hidden) closePlan();
   if (!trailEl.hidden) closeTrail();
@@ -4666,6 +4662,7 @@ function setMode(m) {
   if (!walkEl.hidden) closeWalk();
   if (!trailerEl.hidden) closeTrailer();
   if (m !== 'cerro' && !scenes[m]) {
+    if (!LOOKA) { withLook(() => setMode(m)); return; }
     try { scenes[m] = buildHouseScene(m); fitCamera(scenes[m].camera); }
     catch (err) { console.error(err); return; }
   }
@@ -4674,6 +4671,8 @@ function setMode(m) {
   mode = m;
   active = m === 'cerro' ? hill : scenes[m];
   active.controls.enabled = true;
+  renderer.toneMapping = m === 'cerro' ? THREE.ACESFilmicToneMapping : THREE.AgXToneMapping;      // the designs: AgX +0.5, as in Blender and the walk
+  renderer.toneMappingExposure = m === 'cerro' ? 1 : Math.SQRT2;
   closeDrawer();
   markTab(m);
   $('eyebrow').textContent = EYEBROWS[m];
@@ -5071,7 +5070,7 @@ function makeComposer(scene, camera, hillScale) {
     ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 5, rings: 2, samples: 16 });
     c.addPass(ao);
   }
-  c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), 0.42, 0.6, 0.88));
+  c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), hillScale ? 0.42 : 0.28, hillScale ? 0.6 : 0.5, hillScale ? 0.88 : 0.95));   // the designs: the walk's glow
   c.addPass(new OutputPass());
   c.grade = new ShaderPass(GradeShader);
   c.addPass(c.grade);
