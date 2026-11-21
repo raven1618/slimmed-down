@@ -25,16 +25,17 @@ export function loadLook(onFile = () => {}) {
     fetch(B + 'world.json').then((r) => { if (!r.ok) throw new Error('world.json: ' + r.status); onFile(); return r.json(); }),
     img('sky.jpg'), img('trees.webp'),
     img('tex/grass.jpg', true), img('tex/soil.jpg', true), img('tex/litter.jpg', true), img('tex/wall.jpg', true), img('tex/plaster.jpg', true), img('tex/planks.jpg', true),
-  ]).then(([W, sky, sheet, grass, soil, litter, wall, plaster, planks]) => {
+    img('tex/grass_n.jpg'), img('tex/soil_n.jpg'), img('tex/litter_n.jpg'), img('tex/wall_n.jpg'), img('tex/plaster_n.jpg'), img('tex/planks_n.jpg'),     // relief (normal) maps
+  ]).then(([W, sky, sheet, grass, soil, litter, wall, plaster, planks, grassN, soilN, litterN, wallN, plasterN, planksN]) => {
     sky.wrapS = THREE.RepeatWrapping; sky.minFilter = THREE.LinearFilter; sky.generateMipmaps = false;
     sheet.anisotropy = 4;
-    const tex = { grass, soil, litter, wall, plaster, planks };
-    for (const t of Object.values(tex)) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; }
+    const tex = { grass, soil, litter, wall, plaster, planks, grassN, soilN, litterN, wallN, plasterN, planksN };
+    for (const t of Object.values(tex)) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 16; }     // sharp at grazing angles (the GPU caps it)
     return { W, sky, sheet, tex };
   }).catch((err) => { assets = null; throw err; });
   return assets;
 }
-export const LOOK_FILES = 9;
+export const LOOK_FILES = 15;
 
 /* The uniforms every material of one scene shares. uDim darkens the custom shaders at night. */
 export function uniforms(L) {
@@ -246,7 +247,30 @@ export function composer(renderer, scene, cam, GradeShader, small) {
     c.addPass(new RenderPass(scene, cam));
     c.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.28, 0.5, 0.95));
     c.addPass(new OutputPass());
+    c.addPass(sharpenPass());
     c.grade = new ShaderPass(GradeShader); c.grade.uniforms.uAmt.value = 1; c.addPass(c.grade);
     return c;
   } catch (err) { console.warn('Effects off:', err.message); return null; }
+}
+
+/* Sharpening after anti-aliasing and glow, before the film grain: contrast-adaptive (after AMD's CAS), so
+   fine detail in textures, leaves and grass gets crisper while edges that are already hard do not ring. */
+const SharpenShader = {
+  uniforms: { tDiffuse: { value: null }, uRes: { value: new THREE.Vector2(1, 1) }, uAmt: { value: 0.6 } },
+  vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform vec2 uRes; uniform float uAmt; varying vec2 vUv;
+    void main() {
+      vec2 px = 1.0 / uRes;
+      vec3 c = texture2D(tDiffuse, vUv).rgb, n = texture2D(tDiffuse, vUv + vec2(0.0, px.y)).rgb, s = texture2D(tDiffuse, vUv - vec2(0.0, px.y)).rgb,
+           e = texture2D(tDiffuse, vUv + vec2(px.x, 0.0)).rgb, w = texture2D(tDiffuse, vUv - vec2(px.x, 0.0)).rgb;
+      vec3 mn = min(c, min(min(n, s), min(e, w))), mx = max(c, max(max(n, s), max(e, w)));
+      vec3 amp = sqrt(clamp(min(mn, 1.0 - mx) / max(mx, vec3(1e-4)), 0.0, 1.0));
+      vec3 wt = -amp * mix(0.125, 0.2, uAmt);
+      gl_FragColor = vec4(clamp((c + (n + s + e + w) * wt) / (1.0 + 4.0 * wt), 0.0, 1.0), 1.0);
+    }`,
+};
+export function sharpenPass() {
+  const p = new ShaderPass(SharpenShader);
+  p.setSize = (w, h) => p.uniforms.uRes.value.set(w, h);
+  return p;
 }

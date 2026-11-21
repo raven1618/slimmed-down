@@ -22,7 +22,8 @@ of the link. The choice is remembered on that device.
 
 - `index.html`: the page, its styles, and the hill, concept scenes, 360° views and plan.
 - `js/walk.js`, `js/trail.js`: the two heavy views, loaded only when their tab opens.
-- `js/look.js`: the look the walk and the Designs scenes share, so they match the Blender renders: the sky Blender rendered from the site, AgX colour with +0.5 exposure, the sun of the bake, Poly Haven photo textures, the tree cards, the grass blades, and the same glow and film grade.
+- `js/cabin.js`: the cabin and residence builders. The walk's quarry row and the Designs tab use the same cabin, furnished inside.
+- `js/look.js`: the look the walk and the Designs scenes share, so they match the Blender renders: the sky Blender rendered from the site, AgX colour with +0.5 exposure, the sun of the bake, Poly Haven photo textures with their relief (normal) maps, the tree cards, the grass blades, and the same glow, sharpening and film grade.
 - `data/`: terrain, trees, imagery and base maps for the hill; `data/walk/` for the walk.
 - `img/`: site photos and renders. `render/`: the Blender pipeline. `data/build/`: the data pipeline.
 

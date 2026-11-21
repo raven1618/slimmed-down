@@ -6,6 +6,7 @@
    and gives everything back in dispose(). */
 import * as THREE from 'three';
 import * as LOOK from './look.js';      // the sky, colour, sun, textures, trees, grass and effects, shared with Designs
+import * as CAB from './cabin.js';      // the cabin design, shared with Designs
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
 export async function build(ctx) {
@@ -70,10 +71,10 @@ export async function build(ctx) {
   }
   const VW = 'varying vec3 vW, vN; void main() { vW = position; vN = normal; gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0); }';
   const ground = new THREE.Mesh(gridGeo(Hd, nx, nz, x0, z0, 1), mat({
-    uniforms: { uSplat: { value: splat }, uLight: { value: light }, uTg: { value: tGrass }, uTs: { value: tSoil }, uTl: { value: tLitter }, uTw: { value: tWall } },
+    uniforms: { uNg: { value: L.tex.grassN }, uNs: { value: L.tex.soilN }, uNl: { value: L.tex.litterN }, uSplat: { value: splat }, uLight: { value: light }, uTg: { value: tGrass }, uTs: { value: tSoil }, uTl: { value: tLitter }, uTw: { value: tWall } },
     vertexShader: VW,
     fragmentShader: `${NOISE} ${SKY}
-      uniform sampler2D uSplat, uLight, uTg, uTs, uTl, uTw; uniform vec4 uReg; uniform vec2 uGrid; uniform float uLK; varying vec3 vW, vN;
+      uniform sampler2D uSplat, uLight, uTg, uTs, uTl, uTw, uNg, uNs, uNl; uniform vec4 uReg; uniform vec2 uGrid; uniform float uLK; uniform vec3 uSun, uSunA, uAmb; varying vec3 vW, vN;
       vec3 tile(sampler2D t, vec2 p) {                 // a second, turned and larger copy hides the repeat
         vec3 a = texture2D(t, p).rgb, b = texture2D(t, vec2(p.y, -p.x) * 0.43 + 0.17).rgb;
         return mix(a, b, smoothstep(0.3, 0.7, ohNoise(vec3(p * 0.23, 1.7))) * 0.55);
@@ -91,7 +92,14 @@ export async function build(ctx) {
         vec3 w = (texture2D(uTw, vec2(-vW.z, vW.y) / 4.0).rgb * b.x + texture2D(uTw, p / 4.0).rgb * b.y + texture2D(uTw, vec2(vW.x, vW.y) / 4.0).rgb * b.z) * vec3(0.8, 0.6, 0.5);
         vec3 alb = mix(mix(mix(g, s, ws), l, wl), w, st);
         vec3 L = pow(texture2D(uLight, uv).rgb, vec3(2.2)) * uLK;
-        gl_FragColor = vec4(haze(alb * L, vW), 1.0);
+        // Relief: the textures' normal maps tilt each grain toward or away from the sun. Only where the bake
+        // says the sun reaches, so shadows stay as baked. Tangents: +u = +x, +v = -z (the textures run on x, -z).
+        vec3 tn = normalize(mix(mix(texture2D(uNg, p / 2.4).xyz, texture2D(uNs, p / 3.0).xyz, ws), texture2D(uNl, p / 2.4).xyz, wl) * 2.0 - 1.0);
+        vec3 nd = normalize(mix(normalize(vec3(tn.x, 0.0, -tn.y) + n * tn.z), n, st));
+        float sunlit = clamp((dot(L, vec3(0.333)) - dot(uAmb, vec3(0.333))) / max(dot(uSunA, vec3(0.333)) * max(dot(n, uSun), 0.05), 1e-3), 0.0, 1.0);
+        L += uSunA * sunlit * (max(dot(nd, uSun), 0.0) - max(dot(n, uSun), 0.0));
+        L *= mix(0.8, 1.0, tn.z);                                              // a touch darker in the creases
+        gl_FragColor = vec4(haze(alb * max(L, vec3(0.0)), vW), 1.0);
         ${OUT}
       }`,
   }));
@@ -161,67 +169,13 @@ export async function build(ctx) {
   water.rotation.order = 'YXZ'; water.rotation.set(-Math.PI / 2, -lb, 0); water.position.set(lx, lwl - 0.02, lz);
   scene.add(water);
 
-  /* ---- the cabins: rammed earth set into the quarry wall, glass, steel, a deck and a living roof */
-  const Hh = 3.0;
-  const boxGeo = (sx, sy, sz, tile) => {
-    const g = new THREE.BoxGeometry(sx, sy, sz), uv = g.attributes.uv, dims = [[sz, sy], [sz, sy], [sx, sz], [sx, sz], [sx, sy], [sx, sy]];
-    for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const i = f * 4 + v; uv.setXY(i, (uv.getX(i) * dims[f][0]) / tile, (uv.getY(i) * dims[f][1]) / tile); }
-    return g;
-  };
-  const lin = (r, g, b) => new THREE.Color().setRGB(r, g, b);
-  const mEarth = new THREE.MeshStandardMaterial({ map: tPlaster, roughness: 0.95 });
-  const mDeck = new THREE.MeshStandardMaterial({ map: tPlanks, roughness: 0.8 });
-  const mSteel = new THREE.MeshStandardMaterial({ color: lin(0.03, 0.03, 0.032), metalness: 0.8, roughness: 0.35 });
-  const mSlab = new THREE.MeshStandardMaterial({ color: lin(0.12, 0.11, 0.1), roughness: 0.8 });
-  const mRoof = new THREE.MeshStandardMaterial({ map: tGrass, color: lin(0.52, 0.88, 0.4), roughness: 0.95 });
-  // Behind each glass front, a lit room drawn by ray-casting a box in the shader ("interior mapping").
-  const mRoom = mat({
-    uniforms: { uPlaster: { value: tPlaster }, uPlanks: { value: tPlanks } },
-    vertexShader: `attribute vec3 aRoom; varying vec3 vP, vC, vRoom, vW, vNw;
-      void main() {
-        vP = position; vRoom = aRoom; vC = (inverse(modelMatrix) * vec4(cameraPosition, 1.0)).xyz;
-        vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vNw = normalize(mat3(modelMatrix) * vec3(0.0, 0.0, 1.0));
-        gl_Position = projectionMatrix * viewMatrix * w;
-      }`,
-    fragmentShader: `${SKY} uniform sampler2D uPlaster, uPlanks; varying vec3 vP, vC, vRoom, vW, vNw;
-      void main() {
-        vec3 r = normalize(vP - vC);
-        vec3 lo = vec3(-vRoom.x - 0.25, -vRoom.y - 0.2, -vRoom.z), hi = vec3(vRoom.x + 0.25, vRoom.y + 0.25, 0.5);
-        vec3 tf = max((lo - vP) / r, (hi - vP) / r);
-        float t = min(min(tf.x, tf.y), tf.z);
-        vec3 h = vP + r * t, alb, nr;
-        if (t == tf.y && r.y < 0.0) { alb = texture2D(uPlanks, h.xz * 0.5).rgb; nr = vec3(0.0, 1.0, 0.0); }
-        else if (t == tf.y) { alb = vec3(0.55, 0.5, 0.45); nr = vec3(0.0, -1.0, 0.0); }
-        else if (t == tf.x) { alb = texture2D(uPlaster, h.zy * 0.5).rgb; nr = vec3(-sign(r.x), 0.0, 0.0); }
-        else { alb = texture2D(uPlaster, h.xy * 0.5).rgb; nr = vec3(0.0, 0.0, 1.0); }
-        vec3 lp = vec3(0.0, vRoom.y - 0.15, -vRoom.z * 0.55), ld = lp - h; float dl = length(ld);
-        vec3 col = alb * (vec3(1.0, 0.72, 0.45) * 4.0 * max(dot(nr, ld / dl), 0.0) / (0.5 + dl * dl * 0.3) + vec3(0.22, 0.2, 0.19));
-        col += vec3(1.0, 0.75, 0.5) * 3.0 * smoothstep(0.18, 0.05, length((h - lp).xz)) * step(vRoom.y + 0.2, h.y);   // the lamp
-        vec3 V = normalize(cameraPosition - vW);
-        float fr = 0.04 + 0.96 * pow(1.0 - max(dot(vNw, V), 0.0), 5.0);
-        gl_FragColor = vec4(haze(mix(col, skyAt(reflect(-V, vNw)), fr), vW), 1.0);
-        ${OUT}
-      }`,
-  });
-  const cab = new THREE.Group(); scene.add(cab);
+  /* ---- the cabins: the same design as the Designs tab (js/cabin.js), furnished inside, set into the quarry wall */
+  const Hh = 3.0, SMc = CAB.materials(L), cab = new THREE.Group(); scene.add(cab);
+  const model = CAB.merge(CAB.quarryCabin(SMc));                       // built once, shared by the row
   const cabins = W.cabins.map(([cx, cz, fl, rot, w, d]) => {
     const th = (rot * Math.PI) / 180, F = [Math.sin(th), -Math.cos(th)], Rv = [Math.cos(th), Math.sin(th)];
-    const at = (u, v, y) => new THREE.Vector3(cx + Rv[0] * u + F[0] * v, fl + y, cz + Rv[1] * u + F[1] * v);
-    const box = (sx, sd, sh, u, v, y, m, tile = 2) => {
-      const o = new THREE.Mesh(boxGeo(sx, sh, sd, tile), m); o.position.copy(at(u, v, y)); o.rotation.y = -th; o.castShadow = o.receiveShadow = true; cab.add(o); return o;
-    };
-    box(w, d - 0.3, Hh + 1.2, 0, -0.15, (Hh - 1.2) / 2, mEarth);
-    const gw = w - 0.7, gh = Hh - 0.45, wg = new THREE.PlaneGeometry(gw, gh), n = wg.attributes.position.count;
-    wg.setAttribute('aRoom', new THREE.BufferAttribute(new Float32Array(n * 3).map((_, i) => [gw / 2, gh / 2, d - 1.0][i % 3]), 3));
-    const win = new THREE.Mesh(wg, mRoom); win.position.copy(at(0, d / 2 - 0.25 + 0.016, gh / 2 + 0.2)); win.rotation.y = -th + Math.PI; cab.add(win);
-    for (let k = 0; k < 5; k++) box(0.08, 0.12, Hh - 0.4, -gw / 2 + (k * gw) / 4, d / 2 - 0.25, (Hh - 0.4) / 2 + 0.18, mSteel);
-    box(w - 0.6, 0.12, 0.1, 0, d / 2 - 0.25, Hh - 0.22, mSteel);
-    box(w + 0.8, d + 1.6, 0.3, 0, 0.4, Hh + 0.15, mSlab);
-    box(w + 0.84, 0.06, 0.34, 0, d / 2 + 1.22, Hh + 0.15, mSteel);
-    box(w, 3.0, 0.16, 0, d / 2 + 1.5, 0.08, mDeck);
-    const rg = new THREE.PlaneGeometry(w - 0.8, d - 0.2); rg.rotateX(-Math.PI / 2);
-    const uv = rg.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) * (w - 0.8)) / 2.4, (uv.getY(i) * (d - 0.2)) / 2.4);
-    const roof = new THREE.Mesh(rg, mRoof); roof.position.copy(at(0, 0.4, Hh + 0.31)); roof.rotation.y = -th; roof.receiveShadow = true; cab.add(roof);
+    const g = model.clone(); g.position.set(cx, fl, cz); g.rotation.y = Math.PI - th;   // its front (+z) toward F
+    cab.add(g);
     return { cx, cz, fl, w, d, F, R: Rv };
   });
   const sunL = LOOK.sunLight(U);
@@ -245,8 +199,8 @@ export async function build(ctx) {
     let y = hAt(x, z);
     for (const c of cabins) {
       const [cu, cv] = cabinAt(x, z, c);
-      if (Math.abs(cu) < c.w / 2 + 0.35 && cv > -c.d / 2 - 0.35 && cv < c.d / 2 - 0.2) { if (from > c.fl + Hh) y = Math.max(y, c.fl + Hh + 0.31); else return null; }
-      else if (Math.abs(cu) < c.w / 2 && cv >= c.d / 2 - 0.2 && cv < c.d / 2 + 3) y = Math.max(y, c.fl + 0.16);
+      if (Math.abs(cu) < c.w / 2 + 0.35 && cv > -c.d / 2 - 0.35 && cv < CAB.CABIN.front + 0.05) { if (from > c.fl + Hh) y = Math.max(y, c.fl + CAB.CABIN.roofTop); else return null; }
+      else if (Math.abs(cu) < c.w / 2 && cv >= CAB.CABIN.front + 0.05 && cv < CAB.CABIN.deckEnd) y = Math.max(y, c.fl + CAB.CABIN.deckTop);
     }
     return y;
   }
