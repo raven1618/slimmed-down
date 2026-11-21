@@ -13,7 +13,7 @@ export async function build(ctx) {
   const { renderer: R, $, clamp, small, reduced, windOf, GradeShader, disposeScene } = ctx;
   const ac = new AbortController(), sig = { signal: ac.signal };
 
-  const B = 'data/walk/', barEl = $('wk-bar'), msg = $('wk-msg');
+  const site = ctx.site || 'quarry', B = site === 'quarry' ? 'data/walk/' : 'data/walk/' + site + '/', barEl = $('wk-bar'), msg = $('wk-msg');
   const touch = matchMedia('(pointer: coarse)').matches;
   $('wk-hint').textContent = touch ? 'Left thumb to walk · drag to look around' : 'W A S D or arrow keys to walk · drag to look around · Shift to run';
   let got = 0;
@@ -24,7 +24,10 @@ export async function build(ctx) {
   const img = (f, srgb) => step(new Promise((res, rej) => tl.load(B + f, (t) => { if (srgb) t.colorSpace = THREE.SRGBColorSpace; res(t); }, undefined, () => rej(new Error(f)))));
   const [L, hb, fb, tb, light, splat, farT] = await Promise.all([
     LOOK.loadLook(tick), bin('heights.json'), bin('far.json'), bin('trees.json'), img('light.jpg'), img('splat.png'), img('far.jpg', true)]);
-  const W = L.W, { grass: tGrass, soil: tSoil, litter: tLitter, wall: tWall, plaster: tPlaster, planks: tPlanks } = L.tex;
+  const W = site === 'quarry' ? L.W : await fetch(B + 'world.json').then((r) => { if (!r.ok) throw new Error('world.json: ' + r.status); return r.json(); });
+  $('wk-title').textContent = W.title || 'The quarry cabins';
+  $('wk-eyebrow').textContent = W.eyebrow || 'Walk the site · light baked in Blender, drawn live';
+  const { grass: tGrass, soil: tSoil, litter: tLitter, wall: tWall, plaster: tPlaster, planks: tPlanks } = L.tex;
   msg.textContent = 'Setting up the site';
 
   /* ---- the page's renderer, set by the page to AgX with +0.5 exposure, as in Blender */
@@ -133,7 +136,10 @@ export async function build(ctx) {
   grass.layers.set(1); cam.layers.enable(1);               // left out of the lagoon's mirror, which renders only layer 0
 
   /* ---- the lagoon: on bigger screens it mirrors the cabins and trees; on phones, the sky */
-  const [lx, lz, lwl, lrot, lw, ld] = W.lagoon, lb = (lrot * Math.PI) / 180, lf = [Math.sin(lb), -Math.cos(lb)];
+  let lx = 0, lz = 0, lw = 0, ld = 0, lf = [0, 1], reflector = null;
+  if (W.lagoon) {
+  const [lx_, lz_, lwl, lrot, lw_, ld_] = W.lagoon, lb = (lrot * Math.PI) / 180;
+  [lx, lz, lw, ld, lf] = [lx_, lz_, lw_, ld_, [Math.sin(lb), -Math.cos(lb)]];
   const wgeo = new THREE.CircleGeometry(1, 128); wgeo.scale(lw / 2, ld / 2, 1);
   const waterFrag = (refl) => `${refl ? '#define REFL' : ''}
     ${NOISE} ${SKY}
@@ -156,7 +162,7 @@ export async function build(ctx) {
     }`;
   const waterVert = 'uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vW; void main() { vUv = textureMatrix * vec4(position, 1.0); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }';
   const wU = { uDeep: { value: new THREE.Vector3(0.008, 0.02, 0.018) } };
-  let water, reflector = null;
+  let water;
   if (!small) {
     const pr = R.getPixelRatio() * 0.5;
     reflector = new Reflector(wgeo, { textureWidth: innerWidth * pr, textureHeight: innerHeight * pr, clipBias: 0.003, multisample: 0,
@@ -168,19 +174,45 @@ export async function build(ctx) {
   }
   water.rotation.order = 'YXZ'; water.rotation.set(-Math.PI / 2, -lb, 0); water.position.set(lx, lwl - 0.02, lz);
   scene.add(water);
+  }
 
   /* ---- the cabins: the same design as the Designs tab (js/cabin.js), furnished inside, set into the quarry wall */
   const Hh = 3.0, SMc = CAB.materials(L), cab = new THREE.Group(); scene.add(cab);
   const model = CAB.merge(CAB.quarryCabin(SMc));                       // built once, shared by the row
-  const cabins = W.cabins.map(([cx, cz, fl, rot, w, d]) => {
+  const cabins = (W.cabins || []).map(([cx, cz, fl, rot, w, d]) => {
     const th = (rot * Math.PI) / 180, F = [Math.sin(th), -Math.cos(th)], Rv = [Math.cos(th), Math.sin(th)];
     const g = model.clone(); g.position.set(cx, fl, cz); g.rotation.y = Math.PI - th;   // its front (+z) toward F
     cab.add(g);
     return { cx, cz, fl, w, d, F, R: Rv };
   });
+  /* ---- the residence on its homesite (js/cabin.js), and the granite boulders by the mango tree */
+  let res = null;
+  if (W.residence) {
+    const r = W.residence, th = (r.rot * Math.PI) / 180;
+    const g = CAB.merge(CAB.residence(SMc)); g.position.set(r.x, r.floor, r.z); g.rotation.y = Math.PI - th; cab.add(g);
+    res = { cx: r.x, cz: r.z, fl: r.floor, F: [Math.sin(th), -Math.cos(th)], R: [Math.cos(th), Math.sin(th)] };
+  }
+  const rocks = [];
+  if (W.rocks) {
+    const t = (k) => { const c = L.tex[k].clone(); c.needsUpdate = true; return c; };
+    const rockMat = new THREE.MeshStandardMaterial({ map: t('wall'), normalMap: t('wallN'), color: new THREE.Color().setRGB(0.6, 0.58, 0.55), roughness: 0.92 });
+    W.rocks.forEach(([x, z, y, w, d, h, rot], k) => {
+      const geo = new THREE.IcosahedronGeometry(1, 5), p = geo.attributes.position, v = new THREE.Vector3();
+      for (let i = 0; i < p.count; i++) {                 // a weathered granite lump: lumpy, flat underneath
+        v.fromBufferAttribute(p, i);
+        const n = 1 + 0.13 * Math.sin(v.x * 3.1 + k * 7) * Math.cos(v.z * 2.7 + v.y * 1.9) + 0.06 * Math.sin(v.x * 9.3 + v.y * 7.7 + v.z * 8.1);
+        v.multiplyScalar(n); if (v.y < -0.15) v.y = -0.15 + (v.y + 0.15) * 0.2;
+        p.setXYZ(i, v.x, v.y, v.z);
+      }
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, rockMat); m.scale.set(w / 2, h, d / 2); m.position.set(x, y + 0.1, z); m.rotation.y = (-rot * Math.PI) / 180;
+      m.castShadow = m.receiveShadow = true; cab.add(m); rocks.push([x, z, w, d, rot]);
+    });
+  }
   const sunL = LOOK.sunLight(U);
-  const cc = new THREE.Vector3(); cabins.forEach((c) => cc.add(new THREE.Vector3(c.cx, c.fl, c.cz))); cc.divideScalar(Math.max(1, cabins.length));
-  const spread = Math.max(20, ...cabins.map((c) => Math.hypot(c.cx - cc.x, c.cz - cc.z) + c.w));
+  const casters = cabins.map((c) => [c.cx, c.fl, c.cz, c.w]); if (res) casters.push([res.cx, res.fl, res.cz, 18]);
+  const cc = new THREE.Vector3(); casters.forEach((c) => cc.add(new THREE.Vector3(c[0], c[1], c[2]))); cc.divideScalar(Math.max(1, casters.length));
+  const spread = Math.max(20, ...casters.map((c) => Math.hypot(c[0] - cc.x, c[2] - cc.z) + c[3]));
   sunL.position.copy(cc).addScaledVector(sunDir, 200); sunL.target.position.copy(cc);
   sunL.castShadow = true; sunL.shadow.mapSize.set(2048, 2048); sunL.shadow.bias = -0.0004; sunL.shadow.normalBias = 0.03;
   Object.assign(sunL.shadow.camera, { left: -spread, right: spread, top: spread, bottom: -spread, near: 100, far: 300 });
@@ -194,9 +226,24 @@ export async function build(ctx) {
   const cabinAt = (x, z, c) => { const dx = x - c.cx, dz = z - c.cz; return [dx * c.R[0] + dz * c.R[1], dx * c.F[0] + dz * c.F[1]]; };
   function feetAt(x, z, from) {                       // where your feet would be at (x, z); null if you cannot stand there
     if (x < x0 + 3 || x > x1 - 3 || z < z0 + 3 || z > z1 - 3) return null;
-    const ux = x - lx, uz = z - lz, u = ux * lf[0] + uz * lf[1], v = -ux * lf[1] + uz * lf[0];
-    if ((u / (ld / 2)) ** 2 + (v / (lw / 2)) ** 2 < 1.03) return null;
+    if (W.lagoon) {
+      const ux = x - lx, uz = z - lz, u = ux * lf[0] + uz * lf[1], v = -ux * lf[1] + uz * lf[0];
+      if ((u / (ld / 2)) ** 2 + (v / (lw / 2)) ** 2 < 1.03) return null;
+    }
     let y = hAt(x, z);
+    if (res) {                                          // the residence: walls and the water stop you; decks and roofs carry you
+      const [cu, cv] = cabinAt(x, z, res), inR = (r) => cu > r[0] && cu < r[2] && cv > r[1] && cv < r[3];
+      const roof = CAB.RESIDENCE.roofs.find((r) => inR(r) && from > res.fl + r[4] - 0.6);
+      if (roof) y = Math.max(y, res.fl + roof[4]);
+      else {
+        if (CAB.RESIDENCE.solid.some(inR)) return null;
+        for (const f of CAB.RESIDENCE.floors) if (inR(f)) y = Math.max(y, res.fl + f[4]);
+      }
+    }
+    for (const [rx, rz, rw, rd, rot] of rocks) {
+      const c = Math.cos((rot * Math.PI) / 180), sn = Math.sin((rot * Math.PI) / 180), du = (x - rx) * c + (z - rz) * sn, dv = -(x - rx) * sn + (z - rz) * c;
+      if ((du / (rw / 2 + 0.3)) ** 2 + (dv / (rd / 2 + 0.3)) ** 2 < 1) return null;
+    }
     for (const c of cabins) {
       const [cu, cv] = cabinAt(x, z, c);
       if (Math.abs(cu) < c.w / 2 + 0.35 && cv > -c.d / 2 - 0.35 && cv < CAB.CABIN.front + 0.05) { if (from > c.fl + Hh) y = Math.max(y, c.fl + CAB.CABIN.roofTop); else return null; }
@@ -210,7 +257,7 @@ export async function build(ctx) {
     const c = cabins[Math.min(3, cabins.length - 1)], off = c.d / 2 + 2.2;
     return { x: c.cx + c.F[0] * off, z: c.cz + c.F[1] * off };
   };
-  const SPOTS = [
+  const SPOTS = W.spots ? W.spots.map((p) => ({ name: p.name, at: () => ({ x: p.x, z: p.z }), look: p.look })) : [
     { name: 'Arrival', at: () => ({ x: 392, z: 834 }), look: [350, 892] },
     { name: 'Lagoon shore', at: () => ({ x: 384.2, z: 860.4 }), bearing: 280 },
     { name: 'Cabin deck', at: deckSpot, look: [lx, lz] },

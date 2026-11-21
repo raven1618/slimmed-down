@@ -483,6 +483,9 @@ body.in-view :is(.shade, .labels, .top, .dock, .display, .credit, .compass, .dra
 .wk-stick i { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgb(241 233 219 / 0.6); }
 .walk .pano-foot { gap: 8px; }
 .wk-credit { opacity: 0.7; }
+.wk-sites { display: flex; gap: 6px; margin-top: 10px; pointer-events: auto; }
+.wk-sites button { border: 1px solid rgb(241 233 219 / 0.3); background: var(--glass); color: var(--sand); border-radius: 999px; padding: 7px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+.wk-sites button[aria-current="true"] { background: var(--sand); color: var(--night); }
 
 /* ---------- the trail: the walkthrough video ---------- */
 .trailer { position: fixed; inset: 0; z-index: 36; overflow-y: auto; background: var(--night); }
@@ -650,7 +653,8 @@ body.in-view :is(.shade, .labels, .top, .dock, .display, .credit, .compass, .dra
 <div class="walk" id="walk" hidden>
   <div class="wk-stage" id="wk-stage"></div>
   <div class="pano-head">
-    <div><p class="eyebrow">Walk the site · light baked in Blender, drawn live</p><h2>The quarry cabins</h2></div>
+    <div><p class="eyebrow" id="wk-eyebrow">Walk the site · light baked in Blender, drawn live</p><h2 id="wk-title">The quarry cabins</h2>
+      <div class="wk-sites" id="wk-sites" role="group" aria-label="Which part of the site"><button type="button" data-site="quarry">Quarry cabins</button><button type="button" data-site="private">Private side</button></div></div>
     <div class="pano-status"><span class="pano-facing" id="wk-facing"></span><button class="btn ghost" id="wk-close" type="button">Back to 3D</button></div>
   </div>
   <div class="wk-load" id="wk-loading"><div class="wk-bar"><i id="wk-bar"></i></div><p id="wk-msg">Loading the site</p></div>
@@ -3055,25 +3059,7 @@ function buildHouseScene(kind) {
   if (isCabin) {
     house.add(CAB.quarryCabin(SM, lights));      // the same cabin as the quarry row in Walk the site (js/cabin.js)
   } else {
-    const main = CAB.buildVolume(SM, {
-      w: 15, d: 7, h: 3.0, overFront: 2.2, overSide: 1.2,
-      front: [{ k: 'earth', w: 1.5 }, { k: 'glass', w: 10.0 }, { k: 'door', w: 1.4 }, { k: 'earth', w: 3.0 }],
-      lights: [[-5, -1], [-1, 0], [3, -1]],
-    }, lights);
-    main.position.set(-4.2, 0, 0);
-    CAB.livingInterior(SM, main);
-    const wing = CAB.buildVolume(SM, {
-      w: 9, d: 7, h: 3.3, overFront: 1.8, overSide: 0.8,
-      front: [{ k: 'glass', w: 6.0 }, { k: 'slit', w: 3.9 }],
-      lights: [[-1.5, 0], [2.5, -1]],
-    }, lights);
-    wing.position.set(8.75, 0, -2.5);
-    house.add(main, wing);
-    // Pool with stone coping.
-    box(13, 0.3, 4.5, -4.2, 0.15, 9.2, SM.coping, house, { cast: false });
-    const water = box(12, 0.06, 3.5, -4.2, 0.31, 9.2, SM.pool, house, { cast: false });
-    water.receiveShadow = true;
-    for (const cx of [-8, -6.4]) { box(0.7, 0.35, 1.7, cx, 0.5, 5.2, SM.timber, house); }
+    house.add(...CAB.residence(SM, lights).children);     // the residence of the private side (js/cabin.js): living room, wing, pool
   }
   scene.add(house);
 
@@ -4482,6 +4468,7 @@ function buildBar() {
     lastDesign = mode;
     for (const [id, label] of [['cabin', 'Cabin'], ['residence', 'Residence']]) pill(label, mode === id, () => { if (mode !== id) setMode(id); }, 'design');
     VIEWS[mode].forEach(([label, p, t]) => pill(label, null, () => { closeDrawer(); flyTo(new THREE.Vector3(...p), new THREE.Vector3(...t), 1400); }));
+    pill('Walk around it', null, () => openWalk(mode === 'cabin' ? 'quarry' : 'private'), 'accent');
     pill(sc.isNight() ? 'Night' : 'Day', sc.isNight(), (b) => { sc.setNight(!sc.isNight()); b.textContent = sc.isNight() ? 'Night' : 'Day'; b.setAttribute('aria-pressed', String(sc.isNight())); });
   }
 }
@@ -4697,7 +4684,7 @@ function moduleView(el, src, settings, onFail) {
     lendRenderer(settings);
     const g = ++v.gen;
     import(src)
-      .then((m) => m.build({ renderer, $, clamp, ease, rng, small, reduced, windOf, GLSL_NOISE, GradeShader, disposeScene, trailEl }))
+      .then((m) => m.build({ renderer, $, clamp, ease, rng, small, reduced, windOf, GLSL_NOISE, GradeShader, disposeScene, trailEl, site: walkSite }))
       .then((api) => { if (g !== v.gen || el.hidden) api.dispose(); else v.api = api; })
       .catch((err) => { console.error(err); if (g === v.gen) onFail(err); });
   };
@@ -4819,7 +4806,10 @@ const walkEl = $('walk');
 const walkView = moduleView(walkEl, './js/walk.js',
   { pixelRatio: small ? 1.5 : 2, toneMapping: THREE.AgXToneMapping, exposure: Math.SQRT2, shadows: true, shadowAuto: false },   // full sharpness; the walk steps down on slow devices   // as in Blender: AgX, +0.5
   () => { $('wk-loading').hidden = false; $('wk-msg').textContent = 'This browser could not open the walk. The rest of the site still works.'; });
-function openWalk() {
+/* Two walkable parts: the quarry cabins (#walk) and the private side, Finca 2663, with the residence (#walk-private). */
+let walkSite = 'quarry';
+function openWalk(site) {
+  if (site && site !== walkSite) { if (!walkEl.hidden) closeWalk(); walkSite = site; }
   if (!walkEl.hidden) return;
   if (!planEl.hidden) closePlan();
   if (!trailEl.hidden) closeTrail();
@@ -4829,7 +4819,8 @@ function openWalk() {
   walkEl.hidden = false;
   $('wk-loading').hidden = false; $('wk-bar').style.width = '0'; $('wk-msg').textContent = 'Loading the site';
   markTab('walk');
-  try { history.replaceState(null, '', '#walk'); } catch (e) {}
+  try { history.replaceState(null, '', walkSite === 'quarry' ? '#walk' : '#walk-' + walkSite); } catch (e) {}
+  document.querySelectorAll('#wk-sites button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.site === walkSite)));
   walkView.open();
   $('wk-close').focus({ preventScroll: true });
 }
@@ -4841,6 +4832,7 @@ function closeWalk() {
   try { history.replaceState(null, '', '#' + mode); } catch (e) {}
 }
 $('wk-close').addEventListener('click', closeWalk);
+document.querySelectorAll('#wk-sites button').forEach((b) => b.addEventListener('click', () => openWalk(b.dataset.site)));
 
 /* ------------------------------------------------------------ the trail -- */
 /* Mala Visión, the fight at the trail's midpoint: js/trail.js, loaded when the tab opens.
@@ -5109,7 +5101,8 @@ async function boot() {
   if (want === 'trail') openTrailer();
   if (want === 'trail-play') openTrail();
   if (want.startsWith('pano-')) openPano(want.slice(5));
-  if (want === 'walk') openWalk();
+  if (want === 'walk') openWalk('quarry');
+  if (want === 'walk-private') openWalk('private');
   requestAnimationFrame(tick);
   initLimits().catch((err) => console.error(err));
   initNotes().catch((err) => console.error(err));

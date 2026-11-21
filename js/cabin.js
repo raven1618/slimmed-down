@@ -49,6 +49,8 @@ export function materials(L) {
     stone: std({ color: 0x9a8a78, roughness: 0.92 }),
     lamp: std({ color: 0x2a2622, emissive: 0xffc988, emissiveIntensity: 0 }),
     window: std({ color: 0x1b2326, roughness: 0.1, metalness: 0.6, emissive: 0xffbe7a, emissiveIntensity: 0 }),
+    pool: std({ color: 0x4aa3ad, roughness: 0.04, metalness: 0.15, transparent: true, opacity: 0.9 }),
+    coping: std({ map: t('plaster', 1), normalMap: t('plasterN', 1), color: 0xe6dccb, roughness: 0.85 }),
   };
 }
 
@@ -192,3 +194,35 @@ export function merge(group) {
   out.userData = { ...group.userData };
   return out;
 }
+
+/* The residence for the private side: two earth volumes, the living room and a bedroom wing set back and up
+   the slope, living roofs, decks, and a 12 m pool on the valley side. Front toward +z, floor at y = 0. */
+export function residence(SM, lights = []) {
+  const g = new THREE.Group();
+  const main = buildVolume(SM, {
+    w: 15, d: 7, h: 3.0, overFront: 2.2, overSide: 1.2,
+    front: [{ k: 'earth', w: 1.5 }, { k: 'glass', w: 10.0 }, { k: 'door', w: 1.4 }, { k: 'earth', w: 3.0 }],
+    lights: [[-5, -1], [-1, 0], [3, -1]],
+  }, lights);
+  main.position.set(-4.2, 0, 0);
+  livingInterior(SM, main);
+  const wing = buildVolume(SM, {
+    w: 9, d: 7, h: 3.3, overFront: 1.8, overSide: 0.8,
+    front: [{ k: 'glass', w: 6.0 }, { k: 'slit', w: 3.9 }],
+    lights: [[-1.5, 0], [2.5, -1]],
+  }, lights);
+  wing.position.set(8.75, 0, -2.5);
+  g.add(main, wing);
+  box(13, 0.3, 4.5, -4.2, 0.15, 9.2, SM.coping, g, { cast: false });          // the pool, in a stone surround
+  box(12, 0.06, 3.5, -4.2, 0.31, 9.2, SM.pool, g, { cast: false }).receiveShadow = true;
+  for (const cx of [-8, -6.4]) box(0.7, 0.35, 1.7, cx, 0.5, 5.2, SM.timber, g);
+  return g;
+}
+/* Where you can walk on and around it, in its own frame (x across, z toward the front): solid rectangles,
+   and surfaces you stand on with their height. */
+export const RESIDENCE = {
+  solid: [[-12.2, -4.0, 3.8, 4.0], [3.8, -6.5, 13.7, 1.5], [-10.2, 7.4, 1.8, 11.0]],          // living room, wing, the water
+  floors: [[-12.5, 3.9, 4.1, 6.7, 0.3], [3.5, 1.4, 14.0, 3.8, 0.3], [-10.7, 6.9, 2.3, 11.5, 0.3]],   // decks and the pool surround
+  roofs: [[-13.4, -4.6, 5.0, 6.2, 3.58], [3.0, -7.1, 14.5, 3.3, 3.88]],
+  extent: [-15, -9, 16, 13],
+};

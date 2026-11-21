@@ -41,3 +41,21 @@ python3 web_export.py work assets ../data/walk                             # abo
 - **Trees:** every tree is a card that turns to face you and shows the real model as seen from the nearest of eight sides, so the forest of almost 18,000 trees costs little to draw.
 - **Live:** grass blades that bend in the wind and around your feet, the lagoon (it mirrors the scene on bigger screens and the sky on phones), the cabins with a lit room drawn behind the glass, haze toward the horizon, and the same film grade as the rest of the site.
 - **Colour:** both sides use AgX tone mapping with +0.5 exposure, so the browser matches Blender.
+
+## The private side (Walk the site → Private side)
+
+Finca 2663, the surveyed 8.66 ha parcel at the north-west end, with the residence on a homesite 70 m east of
+the mango tree: open ground at about 7°, the glass facing east over the valley.
+
+```sh
+python3 render/private_site.py data data/walk/private      # about 1.5 minutes, no Blender needed
+```
+
+- **Terrain:** the elevation model at 1 m, with the fine relief real ground has (stronger on steep ground) and a
+  level pad cut into the slope for the house.
+- **Ground:** lawn, bare earth and leaf litter from the satellite image, the tree crowns and the slope; the dirt
+  tracks show as bare earth.
+- **Trees:** every tree of the canopy data within 1.2 km, the mango tree (13 m, 8 m crown) and its two granite
+  boulders, from `data/objects.json`.
+- **Light:** baked in Python with the sun and sky of the Blender bake: sun shadows of crowns, house, boulders and
+  hill ray-marched at 25 cm (leaves let some light through), and how much sky each spot sees, at 1 m.
