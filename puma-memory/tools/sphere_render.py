@@ -26,6 +26,8 @@ P = np.stack([np.cos(LAT) * np.sin(LON), np.sin(LAT), np.cos(LAT) * np.cos(LON)]
 
 def roty(a):
     c, s = math.cos(a), math.sin(a); return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]], np.float32)
+def rotz(a):
+    c, s = math.cos(a), math.sin(a); return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]], np.float32)
 def rotx(a):
     c, s = math.cos(a), math.sin(a); return np.array([[1, 0, 0], [0, c, -s], [0, s, c]], np.float32)
 
@@ -475,11 +477,13 @@ def fish_frame(name, tt, speed=1.0):
     i = int(min(max(tt * speed * 30, 0), len(F) - 1))                      # play once, hold the last frame (never loop)
     return cv2.remap(F[i], FMX, FMY, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
 
-def pulse_layer(t, s, inten, down=0.0, echo=1.0):
+def pulse_layer(t, s, inten, down=0.0, echo=1.0, true_back=False):
     """the pentagon halo at scale s (1 = true panel) on the front AND the back (rotated copy), with echo rings,
     a soft inner glow and bloom; `down` (rad) moves its centre below the front/back centre."""
     D = SYM if down == 0 else SYM @ rotx(-down).T
-    zz = np.maximum(D[..., 2], 1e-3); q = D[..., :2] / zz[..., None]; ok = D[..., 2] > 0.05
+    zz = np.maximum(D[..., 2], 1e-3); q = -D[..., :2] / zz[..., None]; ok = D[..., 2] > 0.05      # point up (client)
+    if true_back:                                                 # back: sit on the ball's real back pentagon (antipode), so the ball forms under it
+        q = np.where((P[..., 2] < 0)[..., None], q * np.array([1, -1], np.float32), q)
     base = np.max(np.stack([q @ U[i] for i in range(5)], 0), 0)
     pdist = lambda sc: np.where(ok, base - sc * A0, 9)
     w = 0.012 + 0.01 * s; pd = pdist(s)
@@ -490,6 +494,7 @@ def pulse_layer(t, s, inten, down=0.0, echo=1.0):
     return bloom(L, 0.8)
 
 KICK = "K_kick_v5.mp4"
+RZ_UP = rotz(math.pi / 5)                                              # opening ball: front pentagon with its point up (client, Nov 22)
 BALL_DOWN = 0.35                                                       # the ball on the spot sits ~20 deg below the centre of the kick clip
 _bc = np.array([0, -math.sin(BALL_DOWN), math.cos(BALL_DOWN)], np.float32); BALL_ANG = np.arccos(np.clip(SYM @ _bc, -1, 1))
 SCN_KEY = ["km", "entrega", "destino", "calidad", "juntos"]
@@ -549,17 +554,17 @@ def render(t):
         if 0 <= k < T["pulseN"]:
             ph_ = k % 1; n = int(k); amp = 0.35 + 0.1 * n
             s = 0.18 + amp * math.sin(math.pi * min(ph_ / 0.8, 1)) ** 0.7; inten = 0.5 + 0.9 * math.sin(math.pi * min(ph_ / 0.8, 1))
-            fr += pulse_layer(t, s, inten)
+            fr += pulse_layer(t, s, inten, true_back=True)
         if t >= T["open"]:
             p = ease((t - T["open"]) / (T["ball"] - T["open"]))
-            d, cent, top, Q = ball_field(np.eye(3, dtype=np.float32))
-            reach = sm(np.cos(p * math.pi * 1.05), np.cos(p * math.pi * 1.05) + 0.15, P[..., 2])[..., None]   # light spreads from the front
+            d, cent, top, Q = ball_field(RZ_UP)
+            reach = sm(np.cos(p * math.pi * 0.55), np.cos(p * math.pi * 0.55) + 0.15, SYM[..., 2])[..., None]   # light spreads from the front AND back centres
             fr = fr * (1 - p) + reach * (green_fill(cent, Q) * p + neon(d, SW, 1.0, Q=Q, t=t))
-            fr += pulse_layer(t, 1.0 + 0.0 * p, 1.2 * (1 - p))
+            fr += pulse_layer(t, 1.0 + 0.0 * p, 1.2 * (1 - p), true_back=True)
         return fr
     # ---- 2. green ball + SOMOS / PUMA ENERGY ----
     if t < T["path"] + 0.6:
-        d, cent, top, Q = ball_field(spin); fr = green_fill(cent, Q) + neon(d, SW, 1.0, Q=Q, t=t)
+        d, cent, top, Q = ball_field(RZ_UP @ roty(-0.10 * (t - T["ball"]))); fr = green_fill(cent, Q) + neon(d, SW, 1.0, Q=Q, t=t)   # continuous with the ball forming (no jump)
         fr = mg_put(fr, "somos", t - T["somos"])
         lb = place(BAR_NOCAT if t < T["logo"] + 0.6 else LOGO_BAR, 0.62, 0.5, 0.56)
         r, a = text_in(lb, t, T["somos"] + 0.35, T["path"] - 0.2)
