@@ -7,7 +7,7 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45          # the 3D is drawn in software on GitHub: the run takes about 22 minutes
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
