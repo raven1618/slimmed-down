@@ -5,9 +5,9 @@
 /* ================================================================ */
 /*                               UI                                 */
 /* ================================================================ */
-const labelsEl = $('labels'), bar = $('bar'), drawer = $('drawer'), specs = $('specs'), hint = $('hint');
+const labelsEl = $('labels'), bar = $('bar'), drawer = $('drawer'), hint = $('hint');
 const planEl = $('plan'), compass = $('compass'), needle = $('needle');
-let mode = 'cerro', active = null, scenes = {}, tween = null, limitLabels = [];
+let mode = 'cerro', active = null, tween = null, limitLabels = [];
 
 hill.controls = new OrbitControls(hill.camera, renderer.domElement);
 const mc = hill.controls;
@@ -122,12 +122,6 @@ function flyAround(x, z, radius) {
   flyTo(pos, tgt, 1600, radius * 0.1);
 }
 
-function selectSpot(s) {
-  document.querySelectorAll('.chip.spot').forEach((c) => c.classList.toggle('is-on', c === s.chip));
-  flyTo(new THREE.Vector3(...s.cam), new THREE.Vector3(...s.tgt), 1400);
-  openDrawer(mode === 'cabin' ? 'The cabin' : 'The residence', s.name, s.text, null, null, mode === 'cabin' ? 'var(--public)' : 'var(--private)', 'Concept design, not final.');
-}
-
 /* ------------------------------------------------------- hill tools -- */
 const fmt = (n, d) => n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 function copyText(text, btn) {
@@ -158,7 +152,7 @@ function bounds(utm) {
   for (const [E, N] of utm) { const [x, z] = fromUTM(E, N); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
   return { x: (x0 + x1) / 2, z: (z0 + z1) / 2, r: Math.max(x1 - x0, z1 - z0) };
 }
-const DEFAULT_HINT = () => (mode === 'cerro' ? (small ? 'Drag to orbit · Tap for coordinates' : 'Drag to orbit · Right-drag to pan · Tap the ground for coordinates') : 'Drag to look around · Tap a label');
+const DEFAULT_HINT = () => (small ? 'Drag to orbit · Tap for coordinates' : 'Drag to orbit · Right-drag to pan · Tap the ground for coordinates');
 function setHint() {
   hint.textContent = notes.placing ? 'Tap the map where it goes · Zoom in close for accuracy'
     : notes.moving ? 'Tap the new spot'

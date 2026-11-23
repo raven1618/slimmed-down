@@ -1,7 +1,7 @@
 /* A check of every view of the site in a real browser: it starts on the hill, then opens each view in turn
-   (the two walks, both designs, the trail video and prototype, a 360° view, the plan) and fails if a view
-   does not open, a script error shows up, or more than one 3D canvas exists. A screenshot of each view goes
-   to tests/shots/.
+   (the photoreal tour of both sites, free roam on both, back to the tour, the trail video and prototype, the
+   plan) and fails if a view does not open, a script error shows up, or more than one 3D canvas exists.
+   A screenshot of each view goes to tests/shots/.
 
      npm install && npx playwright install chromium     (once)
      npm test
@@ -12,19 +12,19 @@ const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 
 const ROOT = path.join(__dirname, '..'), SHOTS = path.join(__dirname, 'shots'), THREE_DIR = process.env.THREE_DIR;
-const TYPES = { '.js': 'application/javascript', '.css': 'text/css', '.webp': 'image/webp', '.mp4': 'video/mp4', '.json': 'application/json' };
+const TYPES = { '.js': 'application/javascript', '.css': 'text/css', '.webp': 'image/webp', '.mp4': 'video/mp4', '.json': 'application/json', '.jpg': 'image/jpeg' };
 const LIMIT = 600000;
 
 const VIEWS = [
-  ['walk-quarry', () => document.querySelector('.tab[data-go="walk"]').click(), () => location.hash === '#walk' && document.getElementById('wk-loading').hidden],
-  ['walk-private', () => document.querySelector('#wk-sites [data-site="private"]').click(), () => location.hash === '#walk-private' && document.getElementById('wk-loading').hidden],
-  ['designs-cabin', () => document.querySelector('.tab[data-go="designs"]').click(), () => location.hash === '#cabin' && !!document.querySelector('#bar button')],
-  ['designs-residence', () => [...document.querySelectorAll('#bar button')].find((b) => b.textContent === 'Residence').click(), () => location.hash === '#residence'],
+  ['tour-quarry', () => document.querySelector('.tab[data-go="explore"]').click(), () => location.hash.startsWith('#explore-quarry') && document.getElementById('pano-loading').hidden],
+  ['tour-private', () => document.querySelector('#pano-sites [data-site="private"]').click(), () => location.hash.startsWith('#explore-private') && document.getElementById('pano-loading').hidden],
+  ['roam-private', () => document.getElementById('pano-roam').click(), () => location.hash === '#walk-private' && document.getElementById('wk-loading').hidden],
+  ['roam-quarry', () => document.querySelector('#wk-sites [data-site="quarry"]').click(), () => location.hash === '#walk' && document.getElementById('wk-loading').hidden],
+  ['back-to-tour', () => document.getElementById('wk-close').click(), () => location.hash.startsWith('#explore-quarry') && document.getElementById('pano-loading').hidden],
   ['trail-video', () => document.querySelector('.tab[data-go="trail"]').click(), () => !document.getElementById('trailer').hidden],
   ['trail-prototype', () => document.getElementById('tl-play').click(), () => { const b = document.querySelector('#tr-card [data-do="start"]'); return !!b && !b.disabled; }],
   ['hill', () => { document.getElementById('tr-close').click(); document.querySelector('.tab[data-go="cerro"]').click(); }, () => location.hash === '#cerro'],
-  ['360-view', () => [...document.querySelectorAll('#bar button')].find((b) => b.textContent.includes('360')).click(), () => !document.getElementById('pano').hidden && document.getElementById('pano-loading').hidden],
-  ['plan', () => { document.getElementById('pano-close').click(); document.querySelector('.tab[data-go="plan"]').click(); }, () => !document.getElementById('plan').hidden],
+  ['plan', () => document.querySelector('.tab[data-go="plan"]').click(), () => !document.getElementById('plan').hidden],
 ];
 
 (async () => {

@@ -26,7 +26,7 @@ blender-env/bin/python build.py assets work hero.png 1920 1080 96
 
 Change the camera with `CAM, TGT` in `build.py` (local metres: x east, z south).
 
-## The walkable site (the Walk the site tab)
+## Free roam: the quarry cabins
 
 The same scene, made walkable in the browser. Blender does the expensive part once; three.js draws the rest live.
 
@@ -42,14 +42,16 @@ python3 web_export.py work assets ../data/walk                             # abo
 - **Live:** grass blades that bend in the wind and around your feet, the lagoon (it mirrors the scene on bigger screens and the sky on phones), the cabins with a lit room drawn behind the glass, haze toward the horizon, and the same film grade as the rest of the site.
 - **Colour:** both sides use AgX tone mapping with +0.5 exposure, so the browser matches Blender.
 
-## The private side (Walk the site → Private side)
+## Free roam: the private side
 
 Finca 2663, the surveyed 8.66 ha parcel at the north-west end, with the residence on a homesite 70 m east of
 the mango tree: open ground at about 7°, the glass facing east over the valley.
 
 ```sh
-python3 render/private_site.py data data/walk/private      # about 1.5 minutes, no Blender needed
+python3 render/private_site.py data data/walk/private [work/private]   # about 1.5 minutes, no Blender needed
 ```
+
+The optional third folder also gets the scene for the Blender renders of the tour (`site.npz`, `splat.png`, `far.png`).
 
 - **Terrain:** the elevation model at 1 m, with the fine relief real ground has (stronger on steep ground) and a
   level pad cut into the slope for the house.
@@ -59,3 +61,24 @@ python3 render/private_site.py data data/walk/private      # about 1.5 minutes, 
   boulders, from `data/objects.json`.
 - **Light:** baked in Python with the sun and sky of the Blender bake: sun shadows of crowns, house, boulders and
   hill ray-marched at 25 cm (leaves let some light through), and how much sky each spot sees, at 1 m.
+
+## The photoreal tour (Explore the site)
+
+Ten 360° views of both sites, rendered from the same terrain, trees and buildings as free roam. The buildings come
+straight from the web: `js/cabin.js` is exported to glTF with its materials, so the renders and free roam show the
+same cabin and residence, inside and out.
+
+```sh
+node render/export_models.cjs work/models                  # cabin.glb and residence.glb, from js/cabin.js
+python3 render/tour_spots.py data                          # data/tour.json: where each view stands and looks
+blender-env/bin/python build.py assets work ../data/tour 4096 2048 48 tour work/models ../data/tour.json
+blender-env/bin/python build.py assets work/private ../data/tour 4096 2048 48 tour work/models ../data/tour.json
+```
+
+- **Buildings:** the glTF models placed at the free roam's positions and bearings. Glass and the pool become real
+  glass and water, the lamps glow and light the rooms, and grass tufts grow on the living roofs (the roof faces of
+  the model, set in from the edge).
+- **Ground:** the walk's terrain at 1 m. Around the buildings the meadow is a mown lawn, and no grass grows inside
+  a building's footprint.
+- **Views:** each `data/tour.json` entry is an equirectangular camera at eye height; the centre of the image faces
+  its bearing. A 4096×2048 view at 48 samples takes about 15 minutes on a 4-core CPU.

@@ -1105,7 +1105,7 @@ async function buildHill() {
     getJSON('data/meta.json'), getJSON('data/terrain.json'), getJSON('data/trees.json'), getJSON('data/context.json'),
     getJSON('data/layers.geojson').catch(() => ({ features: [] })), loadImage('data/imagery.jpg'),
     getJSON('data/basemaps.json').catch(() => ({})), loadSites(), getJSON('data/objects.json').catch(() => ({ objects: [] })),
-    getJSON('data/panos.json').then((p) => (PANOS = p)).catch(() => []),
+    getJSON('data/tour.json').then((p) => (TOUR = p)).catch(() => []),
   ]);
   LEGENDS = legends; SITES = sites; OBJECTS = objects;
   prepCuts();

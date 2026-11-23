@@ -432,7 +432,7 @@ ul.plain b { color: var(--sand); font-weight: 600; }
   .track span { animation: none; width: 100%; }
 }
 
-/* ---------- 360° views: photoreal panoramas ---------- */
+/* ---------- explore the site: the photoreal tour ---------- */
 .pano { position: fixed; inset: 0; z-index: 36; overflow: hidden; user-select: none; -webkit-user-select: none; }
 .pano-stage { position: absolute; inset: 0; }
 .pano-stage { touch-action: none; cursor: grab; }
@@ -450,9 +450,11 @@ ul.plain b { color: var(--sand); font-weight: 600; }
 .pano-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; pointer-events: auto; }
 .pano-tabs button { border: 1px solid rgb(241 233 219 / 0.3); background: var(--glass); color: var(--sand); border-radius: 999px; padding: 9px 14px; font-size: 0.8125rem; font-weight: 600; cursor: pointer; }
 .pano-tabs button[aria-current="true"] { background: var(--sand); color: var(--night); }
-@media (max-width: 760px) { .pano-head .eyebrow { display: none; } .pano-foot p:first-child { font-size: 0.875rem; } }
+.pano-foot .btn { pointer-events: auto; }
+.pano-foot .specs { justify-content: center; }
+@media (max-width: 760px) { .pano-head .eyebrow { display: none; } #pano-text { font-size: 0.875rem; } .pano-foot .specs { display: none; } }
 
-/* ---------- walk the site ---------- */
+/* ---------- free roam ---------- */
 .walk { position: fixed; inset: 0; z-index: 36; overflow: hidden; user-select: none; -webkit-user-select: none; }
 .wk-stage { position: absolute; inset: 0; }
 .wk-stage { touch-action: none; cursor: grab; }

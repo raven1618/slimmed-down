@@ -1,5 +1,5 @@
 /* The trail route on the hill, the bar and its pills, the Display settings, picking, the views over the hill
-   (360° views, the walk, the trail), the render loop and boot. Runs last.
+   (the photoreal tour, free roam, the trail), the render loop and boot. Runs last.
    One of the page's scripts in js/site/: they run in order and share one scope (see index.html). */
 'use strict';
 
@@ -267,8 +267,7 @@ function buildBar() {
   if (mode === 'cerro') {
     pill('Overview', null, () => { closeDrawer(); flyTo(HOME.pos, HOME.tgt, 1800); });
     if (OBJECTS.view) pill('Homestead', null, () => { closeDrawer(); homesteadView(); });
-    pill('Walk the site', null, () => openWalk(), 'accent');
-    if (PANOS.length) pill('360° views', null, () => openPano(PANOS[0].id), 'accent');
+    if (TOUR.length) pill('Explore the site', null, () => openTour(), 'accent');
     if (TOOLS) {
       pill('Notes', null, () => { toggleDisplay(false); closeDrawer(); renderNotes(); }, 'accent');
       pill('Property limits', null, () => { toggleDisplay(false); openLimits(); }, 'accent');
@@ -276,13 +275,6 @@ function buildBar() {
     }
     const db = pill('Display', null, () => toggleDisplay(displayEl.hidden));
     db.dataset.display = '1'; db.setAttribute('aria-expanded', 'false'); db.setAttribute('aria-controls', 'display');
-  } else {
-    const sc = scenes[mode];
-    lastDesign = mode;
-    for (const [id, label] of [['cabin', 'Cabin'], ['residence', 'Residence']]) pill(label, mode === id, () => { if (mode !== id) setMode(id); }, 'design');
-    VIEWS[mode].forEach(([label, p, t]) => pill(label, null, () => { closeDrawer(); flyTo(new THREE.Vector3(...p), new THREE.Vector3(...t), 1400); }));
-    pill('Walk around it', null, () => openWalk(mode === 'cabin' ? 'quarry' : 'private'), 'accent');
-    pill(sc.isNight() ? 'Night' : 'Day', sc.isNight(), (b) => { sc.setNight(!sc.isNight()); b.textContent = sc.isNight() ? 'Night' : 'Day'; b.setAttribute('aria-pressed', String(sc.isNight())); });
   }
 }
 function buildChips() {
@@ -305,15 +297,12 @@ function buildChips() {
       flyAround(l.x, l.z, l.far > 6000 ? 900 : 420);
       showPoint(l.x, l.z, l.name);
     });
-  } else {
-    for (const s of scenes[mode].anchors) s.chip = makeChip({ name: s.name, c: mode === 'cabin' ? 'var(--public)' : 'var(--private)' }, 'spot', () => selectSpot(s));
   }
 }
 
 const tabs = document.querySelectorAll('.tab');
-let lastDesign = 'cabin';                   // the Designs tab holds the cabin and the residence
-function markTab(id) { const go = id === 'cabin' || id === 'residence' ? 'designs' : id; tabs.forEach((t) => t.setAttribute('aria-current', String(t.dataset.go === go))); }
-tabs.forEach((t) => t.addEventListener('click', () => (t.dataset.go === 'plan' ? openPlan() : t.dataset.go === 'trail' ? openTrailer() : t.dataset.go === 'walk' ? openWalk() : t.dataset.go === 'designs' ? setMode(lastDesign) : setMode(t.dataset.go))));
+function markTab(id) { tabs.forEach((t) => t.setAttribute('aria-current', String(t.dataset.go === id))); }
+tabs.forEach((t) => t.addEventListener('click', () => (t.dataset.go === 'plan' ? openPlan() : t.dataset.go === 'trail' ? openTrailer() : t.dataset.go === 'explore' ? openTour() : setMode('cerro'))));
 
 function openPlan(section) {
   if (!trailerEl.hidden) closeTrailer();
@@ -338,55 +327,36 @@ planEl.querySelectorAll('.plan-nav a').forEach((a) => a.addEventListener('click'
 const LEDES = {
   get cerro() {
     return TOOLS ? 'A 4 × 4 km model of the hill built from satellite elevation, imagery and tree-height data. Tap the ground for coordinates. Use Property limits to draw the real boundary.'
-      : 'A 4 × 4 km model of Cerro Kavaju built from satellite elevation, imagery and tree-height data. Walk the site to stand where the cabins will be.';
+      : 'A 4 × 4 km model of Cerro Kavaju built from satellite elevation, imagery and tree-height data. Explore the site to stand where the cabins and homes will be.';
   },
-  cabin: 'The glamping cabin, the same design as the quarry row in Walk the site: rammed-earth walls set into the slope, a glass front and a living roof cantilevered over the deck. Design not final.',
-  residence: 'A concept home for the private side: two earth volumes stepped with the slope, living roofs and a pool. Design not final.',
 };
-const EYEBROWS = { cerro: small ? 'Cerro Kavaju · Cordillera, Paraguay' : 'Cerro Kavaju · Cordillera, Paraguay · UTM 21S', cabin: 'Designs · The cabin', residence: 'Designs · The residence' };
+const EYEBROWS = { cerro: small ? 'Cerro Kavaju · Cordillera, Paraguay' : 'Cerro Kavaju · Cordillera, Paraguay · UTM 21S' };
 
 let HOME;
-/* The Designs scenes are drawn with the walk's look (js/look.js), loaded the first time a design opens. */
-let LOOKA = null;
-function withLook(then) {
-  $('loader').classList.add('is-on'); loaderText.textContent = 'Loading the design';
-  const script = new Promise((res, rej) => { if (window.buildHouseScene) return res(); const el = document.createElement('script'); el.src = 'js/site/designs.js'; el.onload = res; el.onerror = () => rej(new Error('designs.js')); document.head.appendChild(el); });
-  Promise.all([script, LOOK.loadLook()]).then(([, a]) => a)
-    .then((a) => { LOOKA = a; $('loader').classList.remove('is-on'); then(); })
-    .catch((err) => { console.error(err); $('loader').classList.remove('is-on'); });
-}
 function setMode(m) {
   if (!planEl.hidden) closePlan();
   if (!trailEl.hidden) closeTrail();
   if (!panoEl.hidden) closePano();
   if (!walkEl.hidden) closeWalk();
   if (!trailerEl.hidden) closeTrailer();
-  if (m !== 'cerro' && !scenes[m]) {
-    if (!LOOKA) { withLook(() => setMode(m)); return; }
-    try { scenes[m] = buildHouseScene(m); fitCamera(scenes[m].camera); }
-    catch (err) { console.error(err); return; }
-  }
   if (active) active.controls.enabled = false;
   tween = null;
   mode = m;
-  active = m === 'cerro' ? hill : scenes[m];
+  active = hill;
   active.controls.enabled = true;
-  renderer.toneMapping = m === 'cerro' ? THREE.ACESFilmicToneMapping : THREE.AgXToneMapping;      // the designs: AgX +0.5, as in Blender and the walk
-  renderer.toneMappingExposure = m === 'cerro' ? 1 : Math.SQRT2;
+  renderer.toneMappingExposure = 1;
   closeDrawer();
   markTab(m);
   $('eyebrow').textContent = EYEBROWS[m];
   $('lede').textContent = LEDES[m];
-  specs.hidden = m === 'cerro';
-  if (m !== 'cerro') specs.innerHTML = SPECS[m];
   setHint();
   toggleDisplay(false);
   compass.hidden = m !== 'cerro' || !display.compass;
   renderLegend();
   showSitePhotos();
-  // The hill keeps imagery colours true; the concept scenes keep their filmic look. The hill's shadows never move.
+  // The hill keeps imagery colours true. Its shadows never move.
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.shadowMap.autoUpdate = m !== 'cerro';
+  renderer.shadowMap.autoUpdate = false;
   renderer.shadowMap.needsUpdate = true;
   buildChips();
   buildBar();
@@ -437,7 +407,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (!trailerEl.hidden) closeTrailer();
-  else if (!walkEl.hidden) closeWalk();
+  else if (!walkEl.hidden) backToTour();
   else if (!panoEl.hidden) closePano();
   else if (!trailEl.hidden) closeTrail();
   else if (!displayEl.hidden) toggleDisplay(false);
@@ -450,11 +420,10 @@ addEventListener('keydown', (e) => {
 addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
   fitCamera(hill.camera);
-  Object.values(scenes).forEach((s) => fitCamera(s.camera));
 });
 
 /* ------------------------------------------------ views over the hill -- */
-/* The 360° views, the walk and the trail draw with the page's one renderer, on the same canvas; their
+/* The tour, free roam and the trail draw with the page's one renderer, on the same canvas; their
    controls sit on top of it, so the hill never sees their input, and the hill pauses meanwhile. Each view
    sets the renderer up its own way and the page puts it back as it was when the view closes. One WebGL
    context for the whole site keeps phones within their graphics memory. */
@@ -494,11 +463,11 @@ function disposeScene(root) {
 /* A view whose code lives in js/: loaded on open, built fresh, disposed on close. */
 function moduleView(el, src, settings, onFail) {
   const v = { api: null, gen: 0 };
-  v.open = () => {
+  v.open = (extra = {}) => {                       // extra: what this opening needs (free roam: which site, where to start)
     lendRenderer(settings);
     const g = ++v.gen;
     import(new URL(src, document.baseURI).href)      // from the page's folder (a plain script would resolve it from js/site/)
-      .then((m) => m.build({ renderer, $, clamp, ease, rng, small, reduced, windOf, GLSL_NOISE, GradeShader, disposeScene, trailEl, site: walkSite }))
+      .then((m) => m.build({ renderer, $, clamp, ease, rng, small, reduced, windOf, GLSL_NOISE, GradeShader, disposeScene, trailEl, ...extra }))
       .then((api) => { if (g !== v.gen || el.hidden) api.dispose(); else v.api = api; })
       .catch((err) => { console.error(err); if (g === v.gen) onFail(err); });
   };
@@ -506,21 +475,29 @@ function moduleView(el, src, settings, onFail) {
   return v;
 }
 
-/* ------------------------------------------------------------ 360° views -- */
-/* Photoreal panoramas rendered in Blender (render/), at render quality because nothing is drawn live:
-   each is one image on the inside of a sphere. They sit on the hill as markers and open full screen. */
-let PANOS = [], panoLabels = [];
+/* ------------------------------------------------------ explore the site -- */
+/* The photoreal tour of both parts of the site: 360° views rendered in Blender (render/build.py) from the same
+   terrain, trees and buildings as free roam (data/walk/, js/cabin.js), listed in data/tour.json. Each view is one
+   finished image on the inside of a sphere. "Free roam from here" opens the walk where you stand. */
+let TOUR = [], panoLabels = [];
+const tourLast = {};                          // the last view seen on each part of the site
+const SITE_NAMES = { quarry: 'The quarry cabins', private: 'The private side · Finca 2663' };
+const SITE_SPECS = {
+  quarry: '<b>Cabin</b><span>9 × 6.5 m · 58 m²</span><span>27 m² deck</span><span>1 bedroom</span><span>build budget $60–70k</span>',
+  private: '<b>Residence</b><span>≈180 m²</span><span>3 bedrooms</span><span>on ≈1 ha</span><span>homesite from $150k</span><span>build ≈$900–1,100/m²</span>',
+};
 const panoEl = $('pano');
 const pano = { built: false, p: null, yaw: 0, pitch: 0, fov: 70, tex: {} };
-function panoChips() {
-  panoLabels = PANOS.map((p) => {
-    const l = { name: '360° · ' + p.name, sub: 'Photoreal view', c: 'var(--gold)', anchor: new THREE.Vector3(p.x, yAt(p.x, p.z) + 8, p.z) };
-    l.chip = makeChip(l, '', () => openPano(p.id));
+function panoChips() {                        // on the hill: one marker per part of the site
+  panoLabels = Object.keys(SITE_NAMES).map((site) => TOUR.find((p) => p.site === site)).filter(Boolean).map((p) => {
+    const l = { name: '360° · ' + SITE_NAMES[p.site].split(' · ')[0], sub: 'Photoreal tour', c: 'var(--gold)', anchor: new THREE.Vector3(p.x, yAt(p.x, p.z) + 8, p.z) };
+    l.chip = makeChip(l, '', () => openTour(p.site));
     return l;
   });
 }
-function openPano(id) {
-  const p = PANOS.find((q) => q.id === id) || PANOS[0];
+/* key: 'quarry', 'private' or 'quarry-deck'; nothing for where you were last. */
+function openTour(key) {
+  const p = TOUR.find((q) => q.site + '-' + q.id === key) || tourLast[key] || TOUR.find((q) => q.site === key) || pano.p || TOUR[0];
   if (!p) return;
   if (!panoEl.hidden) { showPano(p); return; }
   if (!planEl.hidden) closePlan();
@@ -530,7 +507,7 @@ function openPano(id) {
   closeDrawer();
   panoEl.hidden = false;
   lendRenderer({ pixelRatio: 2, toneMapping: THREE.NoToneMapping, exposure: 1, shadows: false, shadowAuto: false });   // the images are finished pictures
-  try { history.replaceState(null, '', '#pano-' + p.id); } catch (e) {}
+  markTab('explore');
   if (!pano.built) buildPano();
   pano.size();
   showPano(p);
@@ -541,9 +518,19 @@ function closePano() {
   panoEl.hidden = true;
   Object.values(pano.tex).forEach((t) => t.dispose());     // off the GPU; the pictures stay loaded for next time
   returnRenderer();
+  markTab(mode);
   try { history.replaceState(null, '', '#' + mode); } catch (e) {}
 }
 $('pano-close').addEventListener('click', closePano);
+document.querySelectorAll('#pano-sites button').forEach((b) => b.addEventListener('click', () => openTour(b.dataset.site)));
+$('pano-roam').addEventListener('click', () => {
+  const p = pano.p;
+  if (!p) return;
+  const [x, z] = p.roam || [p.x, p.z];        // views inside a building start free roam just outside it
+  walkStart = { x, z, bearing: p.bearing - (pano.yaw * 180) / Math.PI };
+  closePano();
+  openWalk(p.site);
+});
 function buildPano() {
   pano.built = true;
   const R = renderer, el = $('pano-stage');
@@ -593,35 +580,40 @@ function buildPano() {
   });
 }
 function showPano(p) {
-  pano.p = p; pano.yaw = 0; pano.pitch = 0; pano.fov = innerWidth < innerHeight ? 85 : 70;
+  pano.p = p; tourLast[p.site] = p; pano.yaw = 0; pano.pitch = 0; pano.fov = innerWidth < innerHeight ? 85 : 70;
+  try { history.replaceState(null, '', '#explore-' + p.site + '-' + p.id); } catch (e) {}
+  $('pano-eyebrow').textContent = 'Photoreal 360° · ' + SITE_NAMES[p.site];
   $('pano-title').textContent = p.name;
   $('pano-text').textContent = p.text || '';
+  $('pano-specs').innerHTML = SITE_SPECS[p.site] || '';
+  document.querySelectorAll('#pano-sites button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.site === p.site)));
   const tabsEl = $('pano-tabs');
   tabsEl.innerHTML = '';
-  if (PANOS.length > 1) PANOS.forEach((q) => {
+  TOUR.filter((q) => q.site === p.site).forEach((q) => {
     const b = document.createElement('button'); b.type = 'button'; b.textContent = q.name; b.setAttribute('aria-current', String(q === p));
-    b.addEventListener('click', () => { try { history.replaceState(null, '', '#pano-' + q.id); } catch (e) {} showPano(q); });
+    b.addEventListener('click', () => showPano(q));
     tabsEl.appendChild(b);
   });
+  const key = p.site + '-' + p.id;
   const set = (t) => { pano.mesh.material.dispose(); pano.mesh.material = new THREE.MeshBasicMaterial({ map: t }); $('pano-loading').hidden = true; pano.draw(); };
-  if (pano.tex[p.id]) { set(pano.tex[p.id]); return; }
+  if (pano.tex[key]) { set(pano.tex[key]); return; }
   $('pano-loading').hidden = false; $('pano-loading').textContent = 'Loading the view';
   new THREE.TextureLoader().load('data/' + p.file, (t) => {
     t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-    pano.tex[p.id] = t;
+    pano.tex[key] = t;
     if (pano.p === p) set(t);
   }, undefined, () => { $('pano-loading').textContent = 'This view did not load. Try again in a moment.'; });
   pano.draw();
 }
 
-/* --------------------------------------------------------- walk the site -- */
-/* The quarry cabins as a place to walk through: js/walk.js, loaded when the tab opens. */
+/* ------------------------------------------------------------ free roam -- */
+/* Free roam: the same site drawn live, to walk anywhere (js/walk.js, loaded when it opens). Opened from the tour. */
 const walkEl = $('walk');
 const walkView = moduleView(walkEl, './js/walk.js',
   { pixelRatio: small ? 1.5 : 2, toneMapping: THREE.AgXToneMapping, exposure: Math.SQRT2, shadows: true, shadowAuto: false },   // full sharpness; the walk steps down on slow devices   // as in Blender: AgX, +0.5
   () => { $('wk-loading').hidden = false; $('wk-msg').textContent = 'This browser could not open the walk. The rest of the site still works.'; });
 /* Two walkable parts: the quarry cabins (#walk) and the private side, Finca 2663, with the residence (#walk-private). */
-let walkSite = 'quarry';
+let walkSite = 'quarry', walkStart = null;           // walkStart: where free roam begins ({ x, z, bearing }), else the site's first spot
 function openWalk(site) {
   if (site && site !== walkSite) { if (!walkEl.hidden) closeWalk(); walkSite = site; }
   if (!walkEl.hidden) return;
@@ -632,10 +624,10 @@ function openWalk(site) {
   closeDrawer();
   walkEl.hidden = false;
   $('wk-loading').hidden = false; $('wk-bar').style.width = '0'; $('wk-msg').textContent = 'Loading the site';
-  markTab('walk');
+  markTab('explore');
   try { history.replaceState(null, '', walkSite === 'quarry' ? '#walk' : '#walk-' + walkSite); } catch (e) {}
   document.querySelectorAll('#wk-sites button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.site === walkSite)));
-  walkView.open();
+  walkView.open({ site: walkSite, start: walkStart }); walkStart = null;
   $('wk-close').focus({ preventScroll: true });
 }
 function closeWalk() {
@@ -645,7 +637,8 @@ function closeWalk() {
   markTab(mode);
   try { history.replaceState(null, '', '#' + mode); } catch (e) {}
 }
-$('wk-close').addEventListener('click', closeWalk);
+function backToTour() { const p = tourLast[walkSite]; closeWalk(); openTour(p ? p.site + '-' + p.id : walkSite); }
+$('wk-close').addEventListener('click', backToTour);
 document.querySelectorAll('#wk-sites button').forEach((b) => b.addEventListener('click', () => openWalk(b.dataset.site)));
 
 /* ------------------------------------------------------------ the trail -- */
@@ -746,10 +739,10 @@ const SanitizeShader = {
     }`,
 };
 const composers = new Set(), POST_PR = small ? 1.25 : 1.5;   // the effects render at most at 1.5× pixels, to fit in any GPU's memory
-let postView = null, postFailed = false, aoOff = small;
+let postView = null, postFailed = false;
 renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); postFailed = true; });
-function makeComposer(scene, camera, hillScale) {
-  const cap = hillScale ? POST_PR : (small ? 1.5 : 2), pr = Math.min(renderer.getPixelRatio(), cap), w = innerWidth, h = innerHeight;   // the designs at full sharpness; slow devices step down
+function makeComposer(scene, camera) {
+  const cap = POST_PR, pr = Math.min(renderer.getPixelRatio(), cap), w = innerWidth, h = innerHeight;
   const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: small ? 0 : Math.min(2, renderer.capabilities.maxSamples || 0) });
   // The GPU has to accept a half-float target, or the chain is skipped and the view draws plainly.
   const gl = renderer.getContext();
@@ -760,24 +753,8 @@ function makeComposer(scene, camera, hillScale) {
   const c = new EffectComposer(renderer, rt);
   c.addPass(new RenderPass(scene, camera));
   c.addPass(new ShaderPass(SanitizeShader));
-  if (!aoOff && !hillScale) {     // not on the hill: at 4 km, depth buffers are too coarse and it blots
-    const ao = new GTAOPass(scene, camera, w, h);
-    // Glows, labels on sprites and see-through overlays cast no occlusion (the pass only skips lines and points).
-    ao._overrideVisibility = function () {
-      const cache = this._visibilityCache;
-      this.scene.traverse((o) => {
-        const m = o.material;
-        if (o.visible && (o.isPoints || o.isLine || o.isSprite || (m && !Array.isArray(m) && m.transparent && (m.opacity < 0.6 || m.blending === THREE.AdditiveBlending)))) { o.visible = false; cache.push(o); }
-      });
-    };
-    ao.blendIntensity = hillScale ? 0.85 : 1;
-    ao.updateGtaoMaterial(hillScale ? { radius: 9, distanceExponent: 1.6, thickness: 6, scale: 1.25, samples: 16, distanceFallOff: 1 } : { radius: 0.6, distanceExponent: 1.2, thickness: 1, scale: 1.3, samples: 16, distanceFallOff: 1 });
-    ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 5, rings: 2, samples: 16 });
-    c.addPass(ao);
-  }
-  c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), hillScale ? 0.42 : 0.28, hillScale ? 0.6 : 0.5, hillScale ? 0.88 : 0.95));   // the designs: the walk's glow
+  c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), 0.42, 0.6, 0.88));
   c.addPass(new OutputPass());
-  if (!hillScale && LOOK) c.addPass(LOOK.sharpenPass());          // the designs: the walk's sharpening
   c.grade = new ShaderPass(GradeShader);
   c.addPass(c.grade);
   c.setPixelRatio(pr); c.setSize(w, h); c.prCap = cap;
@@ -795,7 +772,7 @@ function renderFrame(view, cam) {
   const want = display.effects && !postFailed;
   if (postView && (postView !== view || !want)) { dropComposer(postView); postView = null; }   // one chain in memory at a time
   if (want && !view.composer) {
-    try { view.composer = makeComposer(view.scene, cam, view === hill); postView = view; }
+    try { view.composer = makeComposer(view.scene, cam); postView = view; }
     catch (err) { console.warn('Effects off:', err.message); postFailed = true; }
   }
   if (!want || !view.composer) { renderer.render(view.scene, cam); return; }
@@ -840,9 +817,6 @@ function tick() {
     for (const l of panoLabels) place(l.chip, l.anchor, cam, !display.panos || !!limits.editing || !!limits.drawing, true);
     declutter();
     for (const h of handleGroup.children) h.scale.setScalar(Math.max(0.6, cam.position.distanceTo(h.position) * 0.011 * h.userData.s));
-  } else {
-    active.tick(elapsed);
-    for (const s of active.anchors) place(s.chip, s.anchor, cam, false);
   }
   if (!lent) renderFrame(active, cam);
   adaptResolution();
@@ -863,8 +837,6 @@ function adaptResolution() {
   const avg = perf.sum / perf.n, pr = renderer.getPixelRatio();
   perf.sum = 0; perf.n = 0;
   if (avg <= 30) return;
-  const ao = active && active.composer && active.composer.passes.find((p) => p instanceof GTAOPass && p.enabled);
-  if (ao) { ao.enabled = false; aoOff = true; return; }        // the occlusion is the heaviest effect: it goes first
   if (pr > 1) { renderer.setPixelRatio(Math.max(1, pr - 0.25)); syncComposers(); }
 }
 const crowd = [];
@@ -910,11 +882,11 @@ async function boot() {
   hill.camera.position.copy(HOME.pos); mc.target.copy(HOME.tgt); mc.update();
   fitHillShadow(true);
   const want = (location.hash || '').slice(1);
-  setMode(want === 'cabin' || want === 'residence' ? want : 'cerro');
+  setMode('cerro');
   if (want === 'plan') openPlan();
   if (want === 'trail') openTrailer();
   if (want === 'trail-play') openTrail();
-  if (want.startsWith('pano-')) openPano(want.slice(5));
+  if (want === 'explore' || want.startsWith('explore-')) openTour(want.slice(8));
   if (want === 'walk') openWalk('quarry');
   if (want === 'walk-private') openWalk('private');
   requestAnimationFrame(tick);

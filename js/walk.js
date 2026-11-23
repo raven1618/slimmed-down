@@ -1,12 +1,12 @@
-/* Walk the site: the quarry cabins, the lagoon and the forest edge as a place to walk through.
+/* Free roam: either part of the site (the quarry cabins, or the private side) as a place to walk through.
    The light on the ground was path-traced in Blender, trees and cabins included (render/build.py ... bake),
    and is laid over tiled photo textures here. The trees are pictures of the real tree models from eight
    sides (render/impostors.py). Grass, water, haze and the cabins are drawn live. Data: data/walk/
    (render/web_export.py). Loaded by index.html when the tab opens; it draws with the page's renderer
    and gives everything back in dispose(). */
 import * as THREE from 'three';
-import * as LOOK from './look.js';      // the sky, colour, sun, textures, trees, grass and effects, shared with Designs
-import * as CAB from './cabin.js';      // the cabin design, shared with Designs
+import * as LOOK from './look.js';      // the sky, colour, sun, textures, trees, grass and effects
+import * as CAB from './cabin.js';      // the buildings, the same ones the tour renders
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
 export async function build(ctx) {
@@ -26,7 +26,7 @@ export async function build(ctx) {
     LOOK.loadLook(tick), bin('heights.json'), bin('far.json'), bin('trees.json'), img('light.jpg'), img('splat.png'), img('far.jpg', true)]);
   const W = site === 'quarry' ? L.W : await fetch(B + 'world.json').then((r) => { if (!r.ok) throw new Error('world.json: ' + r.status); return r.json(); });
   $('wk-title').textContent = W.title || 'The quarry cabins';
-  $('wk-eyebrow').textContent = W.eyebrow || 'Walk the site · light baked in Blender, drawn live';
+  $('wk-eyebrow').textContent = W.eyebrow || 'Free roam · light baked in Blender, drawn live';
   const { grass: tGrass, soil: tSoil, litter: tLitter, wall: tWall, plaster: tPlaster, planks: tPlanks } = L.tex;
   msg.textContent = 'Setting up the site';
 
@@ -176,11 +176,11 @@ export async function build(ctx) {
   scene.add(water);
   }
 
-  /* ---- the cabins: the same design as the Designs tab (js/cabin.js), furnished inside, set into the quarry wall */
+  /* ---- the cabins (js/cabin.js), furnished inside, set into the quarry wall */
   const Hh = 3.0, SMc = CAB.materials(L), cab = new THREE.Group(); scene.add(cab);
   const model = CAB.merge(CAB.quarryCabin(SMc));                       // built once, shared by the row
   const cabins = (W.cabins || []).map(([cx, cz, fl, rot, w, d]) => {
-    const th = (rot * Math.PI) / 180, F = [Math.sin(th), -Math.cos(th)], Rv = [Math.cos(th), Math.sin(th)];
+    const th = (rot * Math.PI) / 180, F = [Math.sin(th), -Math.cos(th)], Rv = [-Math.cos(th), -Math.sin(th)];   // Rv: the model's +x (on your left, facing out)
     const g = model.clone(); g.position.set(cx, fl, cz); g.rotation.y = Math.PI - th;   // its front (+z) toward F
     cab.add(g);
     return { cx, cz, fl, w, d, F, R: Rv };
@@ -190,7 +190,7 @@ export async function build(ctx) {
   if (W.residence) {
     const r = W.residence, th = (r.rot * Math.PI) / 180;
     const g = CAB.merge(CAB.residence(SMc)); g.position.set(r.x, r.floor, r.z); g.rotation.y = Math.PI - th; cab.add(g);
-    res = { cx: r.x, cz: r.z, fl: r.floor, F: [Math.sin(th), -Math.cos(th)], R: [Math.cos(th), Math.sin(th)] };
+    res = { cx: r.x, cz: r.z, fl: r.floor, F: [Math.sin(th), -Math.cos(th)], R: [-Math.cos(th), -Math.sin(th)] };   // R: the model's +x, so RESIDENCE's rectangles land on its walls
   }
   const rocks = [];
   if (W.rocks) {
@@ -272,7 +272,7 @@ export async function build(ctx) {
   const spotsEl = $('wk-spots');
   spotsEl.innerHTML = '';
   for (const s of SPOTS) { const b = document.createElement('button'); b.type = 'button'; b.textContent = s.name; b.addEventListener('click', () => goTo(s), sig); spotsEl.appendChild(b); }
-  goTo(SPOTS[0]);
+  goTo(ctx.start ? { name: '', at: () => ctx.start, bearing: ctx.start.bearing } : SPOTS[0]);      // from the tour: where you were looking from
   function tryStep(x, z) {
     const y = feetAt(x, z, P.feet);
     if (y === null || y - P.feet > 0.3) return false;            // water, walls, or a step up of more than 30 cm

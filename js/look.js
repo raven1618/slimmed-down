@@ -1,4 +1,4 @@
-/* The site's look, shared by the views drawn like the Blender renders (Walk the site, Designs):
+/* Free roam's look, matched to the Blender renders of the tour:
    - the sky Blender rendered from the site, in linear light: background, reflections, and the haze;
    - AgX colour with +0.5 exposure and the sun of the bake, as in render/build.py;
    - Poly Haven photo textures; trees as pictures of the real tree models from eight sides

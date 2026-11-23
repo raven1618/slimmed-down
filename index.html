@@ -26,8 +26,7 @@
   </div>
   <nav class="tabs" aria-label="Views">
     <button class="tab" type="button" data-go="cerro" aria-current="true">The hill</button>
-    <button class="tab" type="button" data-go="walk" aria-current="false">Walk the site</button>
-    <button class="tab" type="button" data-go="designs" aria-current="false">Designs</button>
+    <button class="tab" type="button" data-go="explore" aria-current="false">Explore the site</button>
     <button class="tab" type="button" data-go="trail" aria-current="false">The trail</button>
     <button class="tab" type="button" data-go="plan" aria-current="false">The plan</button>
   </nav>
@@ -36,7 +35,6 @@
 <div class="dock" id="dock">
   <p class="hint" id="hint">Drag to orbit · Pinch or scroll to zoom · Tap a place</p>
   <div class="maplegend" id="legend" hidden></div>
-  <div class="specs" id="specs" hidden></div>
   <div class="bar" id="bar" role="group" aria-label="Places"></div>
 </div>
 <div class="display" id="display" hidden role="dialog" aria-label="Choose what the map shows"></div>
@@ -66,28 +64,31 @@
   </div>
 </div>
 
-<!-- ======================= 360° VIEWS ======================= -->
+<!-- ======================= EXPLORE THE SITE: the photoreal tour ======================= -->
 <div class="pano" id="pano" hidden>
   <div class="pano-stage" id="pano-stage"></div>
   <div class="pano-head">
-    <div><p class="eyebrow">Photoreal 360° view · rendered in Blender</p><h2 id="pano-title"></h2></div>
-    <div class="pano-status"><span class="pano-facing" id="pano-facing"></span><button class="btn ghost" id="pano-close" type="button">Back to 3D</button></div>
+    <div><p class="eyebrow" id="pano-eyebrow">Photoreal 360° · rendered in Blender</p><h2 id="pano-title"></h2>
+      <div class="wk-sites" id="pano-sites" role="group" aria-label="Which part of the site"><button type="button" data-site="quarry">Quarry cabins</button><button type="button" data-site="private">Private side</button></div></div>
+    <div class="pano-status"><span class="pano-facing" id="pano-facing"></span><button class="btn ghost" id="pano-close" type="button">Back to the hill</button></div>
   </div>
   <p class="pano-loading" id="pano-loading">Loading the view</p>
   <div class="pano-foot">
+    <div class="specs" id="pano-specs"></div>
     <p id="pano-text"></p>
-    <div class="pano-tabs" id="pano-tabs" role="group" aria-label="360° views"></div>
-    <p class="pano-hint">Drag to look around · scroll or pinch to zoom</p>
+    <div class="pano-tabs" id="pano-tabs" role="group" aria-label="Places to stand"></div>
+    <button class="btn" id="pano-roam" type="button">Free roam from here</button>
+    <p class="pano-hint">Drag to look around · scroll or pinch to zoom · design not final</p>
   </div>
 </div>
 
-<!-- ======================= WALK THE SITE ======================= -->
+<!-- ======================= FREE ROAM ======================= -->
 <div class="walk" id="walk" hidden>
   <div class="wk-stage" id="wk-stage"></div>
   <div class="pano-head">
-    <div><p class="eyebrow" id="wk-eyebrow">Walk the site · light baked in Blender, drawn live</p><h2 id="wk-title">The quarry cabins</h2>
+    <div><p class="eyebrow" id="wk-eyebrow">Free roam · light baked in Blender, drawn live</p><h2 id="wk-title">The quarry cabins</h2>
       <div class="wk-sites" id="wk-sites" role="group" aria-label="Which part of the site"><button type="button" data-site="quarry">Quarry cabins</button><button type="button" data-site="private">Private side</button></div></div>
-    <div class="pano-status"><span class="pano-facing" id="wk-facing"></span><button class="btn ghost" id="wk-close" type="button">Back to 3D</button></div>
+    <div class="pano-status"><span class="pano-facing" id="wk-facing"></span><button class="btn ghost" id="wk-close" type="button">Back to the tour</button></div>
   </div>
   <div class="wk-load" id="wk-loading"><div class="wk-bar"><i id="wk-bar"></i></div><p id="wk-msg">Loading the site</p></div>
   <div class="wk-stick" id="wk-stick" hidden><i></i></div>
@@ -548,21 +549,20 @@
 
 <script type="module">
 /* three.js and the shared modules, handed to the page's scripts in js/site/. Those run after this, in order,
-   and share one scope: core, hill, ui, tools, views. js/site/designs.js loads when Designs first opens. */
+   and share one scope: core, hill, ui, tools, views. */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as LOOK from './js/look.js';
 import * as CAB from './js/cabin.js';
-Object.assign(window, { THREE, OrbitControls, RoomEnvironment, Sky, EffectComposer, RenderPass, GTAOPass, UnrealBloomPass, OutputPass, ShaderPass, mergeGeometries, mergeVertices, LOOK, CAB });
+Object.assign(window, { THREE, OrbitControls, RoomEnvironment, Sky, EffectComposer, RenderPass, UnrealBloomPass, OutputPass, ShaderPass, mergeGeometries, mergeVertices, LOOK, CAB });
 </script>
 <script defer src="js/site/core.js"></script>
 <script defer src="js/site/hill.js"></script>

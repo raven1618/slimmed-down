@@ -54,34 +54,6 @@ function inPoly(x, z, poly) {
 }
 
 /* -------------------------------------------------------------- data -- */
-const SPOTS = {
-  cabin: [
-    { id: 'earth', name: 'Rammed-earth walls', at: [4.55, 1.7, 0.4], cam: [11.5, 3.2, 8], tgt: [2.5, 1.4, 0], text: '45 cm walls of compacted local soil, built in layers you can see. The mass soaks up afternoon heat and gives it back at night.' },
-    { id: 'roof', name: 'Living roof', at: [0, 4.0, -1], cam: [-7, 12, -16], tgt: [0, 2.5, 0], text: 'Native grasses on about 20 cm of soil. It insulates, slows the rain, and from the hill above, the cabin disappears.' },
-    { id: 'eaves', name: 'Cantilevered roof', at: [-2.5, 2.9, 4.7], cam: [-1, 1.7, 12], tgt: [-2, 2.4, 3.5], text: 'The roof slab reaches 1.5 m past the glass with no posts, so the high summer sun never touches it and nothing blocks the view.' },
-    { id: 'glass', name: 'Glass front', at: [-2.2, 1.4, 3.4], cam: [-2, 1.7, 10], tgt: [-2, 1.4, 0], text: 'The whole front is glass from floor to ceiling, in four sliding panels, facing the lagoon and the sunrise. The back of the cabin is set into the old quarry wall.' },
-    { id: 'inside', name: 'Inside', at: [0.6, 1.4, 0], cam: [3.6, 1.6, 2.1], tgt: [-2.5, 1.0, -1.2], text: 'One bedroom, a kitchen island and a bathroom with an outdoor shower. Tobatí ceramics and Atyrá leather from the towns next door.' },
-    { id: 'solar', name: 'Solar carport', at: [-14, 3.6, 6], cam: [-6, 4, 18], tgt: [-14, 2, 5], text: 'About 3 kWp over each parking bay, wired to the shared battery room. Shade for the car comes free.' },
-    { id: 'rain', name: 'Rain tank', at: [-18.8, 2.9, 2.2], cam: [-12, 2.4, 10], tgt: [-18, 1.4, 2], text: 'The carport roof feeds a 10,000 L tank. Over a year it catches about what the cabin’s guests use.' },
-  ],
-  residence: [
-    { id: 'pool', name: 'Pool', at: [-4, 0.8, 9.2], cam: [6, 3, 20], tgt: [-4, 0.5, 7], text: 'A 12 m lap pool on the valley side, heated by the sun and filtered without chlorine like the pond.' },
-    { id: 'roof', name: 'Living roofs', at: [2, 4.2, -1], cam: [-8, 14, -18], tgt: [2, 2.6, 0], text: 'Two volumes, two living roofs, stepped with the slope. From the trail above you see grass, not a house.' },
-    { id: 'earth', name: 'Same earth walls', at: [-12.6, 1.8, 0], cam: [-22, 3, 10], tgt: [-11, 1.6, 0], text: 'The cabins and the homes share one language: rammed earth from the site, hardwood, glass and grass.' },
-    { id: 'wing', name: 'Bedroom wing', at: [8.6, 1.6, 1.4], cam: [16, 2.4, 12], tgt: [8, 1.6, -1], text: 'Three bedrooms, about 180 m² in all. The bedroom wing sits back from the living room for privacy.' },
-    { id: 'carport', name: 'Carport for two', at: [-22, 3.6, 7], cam: [-14, 4, 20], tgt: [-22, 2, 6], text: 'About 6 kWp over two bays. Homes draw on the shared battery room like the cabins.' },
-    { id: 'lot', name: 'About a hectare', at: [20, 1.2, 16], cam: [30, 18, 40], tgt: [4, 1, 4], text: 'Each homesite is roughly 100 by 100 m, with the protected forest behind it and the valley in front.' },
-  ],
-};
-const VIEWS = {
-  cabin: [['Front', [4, 2.8, 23], [0, 1.7, 0]], ['Deck', [-3.9, 1.75, 6.1], [1.5, 1.3, 2.4]], ['From the hill', [-6, 13, -20], [0, 2, 2]], ['Inside', [3.6, 1.6, 2.1], [-2.5, 1.0, -1.2]]],
-  residence: [['Front', [6, 3.4, 34], [0, 1.7, 0]], ['Pool', [8, 1.8, 13], [-6, 1, 4]], ['From the hill', [-10, 16, -26], [2, 2, 3]], ['Living room', [-1.5, 1.6, 2.2], [-9, 1.1, -1]]],
-};
-const SPECS = {
-  cabin: '<b>Cabin</b><span>9 × 6.5 m · 58 m²</span><span>27 m² deck</span><span>1 bedroom</span><span>build budget $60–70k</span>',
-  residence: '<b>Residence</b><span>≈180 m²</span><span>3 bedrooms</span><span>on ≈1 ha</span><span>homesite from $150k</span><span>build ≈$900–1,100/m²</span>',
-};
-
 /* ---------------------------------------------------------- renderer -- */
 let renderer;
 try {

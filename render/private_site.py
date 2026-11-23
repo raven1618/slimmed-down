@@ -5,7 +5,9 @@
 - every tree of the canopy data, the mango tree and its two boulders (from the owner's notes);
 - a light bake in Python with the sun and sky of the Blender bake (render/build.py): sun shadows of trees,
   house and hill, ray-marched at 25 cm, and the sky each spot of ground can see, at 1 m.
-   python render/private_site.py data data/walk/private"""
+   python render/private_site.py data data/walk/private [WORK]
+   With WORK, it also writes the scene for the Blender renders there (site.npz, splat.png, far.png), as
+   render/prep.py does for the quarry, so render/build.py can build either site."""
 import base64, json, math, os, sys
 import numpy as np
 from PIL import Image
@@ -45,7 +47,7 @@ H = H + noise(26) * 0.4 + noise(9) * (0.14 + 0.2 * steep) + noise(3.5) * 0.05
 
 # ------------------------------------------------------------------ the homesite and its pad
 RES = {'x': -120.0, 'z': -565.0, 'rot': 90.0}            # open, about 7 degrees, 70 m east of the mango tree; glass to the valley (east)
-th = math.radians(RES['rot']); F = (math.sin(th), -math.cos(th)); R_ = (math.cos(th), math.sin(th))
+th = math.radians(RES['rot']); F = (math.sin(th), -math.cos(th)); R_ = (-math.cos(th), -math.sin(th))   # R_: the model's +x (js/cabin.js), on your left facing out
 U = (X - RES['x']) * R_[0] + (Z - RES['z']) * R_[1]; V = (X - RES['x']) * F[0] + (Z - RES['z']) * F[1]
 ex = [-15, -9, 16, 13]                                     # js/cabin.js RESIDENCE.extent: across, then toward the front
 du = np.maximum(np.maximum(ex[0] - U, U - ex[2]), 0); dv = np.maximum(np.maximum(ex[1] - V, V - ex[3]), 0)
@@ -181,7 +183,7 @@ f32('trees.json', np.column_stack([tx, tz, ty - 0.2, th_, sp]))
 spot = lambda name, x, z, lx, lz: {'name': name, 'x': round(x, 1), 'z': round(z, 1), 'look': [round(lx, 1), round(lz, 1)]}
 at = lambda u, v: (RES['x'] + R_[0] * u + F[0] * v, RES['z'] + R_[1] * u + F[1] * v)
 world = {
-    'title': 'The private side', 'eyebrow': 'Walk the site · Finca 2663, the private side',
+    'title': 'The private side', 'eyebrow': 'Free roam · Finca 2663, the private side',
     'region': [X0, Z0, X1, Z1], 'grid': [len(xs), len(zs)], 'far': [FX0, FZ0, FX1, FZ1], 'farGrid': [len(fxs), len(fzs)],
     **{k: QW[k] for k in ('sun', 'sunLight', 'ambient', 'lightScale', 'skyScale', 'spriteScale', 'sprites', 'grassAlbedo')},
     'trees': len(tx), 'residence': RES, 'rocks': [[x, z, y, w_, d_, h_, rot] for (x, z, w_, d_, h_, rot), y in zip(rocks, rock_y)],
@@ -192,3 +194,15 @@ world = {
 json.dump(world, open(f'{OUT}/world.json', 'w'), indent=1)
 print('pad', round(pad, 1), 'm; trees', len(tx), '; light', Lt.shape[:2], '; files',
       round(sum(os.path.getsize(f'{OUT}/{f}') for f in os.listdir(OUT)) / 1e6, 1), 'MB')
+
+# ------------------------------------------------------------------ the same site for Blender (render/build.py)
+if len(sys.argv) > 3:
+    WORK = sys.argv[3]; os.makedirs(WORK, exist_ok=True)
+    sp3 = np.dstack([grass, np.clip(soil / 0.3, 0, 1), litter])
+    Image.fromarray((sp3[::-1] * 255 + 0.5).astype(np.uint8)).save(f'{WORK}/splat.png')         # as render/prep.py: rows flipped for Blender
+    crop.save(f'{WORK}/far.png')
+    np.savez_compressed(f'{WORK}/site.npz', Hd=H.astype(np.float32), dorig=np.array([X0, Z0]), Hc=Hc.astype(np.float32), corig=np.array([FX0, FZ0, FX1, FZ1]),
+                        grass=grass.astype(np.float32), trees=np.column_stack([tx, tz, ty, th_, tr_]).astype(np.float32), species=(sp + 1).astype(np.int32),
+                        residence=np.array([RES['x'], RES['z'], RES['floor'], RES['rot']]), rocks=np.array([[x, z, y, w_, d_, h_, rot] for (x, z, w_, d_, h_, rot), y in zip(rocks, rock_y)]),
+                        cabins=np.zeros((0, 6)))
+    print('Blender scene in', WORK)

@@ -1,6 +1,6 @@
-/* The buildings of the Designs tab and Walk the site, from one set of builders, so the cabin you walk up to
-   at the quarry is the same one the Designs tab shows: rammed-earth volumes with glass fronts, living-roof
-   slabs, decks and furnished interiors, in the walk's photo materials (js/look.js). */
+/* The buildings of the site, from one set of builders: the cabin and the residence you walk around in free roam
+   are the ones the photoreal tour shows (render/export_models.cjs exports them for Blender): rammed-earth volumes
+   with glass fronts, living-roof slabs, decks and furnished interiors, in the walk's photo materials (js/look.js). */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -30,7 +30,8 @@ export function box(w, h, d, x, y, z, mat, parent, opts = {}) {
 export function materials(L) {
   const t = (k, r) => { const c = L.tex[k].clone(); c.repeat.set(r, r); c.needsUpdate = true; return c; };
   const std = (o) => new THREE.MeshStandardMaterial(o);
-  return {
+  const named = (m) => { for (const [k, v] of Object.entries(m)) v.name = k; return m; };      // the Blender renders key on these names
+  return named({
     earth: std({ map: t('plaster', 2), normalMap: t('plasterN', 2), roughness: 0.95 }),
     deck: std({ map: t('planks', 1.5), normalMap: t('planksN', 1.5), roughness: 0.8 }),
     timber: std({ map: t('planks', 1), normalMap: t('planksN', 1), roughness: 0.7 }),
@@ -51,7 +52,7 @@ export function materials(L) {
     window: std({ color: 0x1b2326, roughness: 0.1, metalness: 0.6, emissive: 0xffbe7a, emissiveIntensity: 0 }),
     pool: std({ color: 0x4aa3ad, roughness: 0.04, metalness: 0.15, transparent: true, opacity: 0.9 }),
     coping: std({ map: t('plaster', 1), normalMap: t('plasterN', 1), color: 0xe6dccb, roughness: 0.85 }),
-  };
+  });
 }
 
 /* One rammed-earth volume: earth back and sides, a front of glass, door and earth. */

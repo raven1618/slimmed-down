@@ -6,10 +6,12 @@ a protected forest hill in Cordillera, Paraguay.
 ## Views
 
 - **The hill:** a 4 × 4 km 3D model of Cerro Kavaju from satellite elevation, imagery, tree heights and map data.
-- **Walk the site:** two parts, walkable in first person. The quarry cabins, the lagoon and the forest edge (`#walk`), lit by a Blender bake; and the private side, Finca 2663, with the residence on its homesite, the mango tree and its boulders (`#walk-private`), lit by a bake in Python (see `render/`).
-- **Designs:** the glamping cabin (the same design as the quarry row in the walk) and a residence for the private side, with a Cabin / Residence switch.
+- **Explore the site:** a photoreal 360° tour of both parts of the site, rendered in Blender: the quarry cabins
+  (arrival, the lagoon, a cabin's deck, inside the cabin, its living roof) and the private side, Finca 2663 (the
+  homesite, the residence's terrace and living room, the slope above it, the mango tree). From any view,
+  **Free roam from here** opens the same place in first person, drawn live, to walk anywhere; **Back to the tour**
+  returns. The tour and free roam use the same terrain, trees and buildings, so they show one site.
 - **The trail:** a video of Mala Visión, the fight at the trail's midpoint, with the playable prototype one button away (`#trail-play`). The video is recorded from the prototype by `render/trail_video.mjs`.
-- **360° views:** photoreal panoramas rendered in Blender.
 - **The plan:** the investor brief, with an interactive return calculator.
 
 ## Pitch and owner tools
@@ -30,22 +32,23 @@ There is no build step: static files, with three.js (minified) from jsDelivr.
   - `hill.js`: the hill: terrain, imagery, trees, structures, property limits on the map, base maps;
   - `ui.js`: labels, the panel, camera flights, the hill tools;
   - `tools.js`: the owners' tools: the property limits editor and the notes;
-  - `views.js`: the bar, Display, picking, the views over the hill, the render loop and boot;
-  - `designs.js`: the Designs scenes, loaded the first time Designs opens.
-- `js/walk.js`, `js/trail.js`: the two heavy views, loaded only when their tab opens.
-- `js/cabin.js`: the cabin and residence builders. The walk's quarry row and the Designs tab use the same cabin, furnished inside.
-- `js/look.js`: the look the walk and the Designs scenes share, so they match the Blender renders: the sky Blender rendered from the site, AgX colour with +0.5 exposure, the sun of the bake, Poly Haven photo textures with their relief (normal) maps, the tree cards, the grass blades, and the same glow, sharpening and film grade.
-- `data/`: terrain, trees, imagery and base maps for the hill; `data/walk/` and `data/walk/private/` for the two walks.
+  - `views.js`: the bar, Display, picking, the tour, free roam and the trail over the hill, the render loop and boot.
+- `js/walk.js` (free roam), `js/trail.js`: the two heavy views, loaded only when they open.
+- `js/cabin.js`: the cabin and residence, furnished inside. **The one source of the buildings:** free roam draws
+  them, and `render/export_models.cjs` exports them for the Blender renders of the tour.
+- `js/look.js`: free roam's look, matched to the Blender renders: the sky Blender rendered from the site, AgX colour with +0.5 exposure, the sun of the bake, Poly Haven photo textures with their relief (normal) maps, the tree cards, the grass blades, glow, sharpening and film grade.
+- `data/`: terrain, trees, imagery and base maps for the hill; `data/tour.json` and `data/tour/` for the tour;
+  `data/walk/` and `data/walk/private/` for free roam.
 - `img/`: site photos, renders and the trail video. `render/`: the Blender pipeline, the private side's build and the video recorder. `data/build/`: the data pipeline.
 
-Every view draws with **one WebGL renderer**: the walk, the trail and the 360° views borrow it, set it up their own way and hand it back when they close,
-and the walk and the trail free their graphics memory when you leave them. One context for the whole site
+Every view draws with **one WebGL renderer**: the tour, free roam and the trail borrow it, set it up their own way and hand it back when they close,
+and free roam and the trail free their graphics memory when you leave them. One context for the whole site
 keeps phones within their graphics memory.
 
 ## Check every view
 
-`npm test` opens the site in a browser and goes through every view: the hill, both walks, both designs, the trail
-video and prototype, a 360° view and the plan. It fails if a view does not open, a script error shows up, or more
+`npm test` opens the site in a browser and goes through every view: the hill, the tour of both sites, free roam on
+both, back to the tour, the trail video and prototype, and the plan. It fails if a view does not open, a script error shows up, or more
 than one 3D canvas exists, and saves a screenshot of each view in `tests/shots/`. Once: `npm install && npx
 playwright install chromium`. The browser draws in software, so a run takes a few minutes. GitHub runs it on every
 push (`.github/workflows/smoke.yml`) and attaches the screenshots to the run.
@@ -62,11 +65,16 @@ To preview locally, run `npx serve .` or `python3 -m http.server` in this folder
 
 ## Links to individual views
 
-Add one of these to the URL to open a view directly: `#walk` (the quarry cabins), `#walk-private` (the private side), `#cabin`, `#residence`, `#trail` (the walkthrough video), `#trail-play` (the playable prototype), `#plan`, `#pano-lagoon` or `#pano-deck` (the 360° views). `#tools` switches on the owners' tools.
+Add one of these to the URL to open a view directly: `#explore` (the tour), `#explore-quarry-deck` or any
+`#explore-<site>-<view>` from `data/tour.json`, `#walk` and `#walk-private` (free roam), `#trail` (the walkthrough
+video), `#trail-play` (the playable prototype), `#plan`. `#tools` switches on the owners' tools.
 
-## 360° photoreal views
+## The photoreal tour
 
-Panoramas rendered in Blender (see `render/README.md`) at the quality of the stills, because nothing is drawn live: each is one 4096×2048 image on the inside of a sphere. They are listed in `data/panos.json` (position in local metres, the bearing at the centre of the image, a caption), appear on the hill as **360°** markers and under **360° views** in the bar, and open full screen: drag to look around, scroll or pinch to zoom. Render another with `build.py … 4096 2048 32 <view>` after adding the viewpoint to `PANOS` in `render/build.py`.
+Ten 360° views rendered in Blender (see `render/README.md`), each one 4096×2048 image on the inside of a sphere:
+drag to look around, scroll or pinch to zoom. `data/tour.json` lists them (site, position in local metres, eye
+height, the bearing at the centre of the image, a caption) and is written by `render/tour_spots.py` from the free
+roam's own data. They appear on the hill as a **360°** marker per site and under **Explore the site**.
 
 ## The trail: Mala Visión, playable
 
