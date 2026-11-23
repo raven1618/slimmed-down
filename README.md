@@ -20,17 +20,35 @@ of the link. The choice is remembered on that device.
 
 ## How it is built
 
-- `index.html`: the page, its styles, and the hill, concept scenes, 360° views and plan.
+There is no build step: static files, with three.js (minified) from jsDelivr.
+
+- `index.html`: the page's markup and the plan's text, then a short module that loads three.js, `js/look.js`
+  and `js/cabin.js` and hands them to the page's scripts.
+- `css/site.css`: the styles.
+- `js/site/`: the page's scripts, run in this order and sharing one scope:
+  - `core.js`: small helpers, site data, the renderer, procedural textures, shared geometry;
+  - `hill.js`: the hill: terrain, imagery, trees, structures, property limits on the map, base maps;
+  - `ui.js`: labels, the panel, camera flights, the hill tools;
+  - `tools.js`: the owners' tools: the property limits editor and the notes;
+  - `views.js`: the bar, Display, picking, the views over the hill, the render loop and boot;
+  - `designs.js`: the Designs scenes, loaded the first time Designs opens.
 - `js/walk.js`, `js/trail.js`: the two heavy views, loaded only when their tab opens.
 - `js/cabin.js`: the cabin and residence builders. The walk's quarry row and the Designs tab use the same cabin, furnished inside.
 - `js/look.js`: the look the walk and the Designs scenes share, so they match the Blender renders: the sky Blender rendered from the site, AgX colour with +0.5 exposure, the sun of the bake, Poly Haven photo textures with their relief (normal) maps, the tree cards, the grass blades, and the same glow, sharpening and film grade.
-- `data/`: terrain, trees, imagery and base maps for the hill; `data/walk/` for the walk.
-- `img/`: site photos and renders. `render/`: the Blender pipeline. `data/build/`: the data pipeline.
+- `data/`: terrain, trees, imagery and base maps for the hill; `data/walk/` and `data/walk/private/` for the two walks.
+- `img/`: site photos, renders and the trail video. `render/`: the Blender pipeline, the private side's build and the video recorder. `data/build/`: the data pipeline.
 
-There is no build step. Three.js (minified) loads from jsDelivr. Every view draws with **one WebGL renderer**:
-the walk, the trail and the 360° views borrow it, set it up their own way and hand it back when they close,
+Every view draws with **one WebGL renderer**: the walk, the trail and the 360° views borrow it, set it up their own way and hand it back when they close,
 and the walk and the trail free their graphics memory when you leave them. One context for the whole site
 keeps phones within their graphics memory.
+
+## Check every view
+
+`npm test` opens the site in a browser and goes through every view: the hill, both walks, both designs, the trail
+video and prototype, a 360° view and the plan. It fails if a view does not open, a script error shows up, or more
+than one 3D canvas exists, and saves a screenshot of each view in `tests/shots/`. Once: `npm install && npx
+playwright install chromium`. The browser draws in software, so a run takes a few minutes. GitHub runs it on every
+push (`.github/workflows/smoke.yml`) and attaches the screenshots to the run.
 
 ## Host it for free
 
@@ -44,7 +62,7 @@ To preview locally, run `npx serve .` or `python3 -m http.server` in this folder
 
 ## Links to individual views
 
-Add `#cabin`, `#residence`, `#trail` or `#plan` to the URL to open that view directly. `#pano-lagoon` and `#pano-deck` open the 360° views.
+Add one of these to the URL to open a view directly: `#walk` (the quarry cabins), `#walk-private` (the private side), `#cabin`, `#residence`, `#trail` (the walkthrough video), `#trail-play` (the playable prototype), `#plan`, `#pano-lagoon` or `#pano-deck` (the 360° views). `#tools` switches on the owners' tools.
 
 ## 360° photoreal views
 

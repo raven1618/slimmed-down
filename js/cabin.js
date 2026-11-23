@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-function worldUV(geo, s = 4) {
+export function worldUV(geo, s = 4) {
   const p = geo.attributes.position, n = geo.attributes.normal, uv = geo.attributes.uv;
   for (let i = 0; i < p.count; i++) {
     const nx = Math.abs(n.getX(i)), ny = Math.abs(n.getY(i));
@@ -16,7 +16,7 @@ function worldUV(geo, s = 4) {
   uv.needsUpdate = true;
   return geo;
 }
-function box(w, h, d, x, y, z, mat, parent, opts = {}) {
+export function box(w, h, d, x, y, z, mat, parent, opts = {}) {
   const geo = new THREE.BoxGeometry(w, h, d);
   if (opts.uv) worldUV(geo, opts.uv);
   const m = new THREE.Mesh(geo, mat);
