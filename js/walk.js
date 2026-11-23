@@ -287,12 +287,13 @@ export async function build(ctx) {
   addEventListener('keyup', (e) => keys.delete(e.code), sig);
   addEventListener('blur', () => keys.clear(), sig);
   const stickEl = $('wk-stick'), knob = stickEl.firstElementChild, stick = { id: null, ox: 0, oy: 0, x: 0, y: 0 }, looks = new Map(), cv = stage;
+  const look = { x: 0, y: 0, t: 0 };                // how fast the view was turning (radians per ms): it glides on after you let go
   cv.addEventListener('pointerdown', (e) => {
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     if (e.pointerType !== 'mouse' && stick.id === null && e.clientX < innerWidth * 0.45) {
       Object.assign(stick, { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: 0, y: 0 });
       stickEl.hidden = false; stickEl.style.left = e.clientX + 'px'; stickEl.style.top = e.clientY + 'px'; knob.style.transform = '';
-    } else looks.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    } else { looks.set(e.pointerId, { x: e.clientX, y: e.clientY }); Object.assign(look, { x: 0, y: 0, t: performance.now() }); }
   }, sig);
   cv.addEventListener('pointermove', (e) => {
     if (e.pointerId === stick.id) {
@@ -303,11 +304,12 @@ export async function build(ctx) {
     }
     const p = looks.get(e.pointerId);
     if (!p) return;
-    const k = ((cam.fov * Math.PI) / 180) / innerHeight;
-    P.yaw += (e.clientX - p.x) * k; P.pitch = clamp(P.pitch + (e.clientY - p.y) * k, -1.2, 1.2);
+    const k = ((ctx.lookSpeed || 1) * ((cam.fov * Math.PI) / 180)) / innerHeight, dy = -(e.clientX - p.x) * k, dp = -(e.clientY - p.y) * k, now = performance.now(), ms = Math.max(8, now - look.t);
+    P.yaw += dy; P.pitch = clamp(P.pitch + dp, -1.2, 1.2);                    // drag right to look right, up to look up (CLAUDE.md)
+    look.x = look.x * 0.3 + (dy / ms) * 0.7; look.y = look.y * 0.3 + (dp / ms) * 0.7; look.t = now;
     p.x = e.clientX; p.y = e.clientY;
   }, sig);
-  const up = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.x = stick.y = 0; stickEl.hidden = true; } looks.delete(e.pointerId); };
+  const up = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.x = stick.y = 0; stickEl.hidden = true; } looks.delete(e.pointerId); if (performance.now() - look.t > 60) look.x = look.y = 0; };
   cv.addEventListener('pointerup', up, sig); cv.addEventListener('pointercancel', up, sig);
 
   /* ---- the loop */
@@ -331,6 +333,10 @@ export async function build(ctx) {
     if (keys.has('ArrowRight')) turn -= 1;
     if (stick.id !== null) { f -= stick.y; s += stick.x; }
     P.yaw += turn * dt * 1.7;
+    if (!looks.size && !reduced && performance.now() - look.t < 1500) {     // the glide after a flick
+      const ms = dt * 1000, f = Math.exp(-ms / 260);
+      P.yaw += look.x * ms; P.pitch = clamp(P.pitch + look.y * ms, -1.2, 1.2); look.x *= f; look.y *= f;
+    }
     const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || Math.hypot(stick.x, stick.y) > 0.95;
     const m = Math.hypot(f, s);
     if (m > 1) { f /= m; s /= m; }

@@ -3,7 +3,8 @@
   "private": true,
   "description": "Checks for the Outer Heaven site. The site itself has no build step.",
   "scripts": {
-    "test": "node tests/smoke.cjs"
+    "test": "node tests/smoke.cjs",
+    "phone": "node tests/phone.cjs"
   },
   "devDependencies": {
     "playwright": "1.63.0"

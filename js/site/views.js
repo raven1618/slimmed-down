@@ -467,7 +467,7 @@ function moduleView(el, src, settings, onFail) {
     lendRenderer(settings);
     const g = ++v.gen;
     import(new URL(src, document.baseURI).href)      // from the page's folder (a plain script would resolve it from js/site/)
-      .then((m) => m.build({ renderer, $, clamp, ease, rng, small, reduced, windOf, GLSL_NOISE, GradeShader, disposeScene, trailEl, ...extra }))
+      .then((m) => m.build({ renderer, $, clamp, ease, rng, small, reduced, windOf, GLSL_NOISE, GradeShader, disposeScene, trailEl, lookSpeed: LOOK_SPEED, ...extra }))
       .then((api) => { if (g !== v.gen || el.hidden) api.dispose(); else v.api = api; })
       .catch((err) => { console.error(err); if (g === v.gen) onFail(err); });
   };
@@ -554,13 +554,17 @@ function buildPano() {
   const zoom = (f) => { pano.fov = clamp(pano.fov * f, 30, 95); };
   const ptrs = new Map();
   let pinch = 0;
-  el.addEventListener('pointerdown', (e) => { ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { el.setPointerCapture(e.pointerId); } catch (err) {} });
+  // Drag right to look right, up to look up, as on the hill and in free roam (CLAUDE.md); a flick keeps turning.
+  const vel = { x: 0, y: 0, t: 0 };
+  let glide = 0;
+  el.addEventListener('pointerdown', (e) => { cancelAnimationFrame(glide); Object.assign(vel, { x: 0, y: 0, t: performance.now() }); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { el.setPointerCapture(e.pointerId); } catch (err) {} });
   el.addEventListener('pointermove', (e) => {
     const p0 = ptrs.get(e.pointerId);
     if (!p0) return;
     if (ptrs.size === 1) {
-      const k = ((cam.fov * Math.PI) / 180) / innerHeight;
-      pano.yaw += (e.clientX - p0.x) * k; pano.pitch = clamp(pano.pitch + (e.clientY - p0.y) * k, -1.45, 1.45);
+      const k = (LOOK_SPEED * ((cam.fov * Math.PI) / 180)) / innerHeight, dy = -(e.clientX - p0.x) * k, dp = -(e.clientY - p0.y) * k, now = performance.now(), dt = Math.max(8, now - vel.t);
+      pano.yaw += dy; pano.pitch = clamp(pano.pitch + dp, -1.45, 1.45);
+      vel.x = vel.x * 0.3 + (dy / dt) * 0.7; vel.y = vel.y * 0.3 + (dp / dt) * 0.7; vel.t = now;
     }
     p0.x = e.clientX; p0.y = e.clientY;
     if (ptrs.size === 2) {
@@ -570,7 +574,17 @@ function buildPano() {
     }
     pano.draw();
   });
-  const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = 0; };
+  const up = (e) => {
+    ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = 0;
+    if (ptrs.size || performance.now() - vel.t > 60 || reduced) return;          // let go while moving: glide to a stop
+    let last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(50, now - last), f = Math.exp(-dt / 260); last = now;
+      pano.yaw += vel.x * dt; pano.pitch = clamp(pano.pitch + vel.y * dt, -1.45, 1.45); vel.x *= f; vel.y *= f; pano.draw();
+      if (!panoEl.hidden && Math.hypot(vel.x, vel.y) > 2e-5) glide = requestAnimationFrame(step);
+    };
+    glide = requestAnimationFrame(step);
+  };
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   el.addEventListener('wheel', (e) => { e.preventDefault(); zoom(Math.exp(e.deltaY * 0.001)); pano.draw(); }, { passive: false });
   addEventListener('keydown', (e) => {
@@ -724,7 +738,7 @@ const GradeShader = {
       c = (c - 0.5) * 1.12 + 0.5;
       c = mix(vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), c, 1.2);
       vec2 d = vUv - 0.5; c *= 1.0 - dot(d, d) * 0.7;
-      c += (fract(sin(dot(floor(vUv * uRes) + fract(uTime) * 91.7, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.022;
+      c += (fract(sin(dot(floor(vUv * uRes) + fract(uTime) * 91.7, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.006;
       gl_FragColor = vec4(mix(c0, clamp(c, 0.0, 1.0), uAmt), 1.0);
     }`,
 };
@@ -738,12 +752,12 @@ const SanitizeShader = {
       gl_FragColor = vec4(clamp(c.rgb, 0.0, 32.0), 1.0);                        // and no infinities
     }`,
 };
-const composers = new Set(), POST_PR = small ? 1.25 : 1.5;   // the effects render at most at 1.5× pixels, to fit in any GPU's memory
+const composers = new Set(), POST_PR = 2;   // the effects at 2× pixels, phones included (they are most of the audience); slow devices step down
 let postView = null, postFailed = false;
 renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); postFailed = true; });
 function makeComposer(scene, camera) {
   const cap = POST_PR, pr = Math.min(renderer.getPixelRatio(), cap), w = innerWidth, h = innerHeight;
-  const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: small ? 0 : Math.min(2, renderer.capabilities.maxSamples || 0) });
+  const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: Math.min(4, renderer.capabilities.maxSamples || 0) });   // 4× antialiasing everywhere: without it edges stair-step
   // The GPU has to accept a half-float target, or the chain is skipped and the view draws plainly.
   const gl = renderer.getContext();
   renderer.setRenderTarget(rt);
@@ -753,7 +767,7 @@ function makeComposer(scene, camera) {
   const c = new EffectComposer(renderer, rt);
   c.addPass(new RenderPass(scene, camera));
   c.addPass(new ShaderPass(SanitizeShader));
-  c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), 0.42, 0.6, 0.88));
+  c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), 0.2, 0.5, 0.95));       // a little glow on the sun's glints, never a wash
   c.addPass(new OutputPass());
   c.grade = new ShaderPass(GradeShader);
   c.addPass(c.grade);
@@ -878,7 +892,7 @@ async function boot() {
   fitCamera(hill.camera);
   const portrait = innerWidth / innerHeight < 1;
   const tgt = new THREE.Vector3(-250, 0, 60); tgt.y = yAt(tgt.x, tgt.z);
-  HOME = { tgt, pos: tgt.clone().add(new THREE.Vector3().setFromSphericalCoords(portrait ? 4300 : 2900, 1.08, -1.22)) };
+  HOME = { tgt, pos: tgt.clone().add(new THREE.Vector3().setFromSphericalCoords(portrait ? 2700 : 2900, portrait ? 0.95 : 1.08, -1.22)) };   // a phone sees the hill, not the model's edges
   hill.camera.position.copy(HOME.pos); mc.target.copy(HOME.tgt); mc.update();
   fitHillShadow(true);
   const want = (location.hash || '').slice(1);

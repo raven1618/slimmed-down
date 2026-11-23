@@ -201,12 +201,30 @@ function contourMaterial(map, ov, shared = null) {
       float pa = pc.a * uPatchOn * step(0.0, pu.x) * step(pu.x, 1.0) * step(0.0, pu.y) * step(pu.y, 1.0);
       diffuseColor.rgb = mix(diffuseColor.rgb, pc.rgb, pa); }\n`;
   });
+  if (HILL_SKY.tex && HILL_SKY.W && !mat.userData.u.uSky) Object.assign(mat.userData.u, { uSky: { value: HILL_SKY.tex }, uSkyK: { value: HILL_SKY.W.skyScale * SKY_GAIN }, uHaze: { value: 0 }, uDim: { value: new THREE.Vector3(1, 1, 1) } });
+  if (mat.userData.u.uSky) mat.defines = { OH_SKY: 1 };
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, mat.userData.u);
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uVS; uniform float uBase;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvElev = position.y / uVS + uBase;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv; uniform float uPatchOn; uniform float uPhoto; uniform sampler2D uDetail; uniform sampler2D uHole; uniform vec4 uHoleR; uniform float uUseHole;' + patchDecl + GLSL_NOISE)
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vElev; varying vec3 vOhW; uniform float uVS; uniform float uBase;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvElev = position.y / uVS + uBase;')
+      .replace('#include <project_vertex>', '#include <project_vertex>\nvOhW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vOhW;\n' + (mat.userData.u.uSky ? LOOK.SKY : '') + '\nvarying float vElev; uniform float uOn; uniform vec3 uLine; uniform float uLineK; uniform sampler2D uOv; uniform float uPatchOn; uniform float uPhoto; uniform sampler2D uDetail; uniform sampler2D uHole; uniform vec4 uHoleR; uniform float uUseHole;' + patchDecl + GLSL_NOISE)
       .replace('#include <tonemapping_fragment>', 'vec4 ov = texture2D(uOv, vMapUv);\ngl_FragColor.rgb = gl_FragColor.rgb * (1.0 - ov.a) + ov.rgb;\n#include <tonemapping_fragment>')
+      // The outer 9% of the 4 km model melts into the haze, through the same tone mapping as the sky behind it,
+      // so no view shows the model's straight edge against the sky (CLAUDE.md).
+      .replace('#include <fog_fragment>', `#include <fog_fragment>
+        #ifdef USE_FOG
+        { vec2 eu = abs(vMapUv - 0.5) * 2.0; float ef = smoothstep(0.82, 0.99, max(eu.x, eu.y));
+          #ifdef OH_SKY
+          vec3 ed = vOhW - cameraPosition; vec4 ec = vec4(skyAt(vec3(ed.x, length(ed.xz) * 0.012, ed.z)), 1.0);
+          #else
+          vec4 ec = vec4(fogColor, 1.0);
+          #endif
+          #if defined( TONE_MAPPING )
+          ec.rgb = toneMapping(ec.rgb);
+          #endif
+          ec = linearToOutputTexel(ec); gl_FragColor.rgb = mix(gl_FragColor.rgb, ec.rgb, ef); }
+        #endif`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
         if (ohK > 0.0) normal = ohBump(-vViewPosition, normal, ohDH * 1.1 * ohK, faceDirection);`)
       .replace('#include <map_fragment>', `#include <map_fragment>
@@ -313,7 +331,7 @@ function buildTrees() {
 function placeTrees(mesh) {
   const raw = treeData, m = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), s = new THREE.Vector3(), R = rng(5);
   for (let i = 0; i < mesh.userData.n; i++) {
-    const x = raw.x[i], z = raw.z[i], k = clearOfStructures(x, z) ? 1 : 0;
+    const x = raw.x[i], z = raw.z[i], k = clearOfStructures(x, z) && Math.max(Math.abs(x), Math.abs(z)) < HHALF * 0.86 ? 1 : 0;   // none where the edge melts into the haze
     q.setFromAxisAngle(UP, R() * 6.283);
     mesh.setMatrixAt(i, m.compose(v.set(x, yAt(x, z), z), q, s.set(raw.r[i] * k, raw.h[i] * k, raw.r[i] * k)));
   }
@@ -436,9 +454,9 @@ function siteMaterials() {
     black: std({ color: 0x1c1e20, roughness: 0.55 }), tank: std({ color: 0xe9ece6, roughness: 0.5 }), lid: std({ color: 0x3f8a5a, roughness: 0.5 }),
     canvas: std({ color: 0xf3f0e7, roughness: 0.95, side: THREE.DoubleSide }), mud: std({ color: 0xb06a42, roughness: 1 }),
     blue: std({ color: 0x2f5fa8, roughness: 0.5 }), tub: std({ color: 0xdfeef3, roughness: 0.3 }),
-    water: std({ color: 0x8a5a32, roughness: 0.15, metalness: 0, envMapIntensity: 0.6 }),
+    water: std({ color: 0x1f2a22, roughness: 0.04, metalness: 0, envMapIntensity: 1.4 }),       // dark and glassy: it shows the sky, so it reads as water
     bank: std({ map: gravelTex(), vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
-    gravel: std({ map: gravelTex(), roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),
+    gravel: std({ map: gravelTex(), color: 0xd9c8b0, roughness: 1, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),   // edges fade into the ground
     mast: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.3 }),
     leaves: foliage(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.65 }), { instanced: false, scale: 1.3, wind: 0.008 }), granite: std({ color: 0x8e8c86, roughness: 0.9 }),
   });
@@ -622,7 +640,7 @@ function pondModel(o, M) {
     for (let s = 0; s < n; s++) ring.push([lerp(ax, bx, s / n), lerp(az, bz, s / n)]);
   }
   ring.push(ring[0]);
-  const pos = [], uv = [], idx = [], col = [], grass = new THREE.Color(0x6f7d3f), earth = new THREE.Color(0xa25f3b), deep = new THREE.Color(0x5e3a24), c = new THREE.Color();
+  const pos = [], uv = [], idx = [], col = [], grass = new THREE.Color(0x5d6a37), earth = new THREE.Color(0x6e4c33), deep = new THREE.Color(0x2f261c), c = new THREE.Color();   // wet, dark banks: bright clay read as a bowl
   const cx = o.ring.reduce((a, p) => a + p[0], 0) / o.ring.length, cz = o.ring.reduce((a, p) => a + p[1], 0) / o.ring.length;
   let acc = 0;
   ring.forEach(([x, z], i) => {
@@ -650,17 +668,18 @@ function ribbon(path, w, mat) {
     for (let s = 0; s < n; s++) pts.push([lerp(x0, x1, s / n), lerp(z0, z1, s / n)]);
   }
   pts.push(path[path.length - 1]);
-  const pos = [], uv = [], idx = [];
+  const pos = [], uv = [], idx = [], col = [], ACROSS = [[-0.62, 0], [-0.36, 1], [0.36, 1], [0.62, 0]];   // four across: the edges fade out
   let acc = 0;
   pts.forEach(([x, z], i) => {
     const [ax, az] = pts[Math.max(0, i - 1)], [bx, bz] = pts[Math.min(pts.length - 1, i + 1)];
     let dx = bx - ax, dz = bz - az; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
     if (i) acc += Math.hypot(x - pts[i - 1][0], z - pts[i - 1][1]);
-    for (const s of [-1, 1]) { const px = x - dz * (w / 2) * s, pz = z + dx * (w / 2) * s; pos.push(px, yAt(px, pz) + 0.08, pz); uv.push((s * w) / 4, acc / 2); }
-    if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    for (const [s, a] of ACROSS) { const px = x - dz * w * s, pz = z + dx * w * s; pos.push(px, yAt(px, pz) + 0.05, pz); uv.push((s * w) / 2, acc / 2); col.push(1, 1, 1, a * 0.9); }
+    if (i) { const b = (i - 1) * 4; for (let k = 0; k < 3; k++) idx.push(b + k, b + k + 4, b + k + 1, b + k + 4, b + k + 5, b + k + 1); }
   });
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4));
   g.setIndex(idx); g.computeVertexNormals();
   const m = new THREE.Mesh(g, mat); m.receiveShadow = true;
   return m;
@@ -1100,12 +1119,15 @@ function loadOfficial(fc) {
 }
 
 /* ------------------------------------------------------------ build -- */
+const HILL_SKY = {};
 async function buildHill() {
   const [meta, ter, trees, ctx, layers, img, legends, sites, objects] = await Promise.all([
     getJSON('data/meta.json'), getJSON('data/terrain.json'), getJSON('data/trees.json'), getJSON('data/context.json'),
     getJSON('data/layers.geojson').catch(() => ({ features: [] })), loadImage('data/imagery.jpg'),
     getJSON('data/basemaps.json').catch(() => ({})), loadSites(), getJSON('data/objects.json').catch(() => ({ objects: [] })),
     getJSON('data/tour.json').then((p) => (TOUR = p)).catch(() => []),
+    new THREE.TextureLoader().loadAsync('data/walk/sky.jpg').then((t) => (HILL_SKY.tex = t)).catch(() => null),      // the sky of the renders
+    getJSON('data/walk/world.json').then((w) => (HILL_SKY.W = w)).catch(() => null),
   ]);
   LEGENDS = legends; SITES = sites; OBJECTS = objects;
   prepCuts();
@@ -1137,12 +1159,28 @@ async function buildHill() {
   loadOfficial(layers);
 
   const scene = hill.scene;
-  const HAZE = new THREE.Color(0xd3c7b6);
-  scene.background = HAZE.clone();
-  scene.fog = new THREE.FogExp2(HAZE, 0.00007);
   const sunDir = new THREE.Vector3(0.86, 0.3, 0.41).normalize();       // golden hour: early morning, low in the east-south-east
   scene.environment = skyEnvironment(sunDir); scene.environmentIntensity = 0.65;
-  scene.add(physicalSky(sunDir, 30000));
+  if (HILL_SKY.tex && HILL_SKY.W) {
+    // The sky Blender rendered from the site, the one in the tour and free roam (js/look.js), so every view has
+    // one sky; the haze toward the horizon takes its colour, so the far edge of the model melts into it.
+    const t = HILL_SKY.tex; t.wrapS = THREE.RepeatWrapping; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false;
+    const U = { uSky: { value: t }, uSkyK: { value: HILL_SKY.W.skyScale * SKY_GAIN }, uHaze: { value: 0 }, uDim: { value: new THREE.Vector3(1, 1, 1) } };
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), new THREE.ShaderMaterial({
+      uniforms: U, side: THREE.BackSide, depthWrite: false, fog: false,
+      vertexShader: 'varying vec3 vDir; void main() { vDir = position; vec4 p = projectionMatrix * viewMatrix * vec4(position + cameraPosition, 1.0); gl_Position = p.xyww; }',
+      fragmentShader: `${LOOK.SKY} varying vec3 vDir; void main() { vec3 d = normalize(vDir); gl_FragColor = vec4(skyAt(vec3(d.x, max(d.y, 0.012), d.z)), 1.0);
+${LOOK.OUT}
+}`,
+    }));
+    dome.frustumCulled = false; dome.renderOrder = -10; scene.add(dome);
+    const hz = LOOK.horizonColor({ sky: t, W: HILL_SKY.W }).multiplyScalar(SKY_GAIN);
+    scene.background = hz; scene.fog = new THREE.FogExp2(hz, 0.00008);
+  } else {
+    const HAZE = new THREE.Color(0xb9c3c9);
+    scene.background = HAZE.clone(); scene.fog = new THREE.FogExp2(HAZE, 0.00007);
+    scene.add(physicalSky(sunDir, 30000));
+  }
   scene.add(new THREE.HemisphereLight(0x9db4d4, 0x4a3d30, 0.55));
   const sun = new THREE.DirectionalLight(0xffbf80, 3.6);
   hill.sun = sun; hill.sunDir = sunDir;
@@ -1432,10 +1470,13 @@ function showStructure(o) {
 }
 /* The camera of the owner's wide drone photo, so the model can be checked against it. */
 function homesteadView() {
-  const v = OBJECTS.view, [cx, cy, cz] = v.camera, b = (v.bearing * Math.PI) / 180, p = (v.pitch * Math.PI) / 180;
+  // Framed on the middle of the buildings, from the bearing of the owner's view, about 45° down: an aerial view,
+  // far enough that the hand-built props and the 1 m imagery do not read as toys up close.
+  const v = OBJECTS.view, b = (v.bearing * Math.PI) / 180, p = -0.8;
+  const at = (o) => (o.ring ? o.ring.reduce((a, q) => [a[0] + q[0] / o.ring.length, a[1] + q[1] / o.ring.length], [0, 0]) : [o.x, o.z]);
+  const ss = OBJECTS.objects.filter((o) => ['house', 'solar', 'pond', 'quincho', 'cabin', 'tent', 'oven'].includes(o.type)).map(at);
+  const cx = ss.reduce((a, q) => a + q[0], 0) / ss.length, cz = ss.reduce((a, q) => a + q[1], 0) / ss.length;
   const dir = new THREE.Vector3(Math.sin(b) * Math.cos(p), Math.sin(p), -Math.cos(b) * Math.cos(p));
-  const pos = new THREE.Vector3(cx, yAt(cx, cz) + (cy - groundAt(cx, cz)), cz);
-  if (innerWidth / innerHeight < 1) pos.addScaledVector(dir, -45);      // portrait screens see a narrower slice
-  const tgt = rayGround(pos, dir) || pos.clone().addScaledVector(dir, 90);
+  const tgt = new THREE.Vector3(cx, yAt(cx, cz), cz), pos = tgt.clone().addScaledVector(dir, innerWidth / innerHeight < 1 ? -150 : -105);
   flyTo(pos, tgt, 1800);
 }

@@ -47,7 +47,9 @@ keeps phones within their graphics memory.
 
 ## Check every view
 
-`npm test` opens the site in a browser and goes through every view: the hill, the tour of both sites, free roam on
+`npm run phone` checks the quality bar in `CLAUDE.md` on an iPhone-sized screen: the hill is not washed out or
+murky, the 3D is antialiased and sharp, and dragging in the tour looks the way you drag. It saves
+`tests/shots/phone-*.png` to look at. `npm test` opens the site in a browser and goes through every view: the hill, the tour of both sites, free roam on
 both, back to the tour, the trail video and prototype, and the plan. It fails if a view does not open, a script error shows up, or more
 than one 3D canvas exists, and saves a screenshot of each view in `tests/shots/`. Once: `npm install && npx
 playwright install chromium`. The browser draws in software, so a run takes a few minutes. GitHub runs it on every

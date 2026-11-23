@@ -5,6 +5,8 @@
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const small = matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+const LOOK_SPEED = 1.15;          // look-around speed in the tour and free roam: radians per screen height, times the field of view
+const SKY_GAIN = 0.85;            // the Blender sky on the hill (ACES, exposure 1) against the renders (AgX, +0.5)
 const $ = (id) => document.getElementById(id);
 const loaderText = $('loader-text');
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));

@@ -1,5 +1,5 @@
-# Opens every view of the site in a browser on each push, and fails on a view that does not open or a script error.
-# The screenshots of each view are attached to the run.
+# On each push: the phone check of CLAUDE.md's quality bar (exposure, antialiasing, drag direction), then every view
+# of the site in a browser (fails on a view that does not open or a script error). Screenshots are attached to the run.
 name: Check every view
 on:
   push:
@@ -15,7 +15,9 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
+      - run: npm run phone
       - run: npm test
+        if: always()
       - uses: actions/upload-artifact@v4
         if: always()
         with:

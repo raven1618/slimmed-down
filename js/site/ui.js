@@ -11,7 +11,8 @@ let mode = 'cerro', active = null, tween = null, limitLabels = [];
 
 hill.controls = new OrbitControls(hill.camera, renderer.domElement);
 const mc = hill.controls;
-mc.enableDamping = true; mc.dampingFactor = 0.07;
+mc.enableDamping = true; mc.dampingFactor = 0.11;          // answers at once and still glides when you let go
+mc.rotateSpeed = small ? 1.3 : 1.0; mc.zoomSpeed = 1.2;     // a phone screen is short: a swipe turns as far as a mouse drag
 mc.minDistance = 25; mc.maxDistance = 7500;
 mc.maxPolarAngle = 1.45; mc.minPolarAngle = 0.02;
 mc.screenSpacePanning = false;
