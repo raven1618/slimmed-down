@@ -8,7 +8,7 @@ a protected forest hill in Cordillera, Paraguay.
 - **The hill:** a 4 × 4 km 3D model of Cerro Kavaju from satellite elevation, imagery, tree heights and map data.
 - **Explore the site:** a photoreal 360° tour of both parts of the site, rendered in Blender: the quarry cabins
   (arrival, the lagoon, a cabin's deck, inside the cabin, its living roof) and the private side, Finca 2663 (the
-  homesite, the residence's terrace and living room, the slope above it, the mango tree). From any view,
+  homesite, the residence's terrace, living room and living roof, the mango tree). From any view,
   **Free roam from here** opens the same place in first person, drawn live, to walk anywhere; **Back to the tour**
   returns. The tour and free roam use the same terrain, trees and buildings, so they show one site.
 - **The trail:** a video of Mala Visión, the fight at the trail's midpoint, with the playable prototype one button away (`#trail-play`). The video is recorded from the prototype by `render/trail_video.mjs`.

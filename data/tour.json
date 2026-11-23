@@ -97,14 +97,18 @@
  },
  {
   "site": "private",
-  "id": "slope",
-  "name": "Above the house",
-  "x": -150.0,
-  "z": -563.0,
-  "y": 170.14,
+  "id": "roof",
+  "name": "On the living roof",
+  "x": -114.8,
+  "z": -561.0,
+  "y": 170.05,
   "bearing": 90.0,
-  "file": "tour/private-slope.jpg",
-  "text": "Up the slope behind the house: two living roofs stepped with the hill. From the trail above you see grass, not a house."
+  "file": "tour/private-roof.jpg",
+  "text": "On the living roof: native grasses on 20 cm of soil, the terrace and the pool below, the valley beyond. From the trail above you see grass, not a house.",
+  "roam": [
+   -114.6,
+   -563.0
+  ]
  },
  {
   "site": "private",

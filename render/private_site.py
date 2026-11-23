@@ -174,6 +174,9 @@ Image.fromarray((np.clip(Lt / QW['lightScale'], 0, 1) ** (1 / 2.2) * 255 + 0.5).
 FX0, FZ0, FX1, FZ1 = -1400, -1660, 1000, 740
 fxs, fzs = np.arange(FX0, FX1 + 1, 10.0), np.arange(FZ0, FZ1 + 1, 10.0)
 FX, FZ = np.meshgrid(fxs, fzs); Hc = height(FX, FZ)
+lo = ndimage.minimum_filter(H, size=21)                    # under the detail terrain, the land beyond sinks below its lowest point
+inside = (FX > X0 + 5) & (FX < X1 - 5) & (FZ > Z0 + 5) & (FZ < Z1 - 5)   # within 10 m (the pad is cut into the slope), or it shows through
+Hc = np.where(inside, np.minimum(Hc, lo[np.clip(np.round(FZ - Z0).astype(int), 0, H.shape[0] - 1), np.clip(np.round(FX - X0).astype(int), 0, H.shape[1] - 1)] - 1.0), Hc)
 crop = Image.open(f'{DATA}/imagery.jpg').convert('RGB').crop((int((FX0 + 2000) * S * 4000 / 4000), int((FZ0 + 2000) * S), int((FX1 + 2000) * S), int((FZ1 + 2000) * S)))
 crop.save(f'{OUT}/far.jpg', quality=85)
 def f32(name, arr):

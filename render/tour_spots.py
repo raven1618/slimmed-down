@@ -52,8 +52,8 @@ px, pz = at(-2, 5.4); add('private', 'terrace', 'The terrace', px, pz, r['floor'
 terrace = (px, pz)
 px, pz = at(-4.5, 0.5); add('private', 'living', 'The living room', px, pz, r['floor'] + 1.6, front,
                           'The living room: rammed-earth walls and a glass front to the valley. Three bedrooms, about 180 m² in all; the bedroom wing sits back for privacy.', terrace)
-px, pz = at(-2, -30); add('private', 'slope', 'Above the house', px, pz, g(px, pz) + 1.7, front,
-                          'Up the slope behind the house: two living roofs stepped with the hill. From the trail above you see grass, not a house.')
+px, pz = at(-4, 5.2); add('private', 'roof', 'On the living roof', px, pz, r['floor'] + 3.58 + 1.7, front,
+                          'On the living roof: native grasses on 20 cm of soil, the terrace and the pool below, the valley beyond. From the trail above you see grass, not a house.', terrace)
 mx, mz = (W['spots'][2]['look'])
 px, pz = mx + 22, mz + 8; add('private', 'mango', 'The mango tree', px, pz, g(px, pz) + 1.7, bearing(px, pz, mx, mz),
                               'The old mango tree and its two granite boulders, where the trail across the hill ends.')
