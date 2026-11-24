@@ -4,10 +4,12 @@ or the private side (render/private_site.py ... WORK).
    python build.py ASSETS SITE_DIR OUT_DIR 4096 2048 SAMPLES tour MODELS_DIR TOUR_JSON
 The tour renders every 360° view of data/tour.json for this site into OUT_DIR, with the buildings exported from the
 web (render/export_models.cjs) so the renders show exactly what you walk around."""
-import glob, math, sys, time
+import glob, math, os, sys, time
 import numpy as np
 import bpy
 from mathutils import Matrix, Vector
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from palm import palm as make_palm                      # Poly Haven has no palm: render/palm.py
 
 A, SITE, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 W, H, SPP = int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6])
@@ -22,7 +24,7 @@ sc = bpy.context.scene
 D = np.load(f'{SITE}/site.npz')
 QUARRY = 'lagoon' in D.files                                 # else the private side
 import json
-SPOTS = [p for p in json.load(open(TOUR)) if p['site'] == ('quarry' if QUARRY else 'private')] if TOUR else []
+SPOTS = [p for p in json.load(open(TOUR)) if p['site'] in (('quarry', 'homestead') if QUARRY else ('private',))] if TOUR else []   # the homestead is in the quarry's scene
 bl = lambda x, z, y: (float(x), float(-z), float(y))           # local (x east, z south, y up) to Blender (X east, Y north, Z up)
 
 # ---------------------------------------------------------------- helpers
@@ -126,6 +128,9 @@ def add_attr(ob, name, kind, values):
 
 # ---------------------------------------------------------------- terrain
 dx0, dz0 = D['dorig']; Hd = D['Hd']
+def ground_at(x, z):
+    fx, fz = x - dx0, z - dz0; i, j = int(fz), int(fx); tz, tx = fz - i, fx - j
+    return float(Hd[i, j] * (1 - tx) * (1 - tz) + Hd[i, j + 1] * tx * (1 - tz) + Hd[i + 1, j] * (1 - tx) * tz + Hd[i + 1, j + 1] * tx * tz)
 nz, nx = Hd.shape
 Hg, GRASS, step = Hd, D['grass'].copy(), 1.0
 if MODELS:
@@ -196,6 +201,11 @@ parts, native = [], []
 for child, model, pick in SPECIES:
     ps = load_parts(model, pick); parts.append((child, ps))
     native.append(max((o.matrix_world @ Vector(c)).z for o in ps for c in o.bound_box))
+PALM = len(parts)
+if QUARRY:                                                   # pindó palms: those mapped on the site, and among the forest's trees
+    ps = make_palm(sc)
+    for o in ps: sc.collection.objects.unlink(o)
+    parts.append(('f_palm', ps)); native.append(max((o.matrix_world @ Vector(c)).z for o in ps for c in o.bound_box))
 treelib = library('treelib', parts)
 T = D['trees']
 keep = (np.hypot(T[:, 0] - 390.0, T[:, 1] - 836.0) > 28) & (np.hypot(T[:, 0] - 384.2, T[:, 1] - 860.4) > 15) if QUARRY else np.ones(len(T), bool)
@@ -203,6 +213,12 @@ if 'species' in D.files: SP0 = D['species']
 else:
     rng = np.random.default_rng(7); r = rng.random(keep.sum()); h_ = T[keep, 3]
     SP0 = np.zeros(len(T), np.int32); SP0[keep] = np.where(h_ >= 14, 1, np.where(h_ >= 8, np.where(r < 0.5, 1, 2), np.where(h_ >= 4.5, np.where(r < 0.6, 3, 2), 4)))
+if QUARRY and 'palms' in D.files:
+    # The drone photos of the homestead show pindó palms all through the forest: one tall tree in five near it.
+    near_h = (np.hypot(T[:, 0] - 244.0, T[:, 1] - 771.0) < 260) & (T[:, 3] > 9) & keep
+    SP0 = np.where(near_h & (np.random.default_rng(11).random(len(T)) < 0.2), PALM, SP0)
+    P_ = D['palms']; T = np.vstack([T, np.column_stack([P_[:, 0], P_[:, 1], [ground_at(x, z) for x, z in P_[:, :2]], P_[:, 2], np.full(len(P_), 2.0)])])
+    SP0 = np.concatenate([SP0, np.full(len(P_), PALM)]); keep = np.concatenate([keep, np.ones(len(P_), bool)])
 for p in SPOTS: keep &= np.hypot(T[:, 0] - p['x'], T[:, 1] - p['z']) > 5          # no trunk right in front of a 360° view
 T, sp = T[keep], SP0[keep].astype(np.int32); h = T[:, 3]
 scale = (h / np.array(native)[sp]).astype(np.float32)
@@ -308,6 +324,28 @@ if MODELS:
         res_col = import_model('residence', [(-4.2, 0.2, 2.3), (-8.0, -0.5, 2.3), (8.75, 2.5, 2.5)])
         rx, rz, rfl, rrot = D['residence']; place(res_col, rx, rz, rfl, rrot)
     web_materials()
+    if QUARRY and os.path.exists(f'{MODELS}/homestead.glb'):
+        # The homestead as the hill draws it (render/export_models.cjs): each building set on this terrain where it
+        # stands, the gravel laid over the ground.
+        before = set(bpy.data.objects)
+        bpy.ops.import_scene.gltf(filepath=f'{MODELS}/homestead.glb')
+        bpy.context.view_layer.update()
+        for o in set(bpy.data.objects) - before:
+            if 'ox' not in o: continue
+            if o.get('drape'):
+                for m in [o] + list(o.children_recursive):
+                    if m.type != 'MESH': continue
+                    mw = m.matrix_world.copy(); inv = mw.inverted()
+                    for v in m.data.vertices:
+                        w = mw @ v.co; w.z = ground_at(w.x, -w.y) + 0.05; v.co = inv @ w
+            else:
+                o.location.z += ground_at(o['ox'], o['oz']) - o['ground']
+        if 'pond' in D.files and len(D['pond']):              # the pond: muddy, as in the photos, and glassy
+            me = bpy.data.meshes.new('pond'); lvl = float(D['pond_level'])
+            me.from_pydata([bl(x, z, lvl) for x, z in D['pond']], [], [list(range(len(D['pond'])))]); me.update()
+            pw = bpy.data.objects.new('pond', me); sc.collection.objects.link(pw)
+            m_, nt, N, L, bs = mat('pondwater'); bs.inputs['Base Color'].default_value = (0.2, 0.12, 0.055, 1); bs.inputs['Roughness'].default_value = 0.04
+            pw.data.materials.append(m_)
     if 'rocks' in D.files:                                            # the granite boulders by the mango tree
         rock, nt, N, L, bs = mat('granite')
         c, rgh, nrm = pbr(nt, 'clay_plaster', 1.5, N.new('ShaderNodeTexCoord').outputs['Object'])
@@ -433,9 +471,6 @@ if VIEW == 'bake':
 
 # ---------------------------------------------------------------- camera and render
 cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam')); sc.collection.objects.link(cam); sc.camera = cam
-def ground_at(x, z):
-    fx, fz = x - dx0, z - dz0; i, j = int(fz), int(fx); tz, tx = fz - i, fx - j
-    return float(Hd[i, j] * (1 - tx) * (1 - tz) + Hd[i, j + 1] * tx * (1 - tz) + Hd[i + 1, j] * (1 - tx) * tz + Hd[i + 1, j + 1] * tx * tz)
 if QUARRY and VIEW != 'tour':
     CAM, TGT = (390.0, 836.0), (350.0, 892.0)      # north-east of the lagoon, looking south-west along the row: the sun rakes across
     cam.location = bl(CAM[0], CAM[1], ground_at(*CAM) + 2.8)

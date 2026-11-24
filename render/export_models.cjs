@@ -1,14 +1,18 @@
 /* Exports the buildings of the site (js/cabin.js, in the walk's materials from js/look.js) as glTF binary files,
    so the Blender renders show exactly what you walk around on the site, interiors included.
 
-     node render/export_models.cjs OUT_DIR [THREE_DIR]      -> OUT_DIR/cabin.glb, OUT_DIR/residence.glb
+     node render/export_models.cjs OUT_DIR [THREE_DIR]      -> OUT_DIR/cabin.glb, residence.glb, homestead.glb
+
+   homestead.glb: the homestead's buildings as the hill draws them (js/site/hill.js), in place (x east, z south), each
+   with extras ox, oz (where it stands) and ground (the hill's ground there), so Blender sets it on its own terrain;
+   gravel comes with drape = 1 (laid over the ground). Palms, the pond and the quarry cut are made in Blender.
 
    Needs Playwright with Chromium. THREE_DIR: a local copy of the three package, if jsDelivr cannot be reached.
    Front of each building toward +z (glTF), floor at y = 0; materials keep their names (earth, glass, pool...). */
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), [OUT, THREE_DIR] = process.argv.slice(2);
-const TYPES = { '.js': 'application/javascript', '.json': 'application/json', '.webp': 'image/webp' };
+const TYPES = { '.js': 'application/javascript', '.json': 'application/json', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.css': 'text/css', '.html': 'text/html', '.mp4': 'video/mp4' };
 const PAGE = `<!doctype html><meta charset="utf-8">
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/" } }</script>
@@ -43,6 +47,27 @@ window.__glb = out;
   await page.goto('http://site/export.html');
   await page.waitForFunction(() => window.__glb, null, { timeout: 300000 });
   const glb = await page.evaluate(() => window.__glb);
+  // The homestead, from the site itself.
+  await page.route('https://fonts.**/**', (r) => r.abort());
+  await page.goto('http://site/index.html', { timeout: 600000 });
+  await page.waitForFunction(() => window.__ohReady === true, null, { timeout: 600000 });
+  await page.waitForTimeout(3000);                                   // the photo textures
+  glb.homestead = await page.evaluate(async () => {
+    const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
+    const KEEP = ['house', 'solar', 'mast', 'oven', 'cabin', 'quincho', 'tent', 'trampoline', 'gravel'];
+    const root = new THREE.Group();
+    hill.structures.children.forEach((c, i) => {
+      let o = null; c.traverse((k) => { if (!o && k.userData.site) o = k.userData.site; });
+      if (!o || !KEEP.includes(o.type)) return;
+      const x = o.x ?? o.path[0][0], z = o.z ?? o.path[0][1];
+      const k = c.clone(true); k.name = `hs_${o.type}_${i}`;
+      k.userData = { ox: x, oz: z, ground: yAt(x, z), drape: o.type === 'gravel' ? 1 : 0 };
+      k.traverse((m) => { if (m !== k) m.userData = {}; });
+      root.add(k);
+    });
+    const buf = await new GLTFExporter().parseAsync(root, { binary: true, maxTextureSize: 1024 });
+    return btoa(Array.from(new Uint8Array(buf), (c) => String.fromCharCode(c)).join(''));
+  });
   for (const [name, b64] of Object.entries(glb)) {
     fs.writeFileSync(path.join(OUT, name + '.glb'), Buffer.from(b64, 'base64'));
     console.log(name + '.glb', (fs.statSync(path.join(OUT, name + '.glb')).size / 1e6).toFixed(1), 'MB');

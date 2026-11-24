@@ -1,17 +1,17 @@
 # Graph Report - slimmed-down  (2026-11-24)
 
 ## Corpus Check
-- 45 files · ~76,122 words
+- 46 files · ~77,942 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 1, .css 1, .geojson 1)
 
 ## Summary
-- 569 nodes · 1024 edges · 26 communities (21 shown, 5 thin omitted)
+- 573 nodes · 1038 edges · 31 communities (25 shown, 6 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 33 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6823eed8`
+- Built from commit: `b7e83327`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -30,8 +30,8 @@
 - yAt
 - relayout
 - buildHill
-- prep.py
 - initLimits
+- export_models.cjs
 - hexRGB
 - private_site.py
 - Blender renders
@@ -42,6 +42,10 @@
 - showStructure
 - Outer Heaven: standing rules
 - .claude/CLAUDE.md
+- package.json
+- tour_spots.py
+- phone.cjs
+- smoke.cjs
 
 ## God Nodes (most connected - your core abstractions)
 1. `build()` - 39 edges
@@ -70,11 +74,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (26 total, 5 thin omitted)
+## Communities (31 total, 6 thin omitted)
 
 ### Community 0 - "views.js"
 Cohesion: 0.05
-Nodes (75): adaptResolution(), applyDisplay(), backToTour(), boot(), buildBar(), buildChips(), buildPano(), chooseBase() (+67 more)
+Nodes (76): adaptResolution(), applyDisplay(), backToTour(), boot(), buildBar(), buildChips(), buildPano(), chooseBase() (+68 more)
 
 ### Community 1 - "tools.js"
 Cohesion: 0.10
@@ -89,8 +93,8 @@ Cohesion: 0.09
 Nodes (33): box(), buildVolume(), CABIN, cabinInterior(), livingInterior(), materials(), merge(), quarryCabin() (+25 more)
 
 ### Community 4 - "trail_video.mjs"
-Cohesion: 0.05
-Nodes (39): description, devDependencies, playwright@1.63.0, name, private, scripts, phone, test (+31 more)
+Cohesion: 0.20
+Nodes (11): caption(), D(), face(), frames, LIMIT, log, page, run() (+3 more)
 
 ### Community 5 - "build"
 Cohesion: 0.16
@@ -132,6 +136,10 @@ Nodes (14): b64bytes(), baseTexture(), buildHill(), buildRoads(), getJSON(), loa
 Cohesion: 0.20
 Nodes (11): deleteLimit(), flatten(), initLimits(), limitById(), loadLocalNames(), localLoad(), localSave(), newLimitId() (+3 more)
 
+### Community 16 - "export_models.cjs"
+Cohesion: 0.20
+Nodes (6): { chromium }, fs, [OUT, THREE_DIR], path, ROOT, TYPES
+
 ### Community 17 - "hexRGB"
 Cohesion: 0.33
 Nodes (9): contourLabels(), gridCanvas(), hexRGB(), hillshade(), landcoverAt(), rampRGB(), reliefMap(), slopeMap() (+1 more)
@@ -156,8 +164,20 @@ Nodes (4): geojsonOf(), ringArea(), showStructure(), toUTM()
 Cohesion: 0.25
 Nodes (7): Before saying "done", graphify, Open (not at the bar yet), Outer Heaven: standing rules, Privacy (the repository is public), The quality bar (every change, every view), Where things are
 
+### Community 27 - "package.json"
+Cohesion: 0.22
+Nodes (9): description, devDependencies, playwright@1.63.0, name, private, scripts, phone, test (+1 more)
+
+### Community 29 - "phone.cjs"
+Cohesion: 0.25
+Nodes (6): { chromium, devices }, fs, path, ROOT, SHOTS, TYPES
+
+### Community 30 - "smoke.cjs"
+Cohesion: 0.25
+Nodes (7): { chromium }, fs, path, ROOT, SHOTS, TYPES, VIEWS
+
 ## Knowledge Gaps
-- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -167,12 +187,12 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 2 inferred relationships involving `build()` (e.g. with `loop()` and `resize()`) actually correct?**
   _`build()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **Should `views.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.05290490100616683 - nodes in this community are weakly interconnected._
-- **Why does `lendRenderer()` connect `views.js` to `core.js`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+  _Cohesion score 0.05189873417721519 - nodes in this community are weakly interconnected._
+- **Why does `build()` connect `build` to `export_models.cjs`, `look.js`?**
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **Should `tools.js` be split into smaller, more focused modules?**
   _Cohesion score 0.09574468085106383 - nodes in this community are weakly interconnected._
-- **Why does `disposeScene()` connect `core.js` to `views.js`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **Why does `lendRenderer()` connect `views.js` to `core.js`?**
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
 - **Should `hill.js` be split into smaller, more focused modules?**
   _Cohesion score 0.051515151515151514 - nodes in this community are weakly interconnected._

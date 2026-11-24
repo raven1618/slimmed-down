@@ -91,5 +91,9 @@ blender-env/bin/python build.py assets work/private ../data/tour 4096 2048 48 to
   the model, set in from the edge).
 - **Ground:** the walk's terrain at 1 m. Around the buildings the meadow is a mown lawn, and no grass grows inside
   a building's footprint.
+- **The homestead** (already built) is in the quarry's scene, which reaches west over it: its buildings come from the
+  hill (`homestead.glb`, from `js/site/hill.js`, set on this terrain where they stand), its pond is cut into the
+  ground with muddy water, and palms (`render/palm.py`) stand among the forest as in the owner's drone photos. Where
+  the site photo shows forest canopy around the clearing, `prep.py` adds trees the canopy model misses.
 - **Views:** each `data/tour.json` entry is an equirectangular camera at eye height; the centre of the image faces
   its bearing. A 4096×2048 view at 48 samples takes about 15 minutes on a 4-core CPU.

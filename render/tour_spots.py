@@ -57,5 +57,17 @@ px, pz = at(-4, 5.2); add('private', 'roof', 'On the living roof', px, pz, r['fl
 mx, mz = (W['spots'][2]['look'])
 px, pz = mx + 22, mz + 8; add('private', 'mango', 'The mango tree', px, pz, g(px, pz) + 1.7, bearing(px, pz, mx, mz),
                               'The old mango tree and its two granite boulders, where the trail across the hill ends.')
+# ---- the homestead (already built), in the quarry's scene: from data/objects.json, as on the hill
+O = {o['type']: o for o in json.load(open(f'{DATA}/objects.json'))['objects'] if o.get('name')}
+W, g = site(f'{DATA}/walk')
+h_ = O['house']; at, F = frame(h_['x'], h_['z'], h_['rot'])
+px, pz = at(0, 13); add('homestead', 'house', 'The homestead', px, pz, g(px, pz) + 1.7, bearing(px, pz, h_['x'], h_['z']),
+                       'Already built: the brick house with its clay tile roof, the solar array beside it, and the forest of Cerro Kavaju behind.')
+ring = O['pond']['ring']
+cx, cz = sum(p[0] for p in ring) / len(ring), sum(p[1] for p in ring) / len(ring)
+dx, dz = h_['x'] - cx, h_['z'] - cz; d = math.hypot(dx, dz); rad = max(math.hypot(p[0] - cx, p[1] - cz) for p in ring)
+px, pz = cx + dx / d * (rad + 3), cz + dz / d * (rad + 3); c_ = O['cabin']
+add('homestead', 'pond', 'By the pond', px, pz, g(px, pz) + 1.7, bearing(px, pz, c_['x'], c_['z']),
+    'The pond, dug into the slope: the wooden cabin at the edge of the forest above it, the bell tent and the quincho, among pindó palms.')
 json.dump(spots, open(f'{DATA}/tour.json', 'w'), indent=1)
 for s in spots: print(s['site'], s['id'], s['x'], s['z'], s['y'], s['bearing'])

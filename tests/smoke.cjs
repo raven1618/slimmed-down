@@ -25,6 +25,8 @@ const VIEWS = [
   ['trail-prototype', () => document.getElementById('tl-play').click(), () => { const b = document.querySelector('#tr-card [data-do="start"]'); return !!b && !b.disabled; }],
   ['hill', () => { document.getElementById('tr-close').click(); document.querySelector('.tab[data-go="cerro"]').click(); }, () => location.hash === '#cerro'],
   ['plan', () => document.querySelector('.tab[data-go="plan"]').click(), () => !document.getElementById('plan').hidden],
+  ['tour-homestead', () => { document.getElementById('plan-close').click(); document.querySelector('.tab[data-go="explore"]').click(); document.querySelector('#pano-sites [data-site="homestead"]').click(); },
+    () => location.hash.startsWith('#explore-homestead') && document.getElementById('pano-loading').hidden && document.getElementById('pano-roam').hidden],
 ];
 
 (async () => {

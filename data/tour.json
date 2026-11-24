@@ -120,5 +120,27 @@
   "bearing": 290.0,
   "file": "tour/private-mango.jpg",
   "text": "The old mango tree and its two granite boulders, where the trail across the hill ends."
+ },
+ {
+  "site": "homestead",
+  "id": "house",
+  "name": "The homestead",
+  "x": 249.49,
+  "z": 759.22,
+  "y": 180.91,
+  "bearing": 205.0,
+  "file": "tour/homestead-house.jpg",
+  "text": "Already built: the brick house with its clay tile roof, the solar array beside it, and the forest of Cerro Kavaju behind."
+ },
+ {
+  "site": "homestead",
+  "id": "pond",
+  "name": "By the pond",
+  "x": 241.92,
+  "z": 754.26,
+  "y": 181.96,
+  "bearing": 304.0,
+  "file": "tour/homestead-pond.jpg",
+  "text": "The pond, dug into the slope: the wooden cabin at the edge of the forest above it, the bell tent and the quincho, among pind\u00f3 palms."
  }
 ]

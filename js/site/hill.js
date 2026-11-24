@@ -396,7 +396,7 @@ function buildTrees() {
     mesh.setColorAt(i, col);
     if (cards) {                                     // the species by height: big crowns for tall trees, the slender one for small
       const h = raw.h[i], u = R();
-      tsp[i] = h > 14 ? 0 : h > 7 ? (u < 0.55 ? 0 : 1) : (u < 0.6 ? 2 : 1);
+      tsp[i] = h > 9 && R() < 0.12 ? PALM : h > 14 ? 0 : h > 7 ? (u < 0.55 ? 0 : 1) : (u < 0.6 ? 2 : 1);     // pindó palms stand all through the forest
       tcol[i] = col.clone();
     }
   }
@@ -510,7 +510,7 @@ function siteMaterials() {
     brick: real('data/hill/tex/brick.jpg', 'data/hill/tex/brick_n.jpg', 1.25, { roughness: 0.92 }),        // about 1.6 m of brick per tile
     tile: real('data/hill/tex/tiles.jpg', 'data/hill/tex/tiles_n.jpg', 0.42, { roughness: 0.75 }),         // about 2.4 m of tiles, courses down the slope
     trim: std({ color: 0xf1ece2, roughness: 0.6 }), glass: std({ color: 0x1b232c, roughness: 0.2, metalness: 0.5 }),
-    concrete: real('data/walk/tex/plaster.jpg', 'data/walk/tex/plaster_n.jpg', 0.5, { color: 0xd8d2c6, roughness: 0.95 }), floor: std({ color: 0xa9563a, roughness: 0.75 }),
+    concrete: std({ color: 0xe6e2da, roughness: 0.95, normalMap: photo('data/walk/tex/plaster_n.jpg', 0.5, false), normalScale: new THREE.Vector2(0.5, 0.5) }),   // white-painted concrete (the solar posts, the plinth) floor: std({ color: 0xa9563a, roughness: 0.75 }),
     wood: real('data/walk/tex/planks.jpg', 'data/walk/tex/planks_n.jpg', 0.5, { color: 0x9c7a5a }), post: std({ map: woodTex('#4f3420') }),
     panel: std({ map: solarTex(), roughness: 0.25, metalness: 0.5 }), alu: std({ color: 0xc7cbcf, roughness: 0.35, metalness: 0.75 }),
     black: std({ color: 0x1c1e20, roughness: 0.55 }), tank: std({ color: 0xe9ece6, roughness: 0.5 }), lid: std({ color: 0x3f8a5a, roughness: 0.5 }),
@@ -518,7 +518,7 @@ function siteMaterials() {
     blue: std({ color: 0x2f5fa8, roughness: 0.5 }), tub: std({ color: 0xdfeef3, roughness: 0.3 }),
     water: std({ color: 0x1f2a22, roughness: 0.04, metalness: 0, envMapIntensity: 1.4 }),       // dark and glassy: it shows the sky, so it reads as water
     bank: std({ map: gravelTex(), vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
-    gravel: std({ map: gravelTex(), color: 0xd9c8b0, roughness: 1, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),   // edges fade into the ground
+    gravel: std({ map: gravelTex(), color: 0xaaa9a3, roughness: 1, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),   // edges fade into the ground
     mast: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.3 }),
     leaves: foliage(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.65 }), { instanced: false, scale: 1.3, wind: 0.008 }), granite: std({ color: 0x8e8c86, roughness: 0.9 }),
   });

@@ -484,10 +484,12 @@ function moduleView(el, src, settings, onFail) {
    finished image on the inside of a sphere. "Free roam from here" opens the walk where you stand. */
 let TOUR = [], panoLabels = [];
 const tourLast = {};                          // the last view seen on each part of the site
-const SITE_NAMES = { quarry: 'The quarry cabins', private: 'The private side · Finca 2663' };
+const WALK_SITES = ['quarry', 'private'];       // the parts that free roam covers
+const SITE_NAMES = { quarry: 'The quarry cabins', private: 'The private side · Finca 2663', homestead: 'The homestead · already built' };
 const SITE_SPECS = {
   quarry: '<b>Cabin</b><span>9 × 6.5 m · 58 m²</span><span>27 m² deck</span><span>1 bedroom</span><span>build budget $60–70k</span>',
   private: '<b>Residence</b><span>≈180 m²</span><span>3 bedrooms</span><span>on ≈1 ha</span><span>homesite from $150k</span><span>build ≈$900–1,100/m²</span>',
+  homestead: '<b>On site today</b><span>brick house</span><span>solar array</span><span>pond</span><span>wooden cabin</span><span>quincho</span>',
 };
 const panoEl = $('pano');
 const pano = { built: false, p: null, yaw: 0, pitch: 0, fov: 70, tex: {} };
@@ -603,6 +605,8 @@ function showPano(p) {
   $('pano-title').textContent = p.name;
   $('pano-text').textContent = p.text || '';
   $('pano-specs').innerHTML = SITE_SPECS[p.site] || '';
+  $('pano-roam').hidden = !WALK_SITES.includes(p.site);                // free roam covers the quarry and the private side
+  $('pano-hint').textContent = 'Drag to look around · scroll or pinch to zoom' + (p.site === 'homestead' ? '' : ' · design not final');   // the homestead is built
   document.querySelectorAll('#pano-sites button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.site === p.site)));
   const tabsEl = $('pano-tabs');
   tabsEl.innerHTML = '';
