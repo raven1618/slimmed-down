@@ -617,6 +617,7 @@ SCN = [(lambda: TL["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), (
        (lambda: TL["calidad"], ["F7_anim.mp4"], [("CON COMBUSTIBLES", "black", 0.11, W_), ("DE CALIDAD", "black", 0.15, W_)], lambda: TL["juntos"]),
        (lambda: TL["juntos"], ["J1_anim.mp4", "J2_anim.mp4", "J3_anim.mp4"], [], lambda: TL["pulse2"])]      # CONSTRUIMOS JUNTOS: client video re-made as 3 fisheye scenes
 _TU, _TV = FMX / 640.0, FMY / 640.0                                   # clip coordinates of every sphere pixel (the fisheye scenes' own frame)
+TIDE = False
 TIDE_HZ = 0.545                                                       # horizon row shared by J1's road end and J2's sea
 def tide(f1, f2, t, tm):
     """J1 land -> J2 sea. The sea floods up from the bottom of the circle to the horizon behind a foam crest,
@@ -652,7 +653,7 @@ def scene_foot(i, t):
     t0, photos, _, t1 = SCN[i][0](), SCN[i][1], SCN[i][2], SCN[i][3]()
     n = len(photos); seg = (t1 - t0) / n; j = int(min(max((t - t0) / seg, 0), n - 1))
     pic = lambda jj: fish_frame(photos[jj], t - (t0 + jj * seg - 0.45) - CLIP_DELAY.get(photos[jj], 0.0), CLIP_SPEED.get(photos[jj], 1.0))
-    if photos[0] == "J1_anim.mp4":                          # land -> sea: the tide rolls in up to the horizon, the truck becomes the tanker in a glint
+    if TIDE and photos[0] == "J1_anim.mp4":                 # land -> sea (REJECTED Nov 24: looked improvised): the tide rolls in up to the horizon, the truck becomes the tanker in a glint
         tm = t0 + seg - 0.1
         if tm - 1.1 <= t < tm + 0.45: return tide(pic(0), pic(1), t, tm)
     f = pic(j)
