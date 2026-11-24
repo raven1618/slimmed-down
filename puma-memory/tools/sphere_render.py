@@ -535,6 +535,16 @@ def fish_frame(name, tt, speed=1.0):
     i = int(min(max(tt * speed * 30, 0), len(F) - 1))                      # play once, hold the last frame (never loop)
     return cv2.remap(F[i], FMX, FMY, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
 
+_BK = (P[..., 2] < 0)
+def fish_frame_kick(name, tt, back_rot):
+    """fish_frame, but the back copy is rolled by back_rot (rad) so the frozen ball can land on the KV ball's real back pentagon."""
+    F = fish_clip(name)
+    if F is None: return None
+    i = int(min(max(tt * 30, 0), len(F) - 1))
+    ph = _ph + np.where(_BK, back_rot, 0.0)
+    mx = ((0.5 + _r * np.cos(ph)) * 640).astype(np.float32); my = ((0.5 - _r * np.sin(ph)) * 640).astype(np.float32)
+    return cv2.remap(F[i], mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
+
 def pulse_layer(t, s, inten, down=0.0, echo=1.0, true_back=False):
     """the pentagon halo at scale s (1 = true panel) on the front AND the back (rotated copy), with echo rings,
     a soft inner glow and bloom; `down` (rad) moves its centre below the front/back centre."""
@@ -551,9 +561,10 @@ def pulse_layer(t, s, inten, down=0.0, echo=1.0, true_back=False):
     L += (sm(0.0, -0.06, pd) * 0.10 * inten)[..., None] * GREEN    # the pentagon's face breathes with light
     return bloom(L, 0.8)
 
-KICK = "K_kick_v5.mp4"
+KICK = "K_neon.mp4"                                                   # client neon sequence (4K original), pushed in to land on the KV ball seams
 RZ_UP = rotz(math.pi / 5)                                              # opening ball: front pentagon with its point up (client, Nov 22)
-BALL_DOWN = 0.35                                                       # the ball on the spot sits ~20 deg below the centre of the kick clip
+KICK_BACK_ROT = math.pi / 5                                            # back: upright pentagon -> the KV ball's back pentagon (points down)
+BALL_DOWN = 0.31                                                       # the ball on the spot sits ~20 deg below the centre of the kick clip
 _bc = np.array([0, -math.sin(BALL_DOWN), math.cos(BALL_DOWN)], np.float32); BALL_ANG = np.arccos(np.clip(SYM @ _bc, -1, 1))
 SCN_KEY = ["km", "entrega", "destino", "calidad", "juntos"]
 SCN = [(lambda: TL["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], lambda: TL["entrega"]),
@@ -583,7 +594,7 @@ def kick_to_kv(fr, t):
     """filmed ball -> KV ball: the code ball crossfades in with a soft radial blur, its seams swell, the panels light up to KV green."""
     T = TL; p = (t - (T["kv_flash"] - 0.3)) / 0.3                    # 0..1 crossfade from the clip
     q = (t - T["kv_flash"]) / (T["logo2"] - T["kv_flash"])          # 0..1 the panels fill to KV green
-    Rb = roty(-0.10 * max(t - T["kv_flash"], 0.0))
+    Rb = RZ_UP @ roty(-0.10 * max(t - T["kv_flash"], 0.0))          # closing ball upright too (same fix as the opening)
     if p < 1:                                                        # start at the filmed ball's size (~0.86 of the circle) so the patterns line up
         D, inside = pole_scaled(1.33 - 0.33 * ease(p)); d, cent, top, Q = ball_field_dirs(D, Rb)   # filmed panels read ~1.33x larger
     else:
@@ -696,15 +707,15 @@ def render(t):
             fr += pulse_layer(t, 0.55 * (1 - pp) + 0.07 * pp, 0.9 + 1.6 * pp, down=BALL_DOWN * pp, echo=1 - pp)
             kt = t - T["kick"]
             if kt >= 0 and fish_clip(KICK) is not None:                      # the stadium opens out of the ball: radial reveal with a lime edge
-                kf = fish_frame(KICK, kt, 1.0)
-                rad = 1.75 * ease(kt / 0.8); m = sm(rad, rad - 0.22, BALL_ANG)[..., None]
+                kf = fish_frame_kick(KICK, kt, KICK_BACK_ROT * ease((kt - 112 / 30) / (27 / 30)))   # back rolls 36 deg during the push-in
+                rad = 3.4 * ease(kt / 1.0); m = sm(rad, rad - 0.22, BALL_ANG)[..., None]           # opens all the way round (no wedges at the side joins)
                 edge = np.exp(-((BALL_ANG - rad) / 0.035) ** 2) * (kt < 0.8)
                 fr = fr * (1 - m) + kf * m + bloom(edge[..., None] * (GREEN + 70), 0.8) * 0.9
             if t >= T["kv_flash"] - 0.3:                                       # the KV ball (code, pentagon facing front) takes over the filmed ball
                 fr = kick_to_kv(fr, t)
         return fr
     # ---- 7. logo without the puma; the puma enters ----
-    d, cent, top, Q = ball_field(roty(-0.10 * (t - T["kv_flash"])))
+    d, cent, top, Q = ball_field(RZ_UP @ roty(-0.10 * (t - T["kv_flash"])))
     q = 1 - ease((t - T["logo2"]) / 0.5)                    # the hand-off glow settles
     dk = 1 - 0.5 * ease((t - T["logro"] + 0.4) / 0.8)    # closing: the ball sinks to deep emerald (KV background) so the type reads
     fr = green_fill(cent, Q) * dk + (bloom(neon(d, SW, 1.0, Q=Q, t=t), 0.8 * q) if q > 0 else neon(d, SW, 0.55 + 0.45 * dk, Q=Q, t=t))
