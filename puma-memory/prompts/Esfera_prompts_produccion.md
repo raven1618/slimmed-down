@@ -1,5 +1,7 @@
 # Sphere opening · production prompts, in script order
 
+> **SUPERSEDED (Nov 20–24):** these are the first-pass 21:9 sphere prompts. Current rules: every frame that fills the ball is a circular type-A fisheye frame (doc 17 §2–3); P8 (black boot, white flash) is replaced by the client neon closing (doc 19, C3). Use doc 17 + doc 19, not this file.
+
 ## How the shape is used
 - **Every panorama has its horizon on the equator.**
   - The sky goes up to the top pole, which carries the sun and the flare.

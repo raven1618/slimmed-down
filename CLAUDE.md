@@ -6,7 +6,7 @@ This file loads automatically in every session. It is binding. The client (Puma 
 1. **Look it up before acting.** Before touching any part of the project, read:
    - `puma-memory/docs/19_ESTANDARES_y_REGISTRO_CLIENTE.md` (standards + every client request with status);
    - the topic doc for the part you touch (sphere: `puma-memory/docs/17_Esfera_metodologia.md`; teasers: `09_METODOLOGIA_teasers.md`, `10_SESSION_LESSONS_user_rules.md`);
-   - the knowledge graph: `puma-memory/graphify-out/GRAPH_REPORT.md` (and `graph.json` for specifics). If the graph is older than the docs, rebuild it (`/graphify puma-memory --update`) before relying on it.
+   - the knowledge graph: `puma-memory/graphify-out/GRAPH_REPORT.md`, and query it for the part you touch: `cd puma-memory && $(dirname $(cat graphify-out/.graphify_python))/graphify query "<topic>" --budget 2000`. If docs changed since the last build, rebuild first (`/graphify puma-memory --update`). If that interpreter no longer exists (new container), run `pip install graphifyy` and use `graphify query` directly.
 2. **Restate the exact request** (the client's own words where they exist) and check it against the register. Do exactly what was asked, where it was asked: no more, no less, no reinterpretation. If the register says something different from what you are about to do, stop and ask.
 3. **Do the whole request.** Every item the user listed. Before replying, re-read the user's message and tick each item. If something is not done, say so in the first lines — never bury it at the end.
 4. **QC before showing anything** (section 3). Never present work you haven't checked.

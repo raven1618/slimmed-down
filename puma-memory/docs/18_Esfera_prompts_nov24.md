@@ -1,5 +1,7 @@
 # Prompts — Nov 24
 
+> **SUPERSEDED (Nov 24):** section C (regenerated neon closing keyframes + animation) is NOT used. The closing is the client's own 4K neon video fitted to the circle in code (doc 19, C3). Sections A and B were generated (J1 `72fa9c2c`, vector puma `72d5cd51`).
+
 ## A · J1 truck to the horizon (Seedance 2.5 omni, 5 s, 480p, 15 cr)
 @image1 = J1 frame c774b8f1 (first frame) · @image2 = truck photo e89ce80e
 
