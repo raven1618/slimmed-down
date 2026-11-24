@@ -117,8 +117,11 @@ const display = { ...DISPLAY_DEFAULT };
    The choice is remembered on this device. */
 let TOOLS = false;
 try { TOOLS = localStorage.getItem('oh-tools') === '1' || location.hash === '#tools'; } catch (e) { TOOLS = location.hash === '#tools'; }
+// Closer than 60 m the 1 m satellite ground turns soft (CLAUDE.md, Open): the pitch stops there; the owners' tools go to 25 m.
+const nearLimit = () => { mc.minDistance = TOOLS ? 25 : 60; };
+nearLimit();
 function setTools(on) {
-  TOOLS = on;
+  TOOLS = on; nearLimit();
   try { localStorage.setItem('oh-tools', on ? '1' : '0'); } catch (e) {}
   if (!on) { if (limits.editing || limits.drawing) { limits.editing = limits.drawing = null; drawOverlay(); } notes.placing = notes.moving = null; closeDrawer(); }
   applyDisplay(); buildBar(); setHint();

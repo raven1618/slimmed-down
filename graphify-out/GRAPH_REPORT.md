@@ -1,17 +1,17 @@
 # Graph Report - slimmed-down  (2026-11-24)
 
 ## Corpus Check
-- 45 files · ~76,079 words
+- 45 files · ~76,122 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 1, .css 1, .geojson 1)
 
 ## Summary
-- 568 nodes · 1022 edges · 26 communities (21 shown, 5 thin omitted)
+- 569 nodes · 1024 edges · 26 communities (21 shown, 5 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 33 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `133a7437`
+- Built from commit: `6823eed8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -49,11 +49,11 @@
 3. `renderNotes()` - 17 edges
 4. `say()` - 16 edges
 5. `buildHill()` - 14 edges
-6. `yAt()` - 13 edges
-7. `openTour()` - 13 edges
-8. `buildStructures()` - 12 edges
-9. `relayout()` - 12 edges
-10. `markTab()` - 12 edges
+6. `openTour()` - 13 edges
+7. `yAt()` - 13 edges
+8. `markTab()` - 12 edges
+9. `setMode()` - 12 edges
+10. `renderLimits()` - 12 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `build()` --calls--> `materials()`  [EXTRACTED]
@@ -74,7 +74,7 @@
 
 ### Community 0 - "views.js"
 Cohesion: 0.05
-Nodes (74): adaptResolution(), applyDisplay(), backToTour(), boot(), buildBar(), buildChips(), buildPano(), chooseBase() (+66 more)
+Nodes (75): adaptResolution(), applyDisplay(), backToTour(), boot(), buildBar(), buildChips(), buildPano(), chooseBase() (+67 more)
 
 ### Community 1 - "tools.js"
 Cohesion: 0.10
@@ -167,9 +167,9 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 2 inferred relationships involving `build()` (e.g. with `loop()` and `resize()`) actually correct?**
   _`build()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **Should `views.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.053613053613053616 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05290490100616683 - nodes in this community are weakly interconnected._
 - **Why does `lendRenderer()` connect `views.js` to `core.js`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
 - **Should `tools.js` be split into smaller, more focused modules?**
   _Cohesion score 0.09574468085106383 - nodes in this community are weakly interconnected._
 - **Why does `disposeScene()` connect `core.js` to `views.js`?**
