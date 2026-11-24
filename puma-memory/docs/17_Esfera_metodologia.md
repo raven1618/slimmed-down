@@ -116,3 +116,15 @@ The user rejected the numpy-only text and effects as "basic and lame". Everythin
 - **Viewer artifact:** "Esfera LED · visor" (private).
 - **Client link:** Netlify from GitHub. Repo branch `claude/gifted-shannon-c1nwsj`; `netlify.toml` publishes `esfera_site/` (index.html, local three.min.js, apertura.mp4). It autoplays muted on a loop; if autoplay is blocked, the first tap starts it. To update, replace `esfera_site/apertura.mp4` and push.
 - **On hold until the client approves the video:** sound, 4K master/upscales, face dim on the kick clip.
+
+## 11. Client round "Cambios 1" (Nov 23–24)
+- **Text:** the green = KV #7FFF00. The glow goes UNDER the letters: additive glow over green clips G and pushes R, which reads yellow.
+- **Size:** scene lines ~20% smaller, max 0.50 of the disc width, `yTop` 0.17 (the chord near the rim cut the C/S of CON COMBUSTIBLES). The text never overlaps the puma.
+- **Closing lines and KV:** centred higher (`logro` 0.33, `hoy` 0.29, `listos` 0.27; KV `cy` 0.45, `w` 0.54).
+- **2027:** grows until the sphere is full white, and the KV comes out of the white (renderer white ramp around `kv`).
+- **Globe:** "muy planito" → a generated night-earth texture (`geo/earth_tex_4096.png`, Higgsfield `109d098a`) fitted to our land mask (lat 90.5→-86, shift 12/1024). The Paraguay glow and arcs stay on top.
+- **J1 terminal:** the beam, puma and black band step aside so the client's truck reads.
+- **Pending (needs Higgsfield uploads):**
+  - the vector logo-cat run (`review_esfera/upload_nov23/puma_logo_vector.png`, cut from the vector KV). Flattening the chrome puma failed (`VECTOR_FROM_CHROME`);
+  - the neon kick from the client sequence (`review_esfera/upload_cierre/`).
+- **Unconfirmed:** the truck turning into the tanker ship.

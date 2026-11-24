@@ -3,7 +3,7 @@ Canvas 2688x1296 equirectangular (x = longitude, canvas centre x=1344 faces the 
 Usage: sphere_render.py [scale] [t0,t1,...]   scale 0.5 = preview (1344x648). With times -> stills only.
 Outputs (out dir): Esfera_apertura_equirect.mp4 (the file for the LED) + Esfera_apertura_vista.mp4 (front+back view preview).
 The puma run and the ball kick are Higgsfield items: placeholders here (marked PLACEHOLDER)."""
-import sys, json, math, subprocess, numpy as np, cv2
+import sys, os, json, math, subprocess, numpy as np, cv2
 from PIL import Image, ImageDraw, ImageFont
 
 R = "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/"
@@ -217,6 +217,8 @@ def _geo_layers():
     coast = cv2.morphologyEx(land, cv2.MORPH_GRADIENT, np.ones((3, 3), np.uint8))
     np.savez_compressed(cache, land=land, border=border, py=py, coast=coast); return land, border, py, coast
 G_LAND, G_BORDER, G_PY, G_COAST = [x.astype(np.float32) / 255 for x in _geo_layers()]
+_tp = R + "geo/earth_tex_4096.png"
+G_TEX = cv2.cvtColor(cv2.imread(_tp), cv2.COLOR_BGR2RGB).astype(np.float32) if os.path.exists(_tp) else None
 PY_LL = (-58.0, -23.4)                                              # Paraguay centre (lon, lat)
 ASU = (-57.58, -25.28)
 HUBS = [(-74, 4.6), (-77, -12), (-70.6, -33.4), (-58.4, -34.6), (-56.2, -34.9), (-43.2, -22.9), (-79.5, 9), (-90.5, 14.6), (-87.2, 14.1),
@@ -248,10 +250,16 @@ def _globe(B, t, lo_c, la_c, zoom, arcs, py_glow):
     mx = ((glo + 180) / 360 * GW).reshape(EH, EW).astype(np.float32); my = ((90 - gla) / 180 * GH).reshape(EH, EW).astype(np.float32)
     smp = lambda L: cv2.remap(L, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_WRAP)
     land, coast, bord, py = smp(G_LAND), smp(G_COAST), smp(G_BORDER), smp(G_PY)
-    ocean = np.array([4, 14, 18], np.float32); lc = np.array([10, 60, 30], np.float32)
-    lit = 0.55 + 0.45 * np.clip(B[..., 2], 0, 1)
-    fr = (ocean * (1 - land[..., None]) + lc * land[..., None]) * lit[..., None]
-    fr += coast[..., None] * GREEN * 0.9 + bord[..., None] * GREEN * 0.25
+    lit = 0.6 + 0.4 * np.clip(B[..., 2], 0, 1)
+    if G_TEX is not None:                                         # client: "muy planito este mapa" -> rich night-earth texture (fitted to our map)
+        fr = smp(G_TEX) * lit[..., None] * 1.25
+        tw = 0.85 + 0.15 * np.sin(t * 6 + mx * 0.05 + my * 0.07)        # city lights twinkle
+        warm = np.clip(fr[..., 0] - fr[..., 2] - 25, 0, None) / 60; fr += (warm * (tw - 0.85) * 120)[..., None] * np.array([1, .9, .7], np.float32)
+        fr += coast[..., None] * GREEN * 0.35
+    else:
+        ocean = np.array([4, 14, 18], np.float32); lc = np.array([10, 60, 30], np.float32)
+        fr = (ocean * (1 - land[..., None]) + lc * land[..., None]) * lit[..., None]
+        fr += coast[..., None] * GREEN * 0.9 + bord[..., None] * GREEN * 0.25
     if py_glow > 0:
         fr = fr * (1 - py[..., None] * py_glow) + py[..., None] * py_glow * (GREEN * 0.9 + 60)
     if arcs > 0:
@@ -326,7 +334,7 @@ def light_over(fr, L, k=1.4, dark=0.45):
     return 255 - (255 - fr) * (255 - Lk) / 255
 # client ref (Nov 20, CLEANTEC stage lasers): a bundle of straight parallel laser strands, hot yellow-white cores,
 # saturated lime glow, heavy bloom, bright streaks racing along the beam
-LASER_CORE = np.array([255, 255, 190], np.float32); LASER_LIME = np.array([150, 255, 30], np.float32); LASER_GLOW = np.array([40, 255, 40], np.float32)
+LASER_CORE = np.array([215, 255, 200], np.float32); LASER_LIME = np.array([150, 255, 30], np.float32); LASER_GLOW = np.array([40, 255, 40], np.float32)
 def laser_band(t, inten=1.0):
     d = LAT - path_lat(LON)                                            # radians from the band centre line
     ph_ = (LON / (2 * np.pi)) * 360                                    # degrees around the ball
@@ -376,7 +384,18 @@ def _load_puma():
     raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", src, "-vf", "scale=1280:-2", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True).stdout
     h = int(round(1648 * 1280 / 3840 / 2) * 2); F = np.frombuffer(raw, np.uint8).reshape(-1, h, 1280, 3)
     mx = F.max(0).max(-1); ys, xs = np.where(mx > 40)
-    return F[:, max(0, ys.min() - 12):ys.max() + 12, max(0, xs.min() - 12):xs.max() + 12]
+    F = F[:, max(0, ys.min() - 12):ys.max() + 12, max(0, xs.min() - 12):xs.max() + 12]
+    if not VECTOR_FROM_CHROME: return F
+    out = np.zeros_like(F)                                         # (rejected: chrome reflections break the silhouette; vector run comes from the logo cat)
+    for i in range(len(F)):
+        fr_ = F[i].astype(np.int16); b = ((fr_.max(-1) > 70) & (fr_[..., 1] - fr_[..., 0] < 60)).astype(np.uint8)   # body above the soft glow, no green rim
+        b = cv2.morphologyEx(b, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+        bp = cv2.copyMakeBorder(b, 2, 2, 2, 2, cv2.BORDER_CONSTANT, value=0); ff = np.zeros((bp.shape[0] + 2, bp.shape[1] + 2), np.uint8)
+        cv2.floodFill(bp, ff, (0, 0), 2); solid = (bp[2:-2, 2:-2] != 2).astype(np.uint8)   # fill enclosed holes only: legs stay open
+        a = cv2.GaussianBlur(solid.astype(np.float32), (0, 0), 0.9)    # crisp vector edge, anti-aliased
+        out[i] = (a[..., None] * 255).astype(np.uint8)
+    return out
+VECTOR_FROM_CHROME = False
 PUMA = _load_puma()
 PUMA_WDEG = 64.0
 def puma_put(fr, t, alpha=1.0, centres=(0.0, math.pi)):
@@ -513,8 +532,11 @@ def scene_foot(i, t):
     return f
 def scene_full(i, t):
     t0, t1 = SCN[i][0](), SCN[i][3]()
-    fr = lower_black(scene_foot(i, t), t)
-    fr = light_over(fr, swoosh(t, 1.0), 1.6, 0.5); fr = puma_put(fr, t)
+    clear = 0.0
+    if SCN[i][1][0] == "J1_anim.mp4":                       # client: the truck must read -> halo + puma step aside during the terminal shot
+        seg = (t1 - t0) / len(SCN[i][1]); clear = ease((t - t0 + 0.2) / 0.4) * (1 - ease((t - t0 - seg + 0.5) / 0.5))
+    fr = lower_black(scene_foot(i, t), t, 1 - clear)
+    fr = light_over(fr, swoosh(t, 1.0 - 0.85 * clear), 1.6, 0.5); fr = puma_put(fr, t, 1 - clear)
     fr = mg_put(fr, SCN_KEY[i], t - t0)
     return fr
 def juntos_full(t):
@@ -669,8 +691,10 @@ def render(t):
             fr = mg_put(fr, key, t - T[key])
     if t >= T["kv"]:                                    # the KV lockup builds row by row (client's own artwork, animated)
         fr = mg_put(fr, "kvend", t - T["kv"])
-    if t >= T["y2027"]:                                 # 2027: pops in small, grows until it overflows the sphere, dissolves into lime light over the KV
+    if t >= T["y2027"]:                                 # 2027: pops in small, grows until it overflows the sphere
         fr = mg_put(fr, "2027", t - T["y2027"])
+        wq = ease((t - T["kv"] + 0.55) / 0.45) * (1 - ease((t - T["kv"] - 0.15) / 0.7))   # client: end in full white, the KV comes out of it
+        fr = fr * (1 - wq) + 255 * wq
     return fr
 
 def front_view(eq, n=540, back=False):
