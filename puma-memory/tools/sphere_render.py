@@ -572,10 +572,12 @@ SCN = [(lambda: TL["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), (
        (lambda: TL["destino"], ["F5_anim.mp4", "F6_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("DESTINO", "black", 0.18, W_)], lambda: TL["calidad"]),
        (lambda: TL["calidad"], ["F7_anim.mp4"], [("CON COMBUSTIBLES", "black", 0.11, W_), ("DE CALIDAD", "black", 0.15, W_)], lambda: TL["juntos"]),
        (lambda: TL["juntos"], ["J1_anim.mp4", "J2_anim.mp4", "J3_anim.mp4"], [], lambda: TL["pulse2"])]      # CONSTRUIMOS JUNTOS: client video re-made as 3 fisheye scenes
+CLIP_DELAY = {"J1_anim.mp4": 0.35}                                     # -> the truck is exactly the tanker's size when the centre panel flips to J2
+CLIP_SPEED = {}                                                        # J1 truck is pre-slowed 2x (interpolated) so it matches the J2 tanker size at the flip
 def scene_foot(i, t):
     t0, photos, _, t1 = SCN[i][0](), SCN[i][1], SCN[i][2], SCN[i][3]()
     n = len(photos); seg = (t1 - t0) / n; j = int(min(max((t - t0) / seg, 0), n - 1))
-    pic = lambda jj: fish_frame(photos[jj], t - (t0 + jj * seg - 0.45))
+    pic = lambda jj: fish_frame(photos[jj], t - (t0 + jj * seg - 0.45) - CLIP_DELAY.get(photos[jj], 0.0), CLIP_SPEED.get(photos[jj], 1.0))
     f = pic(j)
     if j > 0 and t < t0 + j * seg + 0.45:                   # seam reveal between photos of the same line
         f = reveal(pic(j - 1), f, t, t0 + j * seg - 0.35, 0.8)

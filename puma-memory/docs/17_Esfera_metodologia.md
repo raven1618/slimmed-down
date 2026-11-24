@@ -26,7 +26,7 @@ Every new frame, animation and render for the 2 m sphere follows these rules. If
   - "The left and right edges of the circle show the identical scenery … so the two sides match perfectly." The circle's right edge meets its own left edge at the side of the ball.
   - Cinematic grade and light; the sky in the top half carries the text, the ground in the bottom half carries the light path and the puma.
 - **QC before animating:**
-  - check at 100% for gibberish text and third-party brands;
+  - check at 100% for gibberish text and third-party brands (EXCEPT vehicle-manufacturer badges on trucks and ships: user said 4+ times to ignore those);
   - a full circle;
   - a level horizon;
   - matching edges;
