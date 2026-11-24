@@ -682,7 +682,14 @@ def scene_foot(i, t):
         tm = t0 + SPIN_TM; D = SPIN_D
         if tm <= t < tm + D:                                # the back copy rolls WITH the front (measured roll x2), so the side joins move together: no seam, no masking
             fi = int(min(max((t - tm) * 30, 0), len(SPIN_ROLL) - 1))
-            return fish_frame_kick("J1J2_spin.mp4", t - tm, SPIN_SIGN * 2 * SPIN_ROLL[fi])
+            f = fish_frame_kick("J1J2_spin.mp4", t - tm, SPIN_SIGN * 2 * SPIN_ROLL[fi])
+            v = abs(SPIN_ROLL[min(fi + 1, len(SPIN_ROLL) - 1)] - SPIN_ROLL[max(fi - 1, 0)]) / 2      # roll speed (rad / frame)
+            a = min(1.0, v / 0.03)                                                                   # while it is turning at all
+            if a > 0.01:                                                                             # the halves' rims can't match while the image turns: smear across the join in the roll direction (no dark band)
+                k = int(EW * 0.07) | 1; bl = cv2.blur(f, (k, 1)); bl = cv2.blur(bl, (k, 1))
+                w = (a * sm(0.22, 0.0, np.abs(P[..., 2])))[..., None]
+                f = f * (1 - w) + bl * w
+            return f
     if TIDE and photos[0] == "J1_anim.mp4":                 # land -> sea (REJECTED Nov 24: looked improvised): the tide rolls in up to the horizon, the truck becomes the tanker in a glint
         tm = t0 + seg - 0.1
         if tm - 1.1 <= t < tm + 0.45: return tide(pic(0), pic(1), t, tm)
