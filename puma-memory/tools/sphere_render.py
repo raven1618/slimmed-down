@@ -441,8 +441,40 @@ def _load_puma():
         out[i] = (a[..., None] * 255).astype(np.uint8)
     return out
 VECTOR_FROM_CHROME = False
-PUMA_VECTOR = True
+PUMA_VECTOR = False                                                  # the beam run stays chrome (client)
 PUMA = _load_puma()
+def _load_cat_run():
+    """client (Cambios 1): the WHITE logo-cat silhouette runs in and lands in the logo, at the start (logo) and the end (cat_in)."""
+    import os
+    src = R + "esfera_in/puma/puma_vector.mp4"
+    if not os.path.exists(src): return None
+    cap = cv2.VideoCapture(src); F = []
+    while True:
+        ok, f = cap.read()
+        if not ok: break
+        g = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY); g = cv2.resize(g, (g.shape[1] * 2, g.shape[0] * 2), interpolation=cv2.INTER_CUBIC)
+        F.append(cv2.GaussianBlur(np.clip((g.astype(np.float32) - 60) * 2.0, 0, 255), (0, 0), 0.7))
+    return np.array(F, np.float32)
+CAT_RUN = _load_cat_run()
+if CAT_RUN is not None:
+    _ys, _xs = np.where(CAT_RUN[0] > 128); CAT_RUN0 = (_xs.min(), _xs.max(), _ys.min(), _ys.max())   # frame 0 = the logo pose
+_cy_, _cx_ = np.where(CAT[..., 3] > 0); CAT_BOX = (_cx_.min(), _cx_.max(), _cy_.min(), _cy_.max())   # the cat inside the logo bar
+def cat_run_in(fr, t, t0, dur, w_rel, cx, cy, land_layer):
+    """white silhouette gallops in from the left and lands exactly on the logo cat (its loop frame 0 = the logo pose), then the logo cat takes over."""
+    p = ease((t - t0) / dur)
+    if CAT_RUN is not None and p < 1:
+        n = len(CAT_RUN); idx = (-int(round((t0 + dur - t) * 30))) % n; q = CAT_RUN[idx]
+        s = w_rel * DN / CAT.shape[1]; tw = (CAT_BOX[1] - CAT_BOX[0] + 1) * s; th = (CAT_BOX[3] - CAT_BOX[2] + 1) * s
+        tx0 = cx * DN - s * CAT.shape[1] / 2 + CAT_BOX[0] * s; ty0 = cy * DN - s * CAT.shape[0] / 2 + CAT_BOX[2] * s
+        bx0, bx1, by0, by1 = CAT_RUN0
+        g = 1 + 2.6 * (1 - p) ** 1.5                                     # comes in big from the lower left, shrinks into the panel (below the bar, never over the type)
+        k = tw / (bx1 - bx0 + 1) * g; ky = th / (by1 - by0 + 1) * g
+        ex = tx0 + tw / 2 - (1 - p) * 0.42 * DN; ey = ty0 + th / 2 + (1 - p) ** 0.8 * 0.26 * DN   # bbox centre path
+        M = np.float32([[k, 0, ex - (bx0 + bx1) / 2 * k], [0, ky, ey - (by0 + by1) / 2 * ky]])
+        a = cv2.warpAffine(q, M, (DN, DN), flags=cv2.INTER_LINEAR)
+        L = np.concatenate([np.repeat(np.full_like(a, 255)[..., None], 3, -1), a[..., None]], -1)
+        fr = disc_put(fr, L, 1.0 - ease((p - 0.8) / 0.2))
+    return disc_put(fr, place(land_layer, w_rel, cx, cy), ease((p - 0.8) / 0.2))
 PUMA_WDEG = 64.0
 PUMA_FOOT = 1.0 - 14.0 / PUMA.shape[1] if PUMA is not None else 0.9   # paw contact row (crop has 12 px pad under the lowest paw) -> sits on the band centre
 if PUMA is not None:                                               # client: the puma must be seen stepping ON the beam -> damp the gallop's flight phase
@@ -653,9 +685,8 @@ def render(t):
         lb = place(BAR_NOCAT if t < T["logo"] + 0.6 else LOGO_BAR, 0.62, 0.5, 0.56)
         r, a = text_in(lb, t, T["somos"] + 0.35, T["path"] - 0.2)
         if a: fr = disc_put(fr, r, a)
-        if T["logo"] - 0.2 <= t < T["logo"] + 0.6:     # PLACEHOLDER: the cat slides into the panel (Higgsfield puma run later)
-            p = ease((t - T["logo"] + 0.2) / 0.8); cat = place(CAT, 0.62, 0.5 - 0.6 * (1 - p), 0.56)
-            fr = disc_put(fr, cat, 1.0)
+        if T["logo"] - 0.2 <= t < T["logo"] + 0.6:     # the white logo-cat silhouette runs in and lands in the panel
+            fr = cat_run_in(fr, t, T["logo"] - 0.2, 0.8, 0.62, 0.5, 0.56, CAT)
         if t >= T["path"]:                              # the halo becomes a path; the ball goes dark
             p = ease((t - T["path"]) / 0.6); fr = fr * (1 - p) + swoosh(t, 1.0); fr = puma_put(fr, t, ease((t - T["path"] - 1.6) / 0.6))
         return fr
@@ -735,15 +766,8 @@ def render(t):
     fr = green_fill(cent, Q) * dk + (bloom(neon(d, SW, 1.0, Q=Q, t=t), 0.8 * q) if q > 0 else neon(d, SW, 0.55 + 0.45 * dk, Q=Q, t=t))
     if t < T["logro"]:
         fr = disc_put(fr, place(BAR_NOCAT, 0.72, 0.5, 0.5), ease((t - T["logo2"]) / 0.4))
-        if t >= T["cat_in"]:                            # the chrome puma runs in from the left and lands as the logo cat
-            p = ease((t - T["cat_in"]) / 0.9)
-            if PUMA is not None and p < 1:
-                q = PUMA[int(t * 30) % len(PUMA)].astype(np.float32); fw = int(DN * 0.30); fh = int(fw * q.shape[0] / q.shape[1])
-                L = np.zeros((DN, DN, 4), np.float32); qq = cv2.resize(q, (fw, fh))
-                cx = int(DN * (0.05 + 0.62 * p)); cy = int(DN * 0.47); x0 = max(0, cx - fw // 2); y0 = cy - fh // 2
-                w_ = min(fw, DN - x0); L[y0:y0 + fh, x0:x0 + w_, :3] = qq[:, :w_]; L[y0:y0 + fh, x0:x0 + w_, 3] = np.clip((qq[:, :w_].max(-1) - 10) / 55, 0, 1) * 255
-                fr = disc_put(fr, L, 1.0 - ease((p - 0.75) / 0.25))
-            fr = disc_put(fr, place(CAT_G, 0.72, 0.5, 0.5), ease((p - 0.75) / 0.25))
+        if t >= T["cat_in"]:                            # the white logo-cat silhouette runs in and lands as the logo cat
+            fr = cat_run_in(fr, t, T["cat_in"], 0.9, 0.72, 0.5, 0.5, CAT_G)
         return fr
     # ---- 8. closing lines, 2027 grows to fill, KV loop ----
     for key, lines, nxt in (("logro", [("NUESTRO PRÓXIMO", "black", 0.1, W_), ("LOGRO", "black", 0.2, W_)], "hoy"),

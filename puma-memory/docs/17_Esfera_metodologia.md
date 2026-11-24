@@ -128,3 +128,5 @@ The user rejected the numpy-only text and effects as "basic and lame". Everythin
   - the vector logo-cat run (`review_esfera/upload_nov23/puma_logo_vector.png`, cut from the vector KV). Flattening the chrome puma failed (`VECTOR_FROM_CHROME`);
   - the neon kick from the client sequence (`review_esfera/upload_cierre/`).
 - **Unconfirmed:** the truck turning into the tanker ship.
+- **White silhouette puma (client, confirmed Nov 24):** ONLY where the cat comes in and lands in the logo: at the start (`logo`, 10.0 s) and at the end (`cat_in`, 59.2 s). The puma running on the beam in between stays CHROME. Source: Higgsfield `72d5cd51` → `esfera_in/puma/puma_vector.mp4` (seamless 3.3 s loop, frame 0 = logo pose); `cat_run_in()` brings it in big from the lower left and lands it on the logo cat's exact box.
+- **Vehicle badges:** don't flag manufacturer logos on trucks or ships (user, repeatedly).
