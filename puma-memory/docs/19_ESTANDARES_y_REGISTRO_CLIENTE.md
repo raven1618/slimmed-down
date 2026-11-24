@@ -19,7 +19,7 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 | C3b | (user) stop the video exactly where the ball lines match the KV ball | Push-in + freeze on frame 139, KV ball takes over on its seams; back copy rolled 36° | ✅ v14 | `K_neon.mp4`, `KICK_BACK_ROT` |
 | C4 | "Aquí es importante q se vea el camión como está en el video" | The client's white tanker truck visible in J1, driving to the horizon; puma + beam STAY | ✅ v14 | `J1_anim.mp4` (Higgsfield `72fa9c2c`) |
 | C4a | (user) truck→ship at the same size and spot as the J2 tanker | Truck width = ship width at the change (measured) | ✅ v14 (panel flip) | `CLIP_DELAY` |
-| C4b | (user) improve truck→sea transition, "land to sea" | One continuous generated shot: the road becomes the sea, truck silhouette becomes the tanker. Start/end frames in `review_esfera/upload_transicion/` | 🔶 waiting for generation | prompt in doc 18 / chat Nov 24 |
+| C4b | (user) improve truck→sea transition, "land to sea" | One continuous generated shot: the road floods into the sea under the SAME sky, the truck silhouette becomes the tanker. Take 1 (`9a25942d`) crossfaded (end frame had a different sky) | 🔶 new plan: edit end frame from the start frame (same sky) → transition → re-animate J2 | chat Nov 24 |
 | C4c | Code "tide" overlay transition | Flat water, white blob glint, streak, panel-grid flash | ⛔ rejected Nov 24 (`TIDE = False`) | |
 | C5 | Map "muy planito" + Paraguay outline must match the background and not look flat | Night-earth texture; Paraguay traced on the TEXTURE's own borders; neon outline + inner glow | ✅ v14 | `geo/py_tex_mask.png` |
 | C5a | (user) fill Paraguay with a light beam moving horizontally; text smaller and higher so the full outline is visible | Horizontal laser strands + sweep inside; `cfg_py` yTop 0.10, widths ×0.75; zoom 3.6 | ✅ v14 | |
@@ -50,3 +50,4 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 7. Built a code transition from stacked overlays (tide) without a clear idea; it looked improvised.
 8. Flagged vehicle badges repeatedly after being told to ignore them.
 9. A panel-grid flash appeared after the tide transition (overlapping transitions not checked in motion).
+10. Gave a Seedance first/last-frame prompt whose end frame had a different sky, sun and clouds from the start frame (J1 → J2 sea). Seedance had no physical path and crossfaded ("opacity slider"); 15 credits wasted. Rule: start and end frames must share sky, light and camera; only what is meant to change may differ. If the shots differ, first make a bridge end frame by editing the start frame, check it, then animate.

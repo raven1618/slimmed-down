@@ -41,6 +41,7 @@ Every new frame, animation and render for the 2 m sphere follows these rules. If
   - motion along the horizon (left to right, the same direction as the puma) reads best on the ball;
   - motion toward camera bulges at the centre: avoid it, or keep it slow and stop at the centre;
   - faces and expressions never change; all logos, text and numbers stay static.
+- **First + last frame rule:** both frames must share the same sky, light, horizon and camera; only what should change may differ. Different skies = Seedance crossfades (J1→J2 take `9a25942d`). Make the end frame by editing the start frame and verify the match before animating.
 - **QC:** check frames at 0, 1.7, 3.4 and 4.9 s, then put the clip on the sphere (section 5) before approving.
 - **Upscale (Topaz, about 30 credits each)** only after the user approves the animation.
 
