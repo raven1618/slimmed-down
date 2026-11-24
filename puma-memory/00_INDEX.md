@@ -1,5 +1,7 @@
 # Puma Energy · Convención de Operadores 2026 — Knowledge base index
 
+> **START HERE:** `/CLAUDE.md` (protocol, loads every session) → `docs/19_ESTANDARES_y_REGISTRO_CLIENTE.md` (standards + every client request with status + mistakes not to repeat) → topic doc (sphere: `docs/17_Esfera_metodologia.md`). Graph: `graphify-out/GRAPH_REPORT.md`.
+
 Everything we know about this project, indexed by source. Each new piece of content gets a source ID (S06, S07, …) and notes on what was extracted. The documents in `docs/` are rebuilt from these sources.
 
 **Our scope:** 9 videos only: 7 speaker teasers (≤ 30 s, main screen) + 2 sphere videos (running puma; 160-station map). Delivered in 4K, fitted to each screen.

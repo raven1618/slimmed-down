@@ -123,7 +123,7 @@ The user rejected the numpy-only text and effects as "basic and lame". Everythin
 - **Closing lines and KV:** centred higher (`logro` 0.33, `hoy` 0.29, `listos` 0.27; KV `cy` 0.45, `w` 0.54).
 - **2027:** grows until the sphere is full white, and the KV comes out of the white (renderer white ramp around `kv`).
 - **Globe:** "muy planito" → a generated night-earth texture (`geo/earth_tex_4096.png`, Higgsfield `109d098a`) fitted to our land mask (lat 90.5→-86, shift 12/1024). The Paraguay glow and arcs stay on top.
-- **J1 terminal:** the beam, puma and black band step aside so the client's truck reads.
+- **J1 terminal:** SUPERSEDED Nov 24 — the puma and beam STAY; the truck is in the clip itself (see doc 19, C4).
 - **Pending (needs Higgsfield uploads):**
   - the vector logo-cat run (`review_esfera/upload_nov23/puma_logo_vector.png`, cut from the vector KV). Flattening the chrome puma failed (`VECTOR_FROM_CHROME`);
   - the neon kick from the client sequence (`review_esfera/upload_cierre/`).
