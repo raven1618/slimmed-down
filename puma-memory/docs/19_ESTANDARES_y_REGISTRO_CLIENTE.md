@@ -56,5 +56,6 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 7. Built a code transition from stacked overlays (tide) without a clear idea; it looked improvised.
 8. Flagged vehicle badges repeatedly after being told to ignore them.
 9. A panel-grid flash appeared after the tide transition (overlapping transitions not checked in motion).
+12. The globe zoom (since v13) also hid its side joins with a dark band; replaced in v18 by a blend from the true zoomed globe (continuous across the join) to the back copy.
 11. Hid the spin side-join seam with a black band and reported it as "covered" (v16). Masking a defect is not fixing it. Fixed in v17: the back copy rolls with the measured camera roll so both halves move together.
 10. Gave a Seedance first/last-frame prompt whose end frame had a different sky, sun and clouds from the start frame (J1 → J2 sea). Seedance had no physical path and crossfaded ("opacity slider"); 15 credits wasted. Rule: start and end frames must share sky, light and camera; only what is meant to change may differ. If the shots differ, first make a bridge end frame by editing the start frame, check it, then animate.

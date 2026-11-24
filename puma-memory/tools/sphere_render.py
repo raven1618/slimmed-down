@@ -254,8 +254,8 @@ def globe(t, lo_c, la_c, zoom, arcs=0.0, py_glow=0.0, dim=1.0):
     fr = _globe(P, t, lo_c, la_c, zoom, arcs, py_glow)
     w = sm(1.0, 1.45, zoom)
     if w > 0:
-        back = (P[..., 2] < 0)[..., None] * w
-        fs = _globe(SYM, t, lo_c, la_c, zoom, arcs, py_glow) * sm(0.0, 0.2, np.abs(P[..., 2]))[..., None]   # soft edge at the side joins
+        back = (sm(0.05, 0.45, -P[..., 2]))[..., None] * w                 # at the side joins the true zoomed globe (continuous) shows; the copy blends in toward the back
+        fs = _globe(SYM, t, lo_c, la_c, zoom, arcs, py_glow)
         fr = fr * (1 - back) + fs * back
     return fr * dim
 def _globe(B, t, lo_c, la_c, zoom, arcs, py_glow):
