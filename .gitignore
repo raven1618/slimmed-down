@@ -25,3 +25,14 @@ dist-ssr
 
 # client review video previews (delivered directly, not versioned)
 review_*/
+# graphify temporary sidecars (rebuild in progress)
+puma-memory/graphify-out/.graphify_ast.json
+puma-memory/graphify-out/.graphify_chunk_*.json
+puma-memory/graphify-out/.graphify_detect.json
+puma-memory/graphify-out/.graphify_incremental.json
+puma-memory/graphify-out/.graphify_uncached.txt
+puma-memory/graphify-out/.graphify_cached.json
+puma-memory/graphify-out/.graphify_semantic*.json
+puma-memory/graphify-out/.graphify_extract.json
+puma-memory/graphify-out/.graphify_analysis.json
+puma-memory/graphify-out/.graphify_partial.txt
