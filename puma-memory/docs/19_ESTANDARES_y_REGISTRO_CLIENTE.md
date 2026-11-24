@@ -38,7 +38,7 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 - Ignore vehicle-manufacturer badges on trucks/ships.
 - Text/numbers static; light never on text; never change faces; no recognisable AI close-up faces.
 - Renders one at a time; push only to `claude/gifted-shannon-c1nwsj`.
-- Short answers, one recommendation; say what's NOT done first.
+- Short answers; say what is NOT done first. Do exactly what is instructed: NO suggestions, alternatives or opinions unless asked (user, Nov 24).
 
 ## D. Mistakes made on this project (never again)
 1. Claimed the kick ball design changed when it hadn't (no direct comparison).

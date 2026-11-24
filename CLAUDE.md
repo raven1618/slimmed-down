@@ -29,4 +29,4 @@ This file loads automatically in every session. It is binding. The client (Puma 
 - **Prompts:** always written with the skills (`image-prompt-helper`; `seedance-multishot-prompter`, Chinese + English). **Always paste the full prompts in the chat**, never only in a file.
 - **Files for the user:** send them with SendUserFile; never make the user hunt for paths.
 - Renders one at a time. Commit + push only to branch `claude/gifted-shannon-c1nwsj`.
-- Answers: short, one recommendation, no surveys.
+- Answers: short. Do exactly what is instructed. NO suggestions, alternatives or opinions unless the user asks for them (user, Nov 24, repeated).
