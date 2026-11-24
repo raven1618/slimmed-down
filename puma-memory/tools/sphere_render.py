@@ -219,7 +219,22 @@ def _geo_layers():
 G_LAND, G_BORDER, G_PY, G_COAST = [x.astype(np.float32) / 255 for x in _geo_layers()]
 _tp = R + "geo/earth_tex_4096.png"
 G_TEX = cv2.cvtColor(cv2.imread(_tp), cv2.COLOR_BGR2RGB).astype(np.float32) if os.path.exists(_tp) else None
-PY_LL = (-58.0, -23.4)                                              # Paraguay centre (lon, lat)
+def _py_layers():
+    """Paraguay traced on the texture's OWN border lines (geo/py_tex_mask.png), so the highlight sits exactly on the map the viewer sees."""
+    m = cv2.imread(R + "geo/py_tex_mask.png", 0)
+    if m is None: return None
+    m = cv2.dilate(m, np.ones((3, 3), np.uint8)).astype(np.float32) / 255
+    ys, xs = np.where(m > 0); y0, y1, x0, x1 = ys.min() - 40, ys.max() + 40, xs.min() - 40, xs.max() + 40
+    c = (m[y0:y1, x0:x1] > 0.5).astype(np.uint8)
+    edge = cv2.morphologyEx(c, cv2.MORPH_GRADIENT, np.ones((3, 3), np.uint8)).astype(np.float32)
+    glow = cv2.GaussianBlur(edge, (0, 0), 5); glow /= glow.max()
+    dist = cv2.distanceTransform(c, cv2.DIST_L2, 5); inner = c * (0.35 + 0.65 * np.exp(-dist / 9))   # brighter toward the border
+    ang = np.arctan2(*np.mgrid[y0:y1, x0:x1] - np.array([(y0 + y1) / 2, (x0 + x1) / 2])[:, None, None])
+    L = [np.zeros_like(m) for _ in range(4)]
+    for k, a in enumerate((cv2.GaussianBlur(edge, (0, 0), 0.8), glow, inner.astype(np.float32), ang.astype(np.float32))): L[k][y0:y1, x0:x1] = a
+    return L
+PY_T = _py_layers()
+PY_LL = (-58.36, -20.1)                                              # Paraguay centre (lon, lat)
 ASU = (-57.58, -25.28)
 HUBS = [(-74, 4.6), (-77, -12), (-70.6, -33.4), (-58.4, -34.6), (-56.2, -34.9), (-43.2, -22.9), (-79.5, 9), (-90.5, 14.6), (-87.2, 14.1),
         (-86.3, 12.1), (-69.9, 18.5), (-66.1, 18.4), (-76.8, 18), (-3.7, 40.4), (-0.1, 51.5), (4.9, 52.4), (8.5, 47.4), (28, -26.2),
@@ -260,7 +275,14 @@ def _globe(B, t, lo_c, la_c, zoom, arcs, py_glow):
         ocean = np.array([4, 14, 18], np.float32); lc = np.array([10, 60, 30], np.float32)
         fr = (ocean * (1 - land[..., None]) + lc * land[..., None]) * lit[..., None]
         fr += coast[..., None] * GREEN * 0.9 + bord[..., None] * GREEN * 0.25
-    if py_glow > 0:
+    if py_glow > 0 and PY_T is not None:                         # neon outline + inner gradient + light running round the border
+        e, g, inn, ang = [smp(L) for L in PY_T]
+        breath = 0.85 + 0.15 * math.sin(t * 4.0)
+        run = 0.5 + 0.5 * np.cos(ang - t * 3.0) ** 8                  # a bright bead travelling round the outline
+        fr = fr * (1 - 0.35 * inn[..., None] * py_glow) + inn[..., None] * py_glow * breath * GREEN * 0.8
+        fr += g[..., None] * py_glow * GREEN * (0.9 + 0.6 * run[..., None])
+        fr = fr * (1 - e[..., None] * py_glow) + e[..., None] * py_glow * (np.array([200, 255, 170], np.float32) * (0.8 + 0.2 * run[..., None]))
+    elif py_glow > 0:
         fr = fr * (1 - py[..., None] * py_glow) + py[..., None] * py_glow * (GREEN * 0.9 + 60)
     if arcs > 0:
         L = np.zeros((GH, GW), np.float32); a0 = ll2v(*ASU)
@@ -532,9 +554,7 @@ def scene_foot(i, t):
     return f
 def scene_full(i, t):
     t0, t1 = SCN[i][0](), SCN[i][3]()
-    clear = 0.0
-    if SCN[i][1][0] == "J1_anim.mp4":                       # client: the truck must read -> halo + puma step aside during the terminal shot
-        seg = (t1 - t0) / len(SCN[i][1]); clear = ease((t - t0 + 0.2) / 0.4) * (1 - ease((t - t0 - seg + 0.5) / 0.5))
+    clear = 0.0                                             # J1: puma + beam stay (the truck is in the clip itself)
     fr = lower_black(scene_foot(i, t), t, 1 - clear)
     fr = light_over(fr, swoosh(t, 1.0 - 0.85 * clear), 1.6, 0.5); fr = puma_put(fr, t, 1 - clear)
     fr = mg_put(fr, SCN_KEY[i], t - t0)
@@ -602,7 +622,7 @@ def render(t):
         lo = -20 + (t - T["globe"]) * 9.0; la = 8.0; zoom = 1.0; pyg = 0.0
         if t >= T["zoom"]:
             p = ease((t - T["zoom"]) / (T["py"] - T["zoom"] + 0.6))
-            lo = lo * (1 - p) + PY_LL[0] * p; la = la * (1 - p) + PY_LL[1] * p; zoom = 1 + 5.5 * p ** 1.6; pyg = sm(0.6, 1.0, p)
+            lo = lo * (1 - p) + PY_LL[0] * p; la = la * (1 - p) + PY_LL[1] * p; zoom = 1 + 2.6 * p ** 1.6; pyg = sm(0.6, 1.0, p)
         arcs = ease((t - T["txt_40"]) / 2.2) * (1 - ease((t - T["zoom"]) / 0.8))
         fa = ease((t - T["globe"]) / 0.8)
         fr = globe(t, lo, la, zoom, arcs=arcs, py_glow=pyg) * fa; fr = light_over(fr, swoosh(t, 1.0), 1.3, 0.3); fr = puma_put(fr, t)
