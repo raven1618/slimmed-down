@@ -413,6 +413,17 @@ def swoosh_plates(t, inten=1.0, rim=False, **_):
 # chrome puma run (4K Seedance + Topaz, on black): runs in place on the band, front (lon 0) and back (lon 180)
 def _load_puma():
     import os
+    vsrc = R + "esfera_in/puma/puma_vector.mp4"                    # client: flat white logo-cat silhouette running (Seedance from the logo, Nov 24)
+    if PUMA_VECTOR and os.path.exists(vsrc):
+        cap = cv2.VideoCapture(vsrc); F = []
+        while True:
+            ok, f = cap.read()
+            if not ok: break
+            g = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY); g = cv2.resize(g, (g.shape[1] * 2, g.shape[0] * 2), interpolation=cv2.INTER_CUBIC)
+            g = cv2.GaussianBlur(np.clip((g.astype(np.float32) - 60) * 2.0, 0, 255), (0, 0), 0.7)   # crisp vector edge, no grey halo
+            F.append(np.repeat(g[..., None], 3, -1).astype(np.uint8))
+        F = np.array(F); mx = F.max(0).max(-1); ys, xs = np.where(mx > 40)
+        return F[:, max(0, ys.min() - 12):ys.max() + 12, max(0, xs.min() - 12):xs.max() + 12]
     src = R + "esfera_in/puma/puma_4k.mp4"
     if not os.path.exists(src): return None
     raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", src, "-vf", "scale=1280:-2", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True).stdout
@@ -430,6 +441,7 @@ def _load_puma():
         out[i] = (a[..., None] * 255).astype(np.uint8)
     return out
 VECTOR_FROM_CHROME = False
+PUMA_VECTOR = True
 PUMA = _load_puma()
 PUMA_WDEG = 64.0
 PUMA_FOOT = 1.0 - 14.0 / PUMA.shape[1] if PUMA is not None else 0.9   # paw contact row (crop has 12 px pad under the lowest paw) -> sits on the band centre
