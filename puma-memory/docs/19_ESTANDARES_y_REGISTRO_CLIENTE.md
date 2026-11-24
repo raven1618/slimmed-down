@@ -30,6 +30,11 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 | C8 | 2027 → full white → KV | | ✅ v13 | |
 | C9 | Closing text: bad contrast, "basic and outdated" | Closing lines higher, ball darkens to deep emerald | ✅ v13 | |
 | C10 | Photo collage (script p.13) | It IS a client request (script page 13) | ✅ in timeline | |
+| C12 | (user Nov 24) GLOBAL text higher, clear of the puma | `cfg_global` yTop 0.27 → 0.17 | ✅ v18 | |
+| C13 | (user) Paraguay outline higher, fill the space under the text | `PY_LL` lat −21.6 → −22.5 | ✅ v18 | |
+| C14 | (user) ENTREGA text smaller and higher; centre the LPG worker so his canister is visible | `cfg_entrega` yTop 0.11, widths ×0.8; F2 clip tilted −16° (`CLIP_TILT`) | ✅ v18 | |
+| C15 | (user) 2027 too slow: speed ramp, don't dwell | pop 0.35 s, hold 0.3 s, cubic ramp 0.8 s to overflow; white → KV at 68.75 (was 70.6); KV holds to 75.2 | ✅ v18 | `cfg_2027`, `mg.html growScale` |
+| C16 | (user) trim the under-the-truck start; equal screen time truck vs boat | J1 starts at slowed 1.25 s, speed 0.818; spin at JUNTOS+2.015 s; J1 ≈ J2 ≈ 2.4 s | ✅ v18 | `CLIP_DELAY`, `CLIP_SPEED`, `SPIN_TM` |
 | C11 | Truck turning into the oil tanker | Was unconfirmed; now covered by C4a/C4b | ❓→🔶 | |
 
 ## C. User rules (permanent)

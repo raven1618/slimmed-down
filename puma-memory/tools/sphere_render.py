@@ -236,7 +236,7 @@ def _py_layers():
     for k, a in enumerate((cv2.GaussianBlur(edge, (0, 0), 0.8), glow, inner.astype(np.float32), ang.astype(np.float32), soft, uu, vv)): L[k][y0:y1, x0:x1] = a
     return L
 PY_T = _py_layers()
-PY_LL = (-58.36, -21.6)                                              # Paraguay centre (lon, lat)
+PY_LL = (-58.36, -22.5)                                              # Paraguay centre (lon, lat)
 ASU = (-57.58, -25.28)
 HUBS = [(-74, 4.6), (-77, -12), (-70.6, -33.4), (-58.4, -34.6), (-56.2, -34.9), (-43.2, -22.9), (-79.5, 9), (-90.5, 14.6), (-87.2, 14.1),
         (-86.3, 12.1), (-69.9, 18.5), (-66.1, 18.4), (-76.8, 18), (-3.7, 40.4), (-0.1, 51.5), (4.9, 52.4), (8.5, 47.4), (28, -26.2),
@@ -546,7 +546,7 @@ def wipe(t, t0, dur=0.6):
 TL = dict(pulse0=0.4, pulseN=5, pulse_dt=1.05, open=6.0, ball=7.4, somos=8.6, logo=10.0, path=12.2, globe=13.4,
           txt_global=14.2, txt_40=16.8, txt_cal=19.4, zoom=21.6, py=23.0, km=25.6, entrega=28.4, destino=33.8,
           calidad=36.6, juntos=39.4, collage=46.4, pulse2=49.2, ballspin=52.6, kick=52.6, kv_flash=57.6, logo2=58.2, cat_in=59.2,
-          logro=61.4, hoy=63.2, listos=64.8, y2027=67.0, kv=70.6, end=75.2)
+          logro=61.4, hoy=63.2, listos=64.8, y2027=67.0, kv=68.75, end=75.2)
 ENTREGA = ["2_entrega/p2_cilindro.png", "2_entrega/p3_aerea02.jpg", "2_entrega/p4_convoy.png", "2_entrega/p4_ladario03.jpg", "2_entrega/p5_DSC3209.tif"]
 DESTINO = [("3_destino/p1_eess.jpg", 0.6), ("3_destino/p2_aeropuerto.jpg", 0.25)]   # airport: crop away the airline tail (right)
 IN = R + "esfera_in/"
@@ -573,10 +573,18 @@ def fish_clip(name):
 _m = np.where((P[..., 2] >= 0)[..., None], P, np.stack([-P[..., 0], P[..., 1], -P[..., 2]], -1))   # back half = rotated, not mirrored
 _r = np.arccos(np.clip(_m[..., 2], -1, 1)) / np.pi * 0.985; _ph = np.arctan2(_m[..., 1], _m[..., 0])
 FMX = ((0.5 + _r * np.cos(_ph)) * 640).astype(np.float32); FMY = ((0.5 - _r * np.sin(_ph)) * 640).astype(np.float32)
+CLIP_TILT = {"F2_dolly.mp4": math.radians(-16)}                         # user: lift the LPG worker so his canister clears the puma
+_tilt_maps = {}
 def fish_frame(name, tt, speed=1.0):
     F = fish_clip(name)
     if F is None: return None
     i = int(min(max(tt * speed * 30, 0), len(F) - 1))                      # play once, hold the last frame (never loop)
+    if name in CLIP_TILT:                                                  # look slightly down into the clip: its content rises on the ball
+        if name not in _tilt_maps:
+            m = _m @ rotx(-CLIP_TILT[name]).T; r = np.arccos(np.clip(m[..., 2], -1, 1)) / np.pi * 0.985; ph = np.arctan2(m[..., 1], m[..., 0])
+            _tilt_maps[name] = (((0.5 + r * np.cos(ph)) * 640).astype(np.float32), ((0.5 - r * np.sin(ph)) * 640).astype(np.float32))
+        mx, my = _tilt_maps[name]
+        return cv2.remap(F[i], mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
     return cv2.remap(F[i], FMX, FMY, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
 
 _BK = (P[..., 2] < 0)
@@ -619,6 +627,7 @@ SCN = [(lambda: TL["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), (
 _TU, _TV = FMX / 640.0, FMY / 640.0                                   # clip coordinates of every sphere pixel (the fisheye scenes' own frame)
 TIDE = False
 SPIN, SPIN_D = True, 2.2
+SPIN_TM = 2.015                                                      # spin starts 2.015 s into JUNTOS: truck and boat get equal screen time (user)
 SPIN_ROLL = np.load(IN + "fisheye/J1J2_spin_roll.npy") if os.path.exists(IN + "fisheye/J1J2_spin_roll.npy") else np.zeros(66)   # measured camera roll per frame (rad), 3 turns
 SPIN_SIGN = -1.0                                                     # verified on the side view: the halves roll together
 J2_V = 2.0                                                           # J2 after the landing: 1x -> 2x so more of its camera move plays before J3
@@ -656,17 +665,17 @@ def tide(f1, f2, t, tm):
         streak = np.exp(-((_TV - TIDE_HZ) / 0.005) ** 2) * sm(reach, reach - 0.15, np.abs(_TU - 0.5))
         out = out + bloom((star[..., None] * np.array([255, 255, 235], np.float32) * 1.6 + streak[..., None] * (GREEN + 80)) * g, 0.9)
     return out
-CLIP_DELAY = {"J1_anim.mp4": 0.35}                                     # -> the truck is exactly the tanker's size when the centre panel flips to J2
-CLIP_SPEED = {}                                                        # J1 truck is pre-slowed 2x (interpolated) so it matches the J2 tanker size at the flip
+CLIP_DELAY = {"J1_anim.mp4": -1.528}                                     # -> the truck is exactly the tanker's size when the centre panel flips to J2
+CLIP_SPEED = {"J1_anim.mp4": 0.818}        # user: start past the under-the-truck shot (slowed clip 1.25 s) and reach the match frame (3.267 s) at SPIN_TM                                                        # J1 truck is pre-slowed 2x (interpolated) so it matches the J2 tanker size at the flip
 def scene_foot(i, t):
     t0, photos, _, t1 = SCN[i][0](), SCN[i][1], SCN[i][2], SCN[i][3]()
     n = len(photos); seg = (t1 - t0) / n; j = int(min(max((t - t0) / seg, 0), n - 1))
     def pic(jj):
         if SPIN and photos[0] == "J1_anim.mp4" and jj == 1:  # J2 has ONE clock everywhere (also inside the J2 -> J3 reveal)
-            return fish_frame(photos[1], j2_time(t - (t0 + seg - 0.1 + SPIN_D)))
+            return fish_frame(photos[1], j2_time(t - (t0 + SPIN_TM + SPIN_D)))
         return fish_frame(photos[jj], t - (t0 + jj * seg - 0.45) - CLIP_DELAY.get(photos[jj], 0.0), CLIP_SPEED.get(photos[jj], 1.0))
     if SPIN and photos[0] == "J1_anim.mp4":                 # J1 -> J2: generated barrel-roll transition (Seedance 38387eb9), speed-ramped 2.2 s, no time added
-        tm = t0 + seg - 0.1; D = SPIN_D
+        tm = t0 + SPIN_TM; D = SPIN_D
         if tm <= t < tm + D:                                # the back copy rolls WITH the front (measured roll x2), so the side joins move together: no seam, no masking
             fi = int(min(max((t - tm) * 30, 0), len(SPIN_ROLL) - 1))
             return fish_frame_kick("J1J2_spin.mp4", t - tm, SPIN_SIGN * 2 * SPIN_ROLL[fi])

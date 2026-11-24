@@ -99,7 +99,8 @@ function relayout(l, text) {
 function growScale(t) {          // 2027: pops in small, then grows (accelerating) until it overflows the sphere
   const g = CFG.grow; if (!g) return 1;
   const pop = eOutBack(ph(t, g.t0, 0.35)) * g.s0;
-  const q = ph(t, g.t0 + 0.35, g.dur); const acc = q < 0.5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2;
+  const q = ph(t, g.t0 + 0.35 + (g.hold || 0), g.dur);
+  const acc = g.hold !== undefined ? q * q * q : (q < 0.5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2);   // with a hold: read it, then a hard speed ramp
   return Math.max(pop, 1e-3) * Math.pow(g.s1 / g.s0, acc);
 }
 function withGrow(ctx, t, fn) {
