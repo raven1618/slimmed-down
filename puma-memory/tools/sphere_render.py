@@ -575,13 +575,17 @@ _r = np.arccos(np.clip(_m[..., 2], -1, 1)) / np.pi * 0.985; _ph = np.arctan2(_m[
 FMX = ((0.5 + _r * np.cos(_ph)) * 640).astype(np.float32); FMY = ((0.5 - _r * np.sin(_ph)) * 640).astype(np.float32)
 CLIP_TILT = {"F2_dolly.mp4": math.radians(-16)}                         # user: lift the LPG worker so his canister clears the puma
 _tilt_maps = {}
+CLIP_ZOOM = {"F2_dolly.mp4": 1.12}                                     # >1 = the scene is shown smaller (more of it fits between the text and the puma)
 def fish_frame(name, tt, speed=1.0):
     F = fish_clip(name)
     if F is None: return None
     i = int(min(max(tt * speed * 30, 0), len(F) - 1))                      # play once, hold the last frame (never loop)
     if name in CLIP_TILT:                                                  # look slightly down into the clip: its content rises on the ball
         if name not in _tilt_maps:
-            m = _m @ rotx(-CLIP_TILT[name]).T; r = np.arccos(np.clip(m[..., 2], -1, 1)) / np.pi * 0.985; ph = np.arctan2(m[..., 1], m[..., 0])
+            tl = CLIP_TILT[name]; m = _m @ rotx(-tl).T; ph = np.arctan2(m[..., 1], m[..., 0])
+            x = np.clip(np.arccos(np.clip(m[..., 2], -1, 1)) / (np.pi / 2 + abs(tl)), 0, 1)   # every visible direction stays inside the clip circle
+            c = CLIP_ZOOM.get(name, 1.0) * (np.pi / 2 + abs(tl)) / (np.pi / 2)                # centre shrinks by CLIP_ZOOM, the rim stays on the rim
+            r = 0.4925 * x * (c - (c - 1) * x)
             _tilt_maps[name] = (((0.5 + r * np.cos(ph)) * 640).astype(np.float32), ((0.5 - r * np.sin(ph)) * 640).astype(np.float32))
         mx, my = _tilt_maps[name]
         return cv2.remap(F[i], mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
