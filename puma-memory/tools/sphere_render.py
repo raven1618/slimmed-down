@@ -236,7 +236,7 @@ def _py_layers():
     for k, a in enumerate((cv2.GaussianBlur(edge, (0, 0), 0.8), glow, inner.astype(np.float32), ang.astype(np.float32), soft, uu, vv)): L[k][y0:y1, x0:x1] = a
     return L
 PY_T = _py_layers()
-PY_LL = (-58.36, -22.5)                                              # Paraguay centre (lon, lat)
+PY_LL = (-58.36, -25.6)                                              # Paraguay centre (lon, lat)
 ASU = (-57.58, -25.28)
 HUBS = [(-74, 4.6), (-77, -12), (-70.6, -33.4), (-58.4, -34.6), (-56.2, -34.9), (-43.2, -22.9), (-79.5, 9), (-90.5, 14.6), (-87.2, 14.1),
         (-86.3, 12.1), (-69.9, 18.5), (-66.1, 18.4), (-76.8, 18), (-3.7, 40.4), (-0.1, 51.5), (4.9, 52.4), (8.5, 47.4), (28, -26.2),
@@ -760,7 +760,7 @@ def render(t):
         lo = -20 + (t - T["globe"]) * 9.0; la = 8.0; zoom = 1.0; pyg = 0.0
         if t >= T["zoom"]:
             p = ease((t - T["zoom"]) / (T["py"] - T["zoom"] + 0.6))
-            lo = lo * (1 - p) + PY_LL[0] * p; la = la * (1 - p) + PY_LL[1] * p; zoom = 1 + 3.0 * p ** 1.6; pyg = sm(0.6, 1.0, p)
+            lo = lo * (1 - p) + PY_LL[0] * p; la = la * (1 - p) + PY_LL[1] * p; zoom = 1 + 2.1 * p ** 1.6; pyg = sm(0.6, 1.0, p)
         arcs = ease((t - T["txt_40"]) / 2.2) * (1 - ease((t - T["zoom"]) / 0.8))
         fa = ease((t - T["globe"]) / 0.8)
         fr = globe(t, lo, la, zoom, arcs=arcs, py_glow=pyg) * fa; fr = light_over(fr, swoosh(t, 1.0), 1.3, 0.3); fr = puma_put(fr, t)
