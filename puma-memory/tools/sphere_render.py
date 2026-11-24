@@ -619,6 +619,14 @@ SCN = [(lambda: TL["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), (
 _TU, _TV = FMX / 640.0, FMY / 640.0                                   # clip coordinates of every sphere pixel (the fisheye scenes' own frame)
 TIDE = False
 SPIN, SPIN_D = True, 2.2
+SPIN_ROLL = np.load(IN + "fisheye/J1J2_spin_roll.npy") if os.path.exists(IN + "fisheye/J1J2_spin_roll.npy") else np.zeros(66)   # measured camera roll per frame (rad), 3 turns
+SPIN_SIGN = -1.0                                                     # verified on the side view: the halves roll together
+J2_V = 2.0                                                           # J2 after the landing: 1x -> 2x so more of its camera move plays before J3
+def j2_time(tau):
+    """J2 clip time after the spin lands: starts on the landing frame (0.333 s), speed ramps 1x -> J2_V over 0.6 s."""
+    tau = max(tau, 0.0); r = 0.6; a = min(tau, r)
+    ramp = a ** 3 / r ** 2 - a ** 4 / (2 * r ** 3)                 # integral of smoothstep(x / r) from 0 to a
+    return 8 / 24 + tau + (J2_V - 1) * (ramp + max(tau - r, 0))
 TIDE_HZ = 0.545                                                       # horizon row shared by J1's road end and J2's sea
 def tide(f1, f2, t, tm):
     """J1 land -> J2 sea. The sea floods up from the bottom of the circle to the horizon behind a foam crest,
@@ -653,21 +661,23 @@ CLIP_SPEED = {}                                                        # J1 truc
 def scene_foot(i, t):
     t0, photos, _, t1 = SCN[i][0](), SCN[i][1], SCN[i][2], SCN[i][3]()
     n = len(photos); seg = (t1 - t0) / n; j = int(min(max((t - t0) / seg, 0), n - 1))
-    pic = lambda jj: fish_frame(photos[jj], t - (t0 + jj * seg - 0.45) - CLIP_DELAY.get(photos[jj], 0.0), CLIP_SPEED.get(photos[jj], 1.0))
+    def pic(jj):
+        if SPIN and photos[0] == "J1_anim.mp4" and jj == 1:  # J2 has ONE clock everywhere (also inside the J2 -> J3 reveal)
+            return fish_frame(photos[1], j2_time(t - (t0 + seg - 0.1 + SPIN_D)))
+        return fish_frame(photos[jj], t - (t0 + jj * seg - 0.45) - CLIP_DELAY.get(photos[jj], 0.0), CLIP_SPEED.get(photos[jj], 1.0))
     if SPIN and photos[0] == "J1_anim.mp4":                 # J1 -> J2: generated barrel-roll transition (Seedance 38387eb9), speed-ramped 2.2 s, no time added
         tm = t0 + seg - 0.1; D = SPIN_D
-        if tm <= t < tm + D:                                # front and back copies roll in opposite directions where they meet: fade the side joins while rolling
-            u = (t - tm) / D; k = ease((u - 0.05) / 0.1) * (1 - ease((u - 0.88) / 0.1))
-            return fish_frame("J1J2_spin.mp4", t - tm) * (1 - k * sm(0.4, 0.0, np.abs(P[..., 2])))[..., None]
-        if t >= tm + D and j == 1:                          # J2 resumes exactly at the frame the spin lands on (0.333 s)
-            return fish_frame(photos[1], t - (tm + D) + 8 / 24)
+        if tm <= t < tm + D:                                # the back copy rolls WITH the front (measured roll x2), so the side joins move together: no seam, no masking
+            fi = int(min(max((t - tm) * 30, 0), len(SPIN_ROLL) - 1))
+            return fish_frame_kick("J1J2_spin.mp4", t - tm, SPIN_SIGN * 2 * SPIN_ROLL[fi])
     if TIDE and photos[0] == "J1_anim.mp4":                 # land -> sea (REJECTED Nov 24: looked improvised): the tide rolls in up to the horizon, the truck becomes the tanker in a glint
         tm = t0 + seg - 0.1
         if tm - 1.1 <= t < tm + 0.45: return tide(pic(0), pic(1), t, tm)
-    f = pic(j)
-    if j > 0 and t < t0 + j * seg + 0.45:                   # seam reveal between photos of the same line
-        f = reveal(pic(j - 1), f, t, t0 + j * seg - 0.35, 0.8)
-    return f
+    jb = int(round((t - t0) / seg)); bt = t0 + jb * seg            # nearest boundary between two photos of this line
+    spin_cut = SPIN and photos[0] == "J1_anim.mp4" and jb == 1      # J1 -> J2 is the spin, not a reveal
+    if 1 <= jb <= n - 1 and bt - 0.35 <= t < bt + 0.45 and not spin_cut:
+        return reveal(pic(jb - 1), pic(jb), t, bt - 0.35, 0.8)     # the reveal runs its whole 0.8 s (it used to pop in 0.35 s late)
+    return pic(j)
 def scene_full(i, t):
     t0, t1 = SCN[i][0](), SCN[i][3]()
     clear = 0.0                                             # J1: puma + beam stay (the truck is in the clip itself)
