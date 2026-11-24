@@ -230,11 +230,13 @@ def _py_layers():
     glow = cv2.GaussianBlur(edge, (0, 0), 5); glow /= glow.max()
     dist = cv2.distanceTransform(c, cv2.DIST_L2, 5); inner = c * (0.35 + 0.65 * np.exp(-dist / 9))   # brighter toward the border
     ang = np.arctan2(*np.mgrid[y0:y1, x0:x1] - np.array([(y0 + y1) / 2, (x0 + x1) / 2])[:, None, None])
-    L = [np.zeros_like(m) for _ in range(4)]
-    for k, a in enumerate((cv2.GaussianBlur(edge, (0, 0), 0.8), glow, inner.astype(np.float32), ang.astype(np.float32))): L[k][y0:y1, x0:x1] = a
+    L = [np.zeros_like(m) for _ in range(7)]
+    vv, uu = np.mgrid[0:y1 - y0, 0:x1 - x0].astype(np.float32); uu /= (x1 - x0); vv /= (y1 - y0)
+    soft = cv2.GaussianBlur(c.astype(np.float32), (0, 0), 1.2)
+    for k, a in enumerate((cv2.GaussianBlur(edge, (0, 0), 0.8), glow, inner.astype(np.float32), ang.astype(np.float32), soft, uu, vv)): L[k][y0:y1, x0:x1] = a
     return L
 PY_T = _py_layers()
-PY_LL = (-58.36, -20.1)                                              # Paraguay centre (lon, lat)
+PY_LL = (-58.36, -20.7)                                              # Paraguay centre (lon, lat)
 ASU = (-57.58, -25.28)
 HUBS = [(-74, 4.6), (-77, -12), (-70.6, -33.4), (-58.4, -34.6), (-56.2, -34.9), (-43.2, -22.9), (-79.5, 9), (-90.5, 14.6), (-87.2, 14.1),
         (-86.3, 12.1), (-69.9, 18.5), (-66.1, 18.4), (-76.8, 18), (-3.7, 40.4), (-0.1, 51.5), (4.9, 52.4), (8.5, 47.4), (28, -26.2),
@@ -276,11 +278,21 @@ def _globe(B, t, lo_c, la_c, zoom, arcs, py_glow):
         fr = (ocean * (1 - land[..., None]) + lc * land[..., None]) * lit[..., None]
         fr += coast[..., None] * GREEN * 0.9 + bord[..., None] * GREEN * 0.25
     if py_glow > 0 and PY_T is not None:                         # neon outline + inner gradient + light running round the border
-        e, g, inn, ang = [smp(L) for L in PY_T]
+        e, g, inn, ang, msk, uu, vv = [smp(L) for L in PY_T]
         breath = 0.85 + 0.15 * math.sin(t * 4.0)
         run = 0.5 + 0.5 * np.cos(ang - t * 3.0) ** 8                  # a bright bead travelling round the outline
-        fr = fr * (1 - 0.35 * inn[..., None] * py_glow) + inn[..., None] * py_glow * breath * GREEN * 0.8
+        fr = fr * (1 - 0.35 * inn[..., None] * py_glow) + inn[..., None] * py_glow * breath * GREEN * 0.45
         fr += g[..., None] * py_glow * GREEN * (0.9 + 0.6 * run[..., None])
+        # client: fill the country with the beam -> horizontal laser strands, bright dashes racing left to right inside the outline
+        bm = np.zeros_like(uu)
+        for k in range(15):
+            v0 = 0.22 + k * 0.04 + 0.005 * math.sin(t * 1.3 + k)
+            core = np.exp(-((vv - v0) / (0.007 + 0.003 * (k % 3))) ** 2)
+            dash = 0.15 + 0.85 * np.clip(np.sin((uu - (0.55 + 0.12 * (k % 4)) * t - 0.37 * k) * np.pi / (0.16 + 0.05 * (k % 3))), 0, 1) ** 4
+            bm += core * dash
+        sweep = np.exp(-((uu - ((t * 0.45) % 1.4 - 0.2)) / 0.09) ** 2)                # a wide bar of light crossing the country
+        bm = (bm * (0.75 + 0.6 * sweep) + sweep * 0.22) * msk * py_glow
+        fr = fr + bm[..., None] * LASER_LIME * 1.7 + np.clip(bm, 0, 1)[..., None] ** 2 * LASER_CORE * 1.1
         fr = fr * (1 - e[..., None] * py_glow) + e[..., None] * py_glow * (np.array([200, 255, 170], np.float32) * (0.8 + 0.2 * run[..., None]))
     elif py_glow > 0:
         fr = fr * (1 - py[..., None] * py_glow) + py[..., None] * py_glow * (GREEN * 0.9 + 60)
@@ -323,7 +335,7 @@ def rgba(rgb, a=None):
 # swoosh: the KV light path around the ball (tilted great circle bands, moving) — also the puma's track
 # client mockup: one diagonal band under the puma (a tilted ring: low on the left, rising to the right for the front
 # audience) + multi-strand ribbons around the rim of the ball = the side meridians where the front and back views meet.
-PATH_B, PATH_A = math.radians(30), math.radians(10)              # band latitude at the front/back centre, tilt amplitude
+PATH_B, PATH_A = math.radians(33), math.radians(10)              # band latitude at the front/back centre, tilt amplitude
 def path_lat(lon): return -PATH_B + 0.5 * PATH_A * np.sin(2 * lon)    # rises to the right through BOTH the front (0) and back (180) centres
 # real light: the teaser Seedance plates (organic multi-strand KV light) mapped along the band and the rims
 def _plate(name, w=1280):
@@ -420,9 +432,14 @@ def _load_puma():
 VECTOR_FROM_CHROME = False
 PUMA = _load_puma()
 PUMA_WDEG = 64.0
+PUMA_FOOT = 1.0 - 14.0 / PUMA.shape[1] if PUMA is not None else 0.9   # paw contact row (crop has 12 px pad under the lowest paw) -> sits on the band centre
+if PUMA is not None:                                               # client: the puma must be seen stepping ON the beam -> damp the gallop's flight phase
+    _low = np.array([np.where((f.max(-1) > 65).any(1))[0].max() for f in PUMA], np.float32)
+    _low = np.convolve(np.concatenate([_low[-2:], _low, _low[:2]]), np.ones(5) / 5, "valid")
+    PUMA_DROP = 0.65 * (_low.max() - _low) / PUMA.shape[1]        # fraction of the puma height to lower each frame
 def puma_put(fr, t, alpha=1.0, centres=(0.0, math.pi)):
     if PUMA is None or alpha <= 0: return fr
-    q = PUMA[int(t * 30) % len(PUMA)].astype(np.float32); fh, fw = q.shape[:2]
+    fi = int(t * 30) % len(PUMA); q = PUMA[fi].astype(np.float32); fh, fw = q.shape[:2]
     for c in centres:
         lat0 = float(path_lat(np.array(c))); slope = PATH_A * math.cos(2 * c)          # band slope at this centre (rad/rad)
         wpx = int(PUMA_WDEG / 360 * EW / math.cos(lat0)); hpx = int(wpx * fh / fw * math.cos(lat0))
@@ -431,7 +448,7 @@ def puma_put(fr, t, alpha=1.0, centres=(0.0, math.pi)):
         pad = hpx; img = cv2.copyMakeBorder(img, pad, pad, 0, 0, cv2.BORDER_CONSTANT)
         M = cv2.getRotationMatrix2D((wpx / 2, img.shape[0] / 2), ang, 1.0); img = cv2.warpAffine(img, M, (wpx, img.shape[0]))
         cx = int((c / (2 * math.pi) + 0.5) * EW) % EW; yrow = int(EH * (0.5 - math.degrees(lat0) / 180))
-        top = yrow - int(hpx * 0.70) - pad; cols = np.arange(cx - wpx // 2, cx - wpx // 2 + wpx) % EW
+        top = yrow - int(hpx * (PUMA_FOOT - PUMA_DROP[fi])) - pad; cols = np.arange(cx - wpx // 2, cx - wpx // 2 + wpx) % EW
         y0, y1 = max(0, top), min(EH, top + img.shape[0]); img = img[y0 - top:y1 - top]
         al = np.clip((img.max(-1, keepdims=True) - 10) / 55, 0, 1) * alpha
         reg = fr[y0:y1][:, cols]; fr[y0:y1][:, cols] = reg * (1 - al) + img * alpha
@@ -622,7 +639,7 @@ def render(t):
         lo = -20 + (t - T["globe"]) * 9.0; la = 8.0; zoom = 1.0; pyg = 0.0
         if t >= T["zoom"]:
             p = ease((t - T["zoom"]) / (T["py"] - T["zoom"] + 0.6))
-            lo = lo * (1 - p) + PY_LL[0] * p; la = la * (1 - p) + PY_LL[1] * p; zoom = 1 + 2.6 * p ** 1.6; pyg = sm(0.6, 1.0, p)
+            lo = lo * (1 - p) + PY_LL[0] * p; la = la * (1 - p) + PY_LL[1] * p; zoom = 1 + 2.0 * p ** 1.6; pyg = sm(0.6, 1.0, p)
         arcs = ease((t - T["txt_40"]) / 2.2) * (1 - ease((t - T["zoom"]) / 0.8))
         fa = ease((t - T["globe"]) / 0.8)
         fr = globe(t, lo, la, zoom, arcs=arcs, py_glow=pyg) * fa; fr = light_over(fr, swoosh(t, 1.0), 1.3, 0.3); fr = puma_put(fr, t)
