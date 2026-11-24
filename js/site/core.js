@@ -6,6 +6,7 @@
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const small = matchMedia('(max-width: 760px), (pointer: coarse)').matches;
 const LOOK_SPEED = 1.15;          // look-around speed in the tour and free roam: radians per screen height, times the field of view
+const TREE_GAIN = 1.7;            // the photographed trees' brightness on the hill, against the satellite ground
 const SKY_GAIN = 0.85;            // the Blender sky on the hill (ACES, exposure 1) against the renders (AgX, +0.5)
 const $ = (id) => document.getElementById(id);
 const loaderText = $('loader-text');

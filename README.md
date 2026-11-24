@@ -37,7 +37,8 @@ There is no build step: static files, with three.js (minified) from jsDelivr.
 - `js/cabin.js`: the cabin and residence, furnished inside. **The one source of the buildings:** free roam draws
   them, and `render/export_models.cjs` exports them for the Blender renders of the tour.
 - `js/look.js`: free roam's look, matched to the Blender renders: the sky Blender rendered from the site, AgX colour with +0.5 exposure, the sun of the bake, Poly Haven photo textures with their relief (normal) maps, the tree cards, the grass blades, glow, sharpening and film grade.
-- `data/`: terrain, trees, imagery and base maps for the hill; `data/tour.json` and `data/tour/` for the tour;
+- `data/`: terrain, trees, imagery and base maps for the hill (`data/hill/`: its trees photographed from the air, and photo
+  textures for the homestead); `data/tour.json` and `data/tour/` for the tour;
   `data/walk/` and `data/walk/private/` for free roam.
 - `img/`: site photos, renders and the trail video. `render/`: the Blender pipeline, the private side's build and the video recorder. `data/build/`: the data pipeline.
 

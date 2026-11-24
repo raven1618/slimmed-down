@@ -35,9 +35,9 @@ because each was asked for more than once: do not make the owner repeat them.
 
 ## Open (not at the bar yet)
 
-- **Hill close-ups:** the homestead's buildings, pond and palms are hand-built props, and the hill's trees are
-  round canopies. They read as toys closer than about 150 m. Rebuild: the trees as the photographed tree cards free
-  roam uses (`js/look.js` treeCards), the buildings with photo materials, or render the homestead in Blender.
+- **Hill close-ups, closer than about 50 m:** the ground is the 1 m satellite image and turns soft; the homestead's
+  buildings are simple shapes (now in photographed brick, clay tile, plaster and wood). Done already: the hill's trees
+  and palms are photographed tree models (`render/impostors.py ... aerial`, `data/hill/`), not round canopies.
 
 ## Where things are
 

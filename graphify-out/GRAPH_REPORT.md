@@ -1,17 +1,17 @@
-# Graph Report - slimmed-down  (2026-11-23)
+# Graph Report - slimmed-down  (2026-11-24)
 
 ## Corpus Check
-- 44 files · ~74,269 words
+- 45 files · ~76,079 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 1, .css 1, .geojson 1)
 
 ## Summary
-- 563 nodes · 1014 edges · 27 communities (21 shown, 6 thin omitted)
+- 568 nodes · 1022 edges · 26 communities (21 shown, 5 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 33 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e92d3d01`
+- Built from commit: `133a7437`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -30,11 +30,12 @@
 - yAt
 - relayout
 - buildHill
+- prep.py
 - initLimits
-- tour_spots.py
 - hexRGB
 - private_site.py
 - Blender renders
+- impostors.py
 - ph_fetch.py
 - contourMaterial
 - buildBuildings
@@ -50,9 +51,9 @@
 5. `buildHill()` - 14 edges
 6. `yAt()` - 13 edges
 7. `openTour()` - 13 edges
-8. `relayout()` - 12 edges
-9. `markTab()` - 12 edges
-10. `setMode()` - 12 edges
+8. `buildStructures()` - 12 edges
+9. `relayout()` - 12 edges
+10. `markTab()` - 12 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `build()` --calls--> `materials()`  [EXTRACTED]
@@ -69,7 +70,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (27 total, 6 thin omitted)
+## Communities (26 total, 5 thin omitted)
 
 ### Community 0 - "views.js"
 Cohesion: 0.05
@@ -81,7 +82,7 @@ Nodes (46): activePointers, cabinMats(), deleteNote(), downhillBearing(), esc(),
 
 ### Community 2 - "hill.js"
 Cohesion: 0.05
-Nodes (37): archWindow(), BASES, baseTex, BLANK, brickTex(), BROWN, BUILDERS, cabinModel() (+29 more)
+Nodes (34): archWindow(), BASES, baseTex, BLANK, BROWN, BUILDERS, cabinModel(), CREAM (+26 more)
 
 ### Community 3 - "look.js"
 Cohesion: 0.09
@@ -116,12 +117,12 @@ Cohesion: 0.12
 Nodes (16): jobs, smoke, name, on, pull_request, push, runs-on, steps (+8 more)
 
 ### Community 11 - "yAt"
-Cohesion: 0.19
-Nodes (15): baseY(), bearingRot(), buildStructures(), cutAt(), cutModel(), groundAt(), hillLabels(), homesteadView() (+7 more)
+Cohesion: 0.16
+Nodes (17): baseY(), bearingRot(), buildStructures(), cutAt(), cutModel(), gravelTex(), groundAt(), hillLabels() (+9 more)
 
 ### Community 12 - "relayout"
-Cohesion: 0.24
-Nodes (11): applyLayers(), clearOfStructures(), curtain(), drawOverlay(), fromUTM(), kindOf(), placeTrees(), refreshCurtains() (+3 more)
+Cohesion: 0.21
+Nodes (12): applyLayers(), clearOfStructures(), curtain(), drawOverlay(), fromUTM(), kindOf(), placeTrees(), refreshCurtains() (+4 more)
 
 ### Community 13 - "buildHill"
 Cohesion: 0.19
@@ -136,16 +137,16 @@ Cohesion: 0.33
 Nodes (9): contourLabels(), gridCanvas(), hexRGB(), hillshade(), landcoverAt(), rampRGB(), reliefMap(), slopeMap() (+1 more)
 
 ### Community 19 - "Blender renders"
-Cohesion: 0.29
-Nodes (6): Blender renders, Free roam: the private side, Free roam: the quarry cabins, Run it, The photoreal tour (Explore the site), The shot: quarry cabins
+Cohesion: 0.25
+Nodes (7): Blender renders, Free roam: the private side, Free roam: the quarry cabins, Run it, The hill's trees (seen from the air), The photoreal tour (Explore the site), The shot: quarry cabins
 
 ### Community 22 - "contourMaterial"
 Cohesion: 0.40
 Nodes (5): contourMaterial(), detailTexture(), holeMask(), roundRing(), shoreOf()
 
 ### Community 23 - "buildBuildings"
-Cohesion: 0.50
-Nodes (4): buildBuildings(), buildTrees(), imageryColor(), treeGeometry()
+Cohesion: 0.40
+Nodes (5): buildBuildings(), buildTrees(), imageryColor(), treeCardsMesh(), treeGeometry()
 
 ### Community 24 - "showStructure"
 Cohesion: 0.50
@@ -156,22 +157,22 @@ Cohesion: 0.25
 Nodes (7): Before saying "done", graphify, Open (not at the bar yet), Outer Heaven: standing rules, Privacy (the repository is public), The quality bar (every change, every view), Where things are
 
 ## Knowledge Gaps
-- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `windOf()` connect `tools.js` to `core.js`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+  _High betweenness centrality (0.033) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `build()` (e.g. with `loop()` and `resize()`) actually correct?**
   _`build()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **Should `views.js` be split into smaller, more focused modules?**
   _Cohesion score 0.053613053613053616 - nodes in this community are weakly interconnected._
 - **Why does `lendRenderer()` connect `views.js` to `core.js`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
 - **Should `tools.js` be split into smaller, more focused modules?**
   _Cohesion score 0.09574468085106383 - nodes in this community are weakly interconnected._
 - **Why does `disposeScene()` connect `core.js` to `views.js`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **Should `hill.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.05053191489361702 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.051515151515151514 - nodes in this community are weakly interconnected._

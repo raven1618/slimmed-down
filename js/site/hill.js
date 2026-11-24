@@ -312,10 +312,81 @@ function treeGeometry() {
   const trunk = new THREE.CylinderGeometry(0.06, 0.09, 0.5, 5, 1, true); trunk.translate(0, 0.25, 0);
   return mergeGeometries([crown, colorize(trunk, 0x7a6450)]);
 }
+
+/* Trees as photographs: each species was rendered in Blender (render/impostors.py ... aerial) from 8 sides at three
+   heights (12°, 40° and 72° above the horizon). Each tree is one card facing the camera that shows, blended, the
+   photographs nearest to the way you look at it, tinted to the colour of the satellite image under it. The round
+   crowns stay, unseen, to cast the trees' shadows (they are on layer 1, which only the sun's shadow camera sees). */
+const PALM = 3;
+function treeCardsMesh(n) {
+  const T = HILL_TREES, sp = T.meta.species, E = T.meta.elevations, rows = sp.length * E.length;
+  const geo = new THREE.InstancedBufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5, 0]), 3));
+  geo.setIndex([0, 1, 2, 0, 2, 3]);
+  geo.setAttribute('aPos', new THREE.InstancedBufferAttribute(new Float32Array(n * 4), 4));     // x, ground, z, height
+  geo.setAttribute('aDim', new THREE.InstancedBufferAttribute(new Float32Array(n * 2), 2));     // width factor, species
+  geo.setAttribute('aTint', new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3));    // the colour it should have on average
+  geo.instanceCount = n;
+  T.tex.colorSpace = THREE.NoColorSpace; T.tex.anisotropy = 4;
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),
+      uSheet: { value: T.tex }, uFrame: { value: sp.map((q) => q.frame) }, uMean: { value: sp.map((q) => new THREE.Vector3(...q.mean)) },
+      uK: { value: T.meta.scale }, uGain: { value: TREE_GAIN },
+    },
+    defines: { ROWS: rows.toFixed(1), NE: E.length, E0: E[0].toFixed(1), E1: E[1].toFixed(1), E2: E[2].toFixed(1) },
+    fog: true, alphaToCoverage: true, side: THREE.DoubleSide,
+    vertexShader: `#include <fog_pars_vertex>
+      attribute vec4 aPos; attribute vec2 aDim; attribute vec3 aTint; uniform float uFrame[${sp.length}];
+      varying vec2 vA, vB, vC, vD; varying float vM, vE; varying vec3 vTint; varying float vSp;
+      vec2 cell(float col, float row, vec2 q) { return vec2((col + q.x) / 8.0, (ROWS - 1.0 - row + q.y) / ROWS); }
+      void main() {
+        int si = int(aDim.y + 0.5); float size = aPos.w * uFrame[si];
+        vec3 c = vec3(aPos.x, aPos.y + aPos.w * 0.5, aPos.z), d = normalize(cameraPosition - c);
+        vec3 rt = normalize(cross(vec3(0.0, 1.0, 0.0), d) + vec3(1e-5, 0.0, 0.0)), up = cross(d, rt);
+        vec3 p = c + rt * position.x * size * aDim.x + up * position.y * size;
+        float k = mod(atan(d.x, -d.z) / 0.7853982 + 8.0, 8.0), k0 = floor(k), k1 = mod(k0 + 1.0, 8.0);
+        float el = degrees(asin(clamp(d.y, -1.0, 1.0)));
+        float e = el < E1 ? clamp((el - E0) / (E1 - E0), 0.0, 1.0) : 1.0 + clamp((el - E1) / (E2 - E1), 0.0, 1.0);
+        float e0 = min(floor(e), 1.0), e1 = e0 + 1.0;
+        vM = k - k0; vE = e - e0;
+        vec2 q = position.xy + 0.5;
+        vA = cell(k0, aDim.y * float(NE) + e0, q); vB = cell(k1, aDim.y * float(NE) + e0, q);
+        vC = cell(k0, aDim.y * float(NE) + e1, q); vD = cell(k1, aDim.y * float(NE) + e1, q);
+        vTint = aTint; vSp = aDim.y;
+        vec4 mvPosition = viewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader: `#include <fog_pars_fragment>
+      uniform sampler2D uSheet; uniform vec3 uMean[${sp.length}]; uniform float uK, uGain;
+      varying vec2 vA, vB, vC, vD; varying float vM, vE; varying vec3 vTint; varying float vSp;
+      void main() {
+        vec4 a = texture2D(uSheet, vA), b = texture2D(uSheet, vB), c = texture2D(uSheet, vC), d = texture2D(uSheet, vD);
+        float wa = (1.0 - vM) * (1.0 - vE) * a.a, wb = vM * (1.0 - vE) * b.a, wc = (1.0 - vM) * vE * c.a, wd = vM * vE * d.a;
+        float al = wa + wb + wc + wd;
+        vec3 rgb = (a.rgb * wa + b.rgb * wb + c.rgb * wc + d.rgb * wd) / max(al, 1e-4);
+        al = clamp((al - 0.45) / max(fwidth(al), 1e-3) + 0.5, 0.0, 1.0);
+        if (al < 0.02) discard;
+        vec3 m = uMean[int(vSp + 0.5)];
+        vec3 lin = pow(rgb, vec3(2.2)) * uK * clamp(vTint / max(m, vec3(1e-3)), 0.15, 4.0) * uGain;
+        gl_FragColor = vec4(lin, al);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+        #include <fog_fragment>
+      }`,
+  });
+  const mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false;
+  return mesh;
+}
+function setCard(mesh, i, x, y, z, h, w, sp, tint) {
+  const a = mesh.geometry.attributes;
+  a.aPos.setXYZW(i, x, y, z, h); a.aDim.setXY(i, w, sp); a.aTint.setXYZ(i, tint.r, tint.g, tint.b);
+}
 function buildTrees() {
   const raw = treeData, n = small ? Math.min(raw.count, 32000) : raw.count;
   const mesh = new THREE.InstancedMesh(treeGeometry(), foliage(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }), { wind: 0.06 }), n);
-  const col = new THREE.Color(), leaf = new THREE.Color(), R = rng(3);
+  const col = new THREE.Color(), leaf = new THREE.Color(), R = rng(3), cards = !!HILL_TREES.tex, tsp = new Uint8Array(n), tcol = [];
   for (let i = 0; i < n; i++) {
     imageryColor(raw.x[i], raw.z[i], col);
     // Where the 10 m pixel under a tree is roof or bare soil, keep the crown green.
@@ -323,9 +394,18 @@ function buildTrees() {
     leaf.setHSL(0.24 + R() * 0.06, 0.38 + R() * 0.15, 0.13 + R() * 0.08, THREE.SRGBColorSpace);
     col.lerp(leaf, clamp(Math.max((l - 0.07) / 0.12, notGreen), 0, 0.9)).multiplyScalar(0.95 + R() * 0.3);
     mesh.setColorAt(i, col);
+    if (cards) {                                     // the species by height: big crowns for tall trees, the slender one for small
+      const h = raw.h[i], u = R();
+      tsp[i] = h > 14 ? 0 : h > 7 ? (u < 0.55 ? 0 : 1) : (u < 0.6 ? 2 : 1);
+      tcol[i] = col.clone();
+    }
   }
   mesh.castShadow = true; mesh.receiveShadow = true;
   mesh.userData.n = n;
+  if (cards) {
+    mesh.layers.set(1);                              // shadows only: you see the photographs
+    const c = treeCardsMesh(n); c.userData = { sp: tsp, col: tcol }; mesh.add(c); mesh.userData.cards = c;
+  }
   return mesh;
 }
 function placeTrees(mesh) {
@@ -334,8 +414,11 @@ function placeTrees(mesh) {
     const x = raw.x[i], z = raw.z[i], k = clearOfStructures(x, z) && Math.max(Math.abs(x), Math.abs(z)) < HHALF * 0.86 ? 1 : 0;   // none where the edge melts into the haze
     q.setFromAxisAngle(UP, R() * 6.283);
     mesh.setMatrixAt(i, m.compose(v.set(x, yAt(x, z), z), q, s.set(raw.r[i] * k, raw.h[i] * k, raw.r[i] * k)));
+    const c = mesh.userData.cards;
+    if (c) setCard(c, i, x, yAt(x, z) - 0.3, z, raw.h[i] * k, clamp(raw.r[i] / (raw.h[i] * 0.42), 0.75, 1.35), c.userData.sp[i], c.userData.col[i]);
   }
   mesh.instanceMatrix.needsUpdate = true;
+  if (mesh.userData.cards) for (const a of Object.values(mesh.userData.cards.geometry.attributes)) if (a.isInstancedBufferAttribute) a.needsUpdate = true;
   mesh.computeBoundingSphere();
 }
 
@@ -402,36 +485,6 @@ function buildRoads() {
    is built with its front facing +z and turned to its bearing. Heights stay true under Relief ×2. */
 let OBJECTS = { objects: [] };
 const SITE = {};
-function brickTex() {
-  const r = rng(17), [c, g] = canvas(512, 512);           // 2 × 2 m of pale handmade brick
-  g.fillStyle = '#d6cdbd'; g.fillRect(0, 0, 512, 512);
-  const pal = ['#b9aa95', '#c4b6a1', '#ad9f8b', '#cbbfab', '#a8998a', '#bfae97', '#b3a28c'];
-  const bh = 16.6, bw = 64;
-  for (let row = 0; row * bh < 512; row++) {
-    const off = (row % 2) * bw / 2;
-    for (let x = -bw; x < 512 + bw; x += bw) {
-      g.fillStyle = pal[Math.floor(r() * pal.length)];
-      g.fillRect(x + off + 1.5, row * bh + 1.5, bw - 3, bh - 3);
-      g.fillStyle = `rgba(60,45,30,${r() * 0.12})`; g.fillRect(x + off + 1.5, row * bh + bh - 5, bw - 3, 3.5);
-    }
-  }
-  for (let i = 0; i < 2500; i++) { g.fillStyle = `rgba(${r() < 0.5 ? '70,55,40' : '250,245,235'},${r() * 0.12})`; g.fillRect(r() * 512, r() * 512, 2, 2); }
-  return tex(c);
-}
-function tileTex() {
-  const r = rng(23), [c, g] = canvas(256, 256);           // 1 × 1 m of clay roof tile: courses run down the slope
-  g.fillStyle = '#b8653a'; g.fillRect(0, 0, 256, 256);
-  const cw = 256 / 5, ch = 256 / 3;
-  for (let j = 0; j < 3; j++) for (let i = 0; i < 5; i++) {
-    const x = i * cw, y = j * ch, base = ['#d0814f', '#c97646', '#d88c59', '#c06c3f', '#dc9561'][Math.floor(r() * 5)];
-    const grd = g.createLinearGradient(x, 0, x + cw, 0);
-    grd.addColorStop(0, 'rgba(90,40,20,0.55)'); grd.addColorStop(0.35, base); grd.addColorStop(0.6, base); grd.addColorStop(1, 'rgba(90,40,20,0.5)');
-    g.fillStyle = grd; g.fillRect(x, y, cw, ch);
-    g.fillStyle = 'rgba(70,30,15,0.35)'; g.fillRect(x, y + ch - 6, cw, 6);
-  }
-  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${r() < 0.5 ? '80,40,20' : '255,220,190'},${r() * 0.15})`; g.fillRect(r() * 256, r() * 256, 2, 2); }
-  return tex(c);
-}
 function gravelTex() {
   const r = rng(29), [c, g] = canvas(256, 256);           // 2 × 2 m of grey gravel
   g.fillStyle = '#9b958a'; g.fillRect(0, 0, 256, 256);
@@ -445,11 +498,20 @@ function gravelTex() {
 function siteMaterials() {
   if (SITE.m) return SITE.m;
   const std = (o) => new THREE.MeshStandardMaterial({ roughness: 0.85, ...o });
+  // Photographed materials (Poly Haven, CC0): handmade brick and clay roof tiles (data/hill/tex), and the plaster and
+  // planks of free roam (data/walk/tex). Repeats are per metre of the model's world-scaled UVs.
+  const tl = new THREE.TextureLoader(), photo = (file, rep, srgb = true) => {
+    const t = tl.load(file); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 8;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  const real = (file, nfile, rep, o) => std({ map: photo(file, rep), normalMap: photo(nfile, rep, false), normalScale: new THREE.Vector2(0.9, 0.9), ...o });
   return (SITE.m = {
-    brick: std({ map: brickTex(), roughness: 0.92 }), tile: std({ map: tileTex(), roughness: 0.7 }),
+    brick: real('data/hill/tex/brick.jpg', 'data/hill/tex/brick_n.jpg', 1.25, { roughness: 0.92 }),        // about 1.6 m of brick per tile
+    tile: real('data/hill/tex/tiles.jpg', 'data/hill/tex/tiles_n.jpg', 0.42, { roughness: 0.75 }),         // about 2.4 m of tiles, courses down the slope
     trim: std({ color: 0xf1ece2, roughness: 0.6 }), glass: std({ color: 0x1b232c, roughness: 0.2, metalness: 0.5 }),
-    concrete: std({ color: 0xc6c0b4, roughness: 0.95 }), floor: std({ color: 0xa9563a, roughness: 0.75 }),
-    wood: std({ map: woodTex('#6b4a2e') }), post: std({ map: woodTex('#4f3420') }),
+    concrete: real('data/walk/tex/plaster.jpg', 'data/walk/tex/plaster_n.jpg', 0.5, { color: 0xd8d2c6, roughness: 0.95 }), floor: std({ color: 0xa9563a, roughness: 0.75 }),
+    wood: real('data/walk/tex/planks.jpg', 'data/walk/tex/planks_n.jpg', 0.5, { color: 0x9c7a5a }), post: std({ map: woodTex('#4f3420') }),
     panel: std({ map: solarTex(), roughness: 0.25, metalness: 0.5 }), alu: std({ color: 0xc7cbcf, roughness: 0.35, metalness: 0.75 }),
     black: std({ color: 0x1c1e20, roughness: 0.55 }), tank: std({ color: 0xe9ece6, roughness: 0.5 }), lid: std({ color: 0x3f8a5a, roughness: 0.5 }),
     canvas: std({ color: 0xf3f0e7, roughness: 0.95, side: THREE.DoubleSide }), mud: std({ color: 0xb06a42, roughness: 1 }),
@@ -805,7 +867,7 @@ function boulderModel(o, M) {
 const BUILDERS = { mango: mangoModel, boulder: boulderModel, house: houseModel, cabin: cabinModel, quincho: quinchoModel, solar: solarModel, tent: tentModel, trampoline: trampolineModel, oven: ovenModel };
 const FOOT = { mango: 8, boulder: 2.5, house: 6, cabin: 4, quincho: 4.5, solar: 7, tent: 3, trampoline: 2.4, oven: 1.2, mast: 1.5, palm: 1 };
 function buildStructures() {
-  const M = siteMaterials(), group = new THREE.Group();
+  const M = siteMaterials(), group = new THREE.Group(), palms = [];
   for (const o of OBJECTS.objects) {
     let m = null;
     if (BUILDERS[o.type]) {
@@ -816,6 +878,7 @@ function buildStructures() {
       m = new THREE.Mesh(mastGeometry(o.h || 18), M.mast); m.position.set(o.x, yAt(o.x, o.z), o.z);
     } else if (o.type === 'palm') {
       m = new THREE.Mesh(palmGeometry(o.h || 12), palmMat); m.position.set(o.x, yAt(o.x, o.z), o.z);
+      if (HILL_TREES.tex) { m.layers.set(1); palms.push(o); }                    // its shadow; you see the photograph
     } else if (o.type === 'pond') {
       m = pondModel(o, M);
     } else if (o.type === 'gravel') {
@@ -826,6 +889,11 @@ function buildStructures() {
     if (!m) continue;
     m.traverse((c) => { if (c.isMesh) { c.castShadow = c.castShadow || (o.type !== 'gravel' && o.type !== 'pond'); if (o.type !== 'pond') c.receiveShadow = true; if (!c.userData.ground) c.userData.site = o; } });
     group.add(m);
+  }
+  if (palms.length) {
+    const c = treeCardsMesh(palms.length), tint = new THREE.Color(...HILL_TREES.meta.species[PALM].mean);
+    palms.forEach((o, i) => setCard(c, i, o.x, yAt(o.x, o.z) - 0.2, o.z, o.h || 12, 1, PALM, tint));
+    group.add(c);
   }
   return group;
 }
@@ -1119,7 +1187,7 @@ function loadOfficial(fc) {
 }
 
 /* ------------------------------------------------------------ build -- */
-const HILL_SKY = {};
+const HILL_SKY = {}, HILL_TREES = {};
 async function buildHill() {
   const [meta, ter, trees, ctx, layers, img, legends, sites, objects] = await Promise.all([
     getJSON('data/meta.json'), getJSON('data/terrain.json'), getJSON('data/trees.json'), getJSON('data/context.json'),
@@ -1128,6 +1196,8 @@ async function buildHill() {
     getJSON('data/tour.json').then((p) => (TOUR = p)).catch(() => []),
     new THREE.TextureLoader().loadAsync('data/walk/sky.jpg').then((t) => (HILL_SKY.tex = t)).catch(() => null),      // the sky of the renders
     getJSON('data/walk/world.json').then((w) => (HILL_SKY.W = w)).catch(() => null),
+    Promise.all([new THREE.TextureLoader().loadAsync('data/hill/trees.webp'), getJSON('data/hill/trees.json')])    // the trees, photographed from the air
+      .then(([t, m]) => Object.assign(HILL_TREES, { tex: t, meta: m })).catch(() => null),
   ]);
   LEGENDS = legends; SITES = sites; OBJECTS = objects;
   prepCuts();
@@ -1186,7 +1256,7 @@ ${LOOK.OUT}
   hill.sun = sun; hill.sunDir = sunDir;
   FOL.uSunDir.value.copy(sunDir); FOL.uSunCol.value.set(0xffb870);
   sun.position.copy(sunDir).multiplyScalar(5000); sun.target.position.set(0, 0, 0);
-  sun.castShadow = true;
+  sun.castShadow = true; sun.shadow.camera.layers.enable(1);        // layer 1: shadow casters you do not see (the trees' round crowns)
   sun.shadow.mapSize.set(small ? 2048 : 4096, small ? 2048 : 4096);
   Object.assign(sun.shadow.camera, { left: -2300, right: 2300, top: 2300, bottom: -2300, near: 2000, far: 9000 });
   sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.6;

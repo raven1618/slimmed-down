@@ -42,6 +42,17 @@ python3 web_export.py work assets ../data/walk                             # abo
 - **Live:** grass blades that bend in the wind and around your feet, the lagoon (it mirrors the scene on bigger screens and the sky on phones), the cabins with a lit room drawn behind the glass, haze toward the horizon, and the same film grade as the rest of the site.
 - **Colour:** both sides use AgX tone mapping with +0.5 exposure, so the browser matches Blender.
 
+## The hill's trees (seen from the air)
+
+```sh
+blender-env/bin/python impostors.py assets ../data/hill 192 32 aerial     # about 4 minutes
+```
+
+The same Poly Haven tree models as the renders, and a palm built in the script, photographed from 8 sides at three
+heights (12°, 40° and 72° above the horizon) under the bake's sun: `data/hill/trees.webp` and `trees.json`. The
+hill shows each tree as a card with the photographs nearest to your view, tinted to the satellite colour under it.
+The homestead's brick and roof tiles are Poly Haven photo textures in `data/hill/tex/`.
+
 ## Free roam: the private side
 
 Finca 2663, the surveyed 8.66 ha parcel at the north-west end, with the residence on a homesite 70 m east of
