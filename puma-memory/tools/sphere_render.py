@@ -616,12 +616,45 @@ SCN = [(lambda: TL["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), (
        (lambda: TL["destino"], ["F5_anim.mp4", "F6_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("DESTINO", "black", 0.18, W_)], lambda: TL["calidad"]),
        (lambda: TL["calidad"], ["F7_anim.mp4"], [("CON COMBUSTIBLES", "black", 0.11, W_), ("DE CALIDAD", "black", 0.15, W_)], lambda: TL["juntos"]),
        (lambda: TL["juntos"], ["J1_anim.mp4", "J2_anim.mp4", "J3_anim.mp4"], [], lambda: TL["pulse2"])]      # CONSTRUIMOS JUNTOS: client video re-made as 3 fisheye scenes
+_TU, _TV = FMX / 640.0, FMY / 640.0                                   # clip coordinates of every sphere pixel (the fisheye scenes' own frame)
+TIDE_HZ = 0.545                                                       # horizon row shared by J1's road end and J2's sea
+def tide(f1, f2, t, tm):
+    """J1 land -> J2 sea. The sea floods up from the bottom of the circle to the horizon behind a foam crest,
+    the sky slides from J1's sunset to J2's, and at tm (truck = tanker size, same spot) a glint at the vanishing
+    point swaps truck for ship while a lime streak runs out along the horizon."""
+    k = (t - (tm - 1.0)) / 1.0                                        # 0..1 the water rises
+    vf = 1.02 - (1.02 - TIDE_HZ) * ease(min(max(k, 0), 1)) ** 0.9       # crest row (clip v)
+    vf = vf + 0.005 * np.sin(_TU * 14 + t * 3.0) + 0.0025 * np.sin(_TU * 33 - t * 5.0)        # a soft rolling swell
+    below = _TV > TIDE_HZ
+    sea = sm(vf - 0.004, vf + 0.012, _TV) * below                     # 1 where the water has arrived
+    sky = ease((t - (tm - 0.75)) / 0.9) * (~below)                     # the sky slides over, top first
+    sky = np.clip(sky * (1.15 - 0.6 * np.clip((_TV - 0.05) / TIDE_HZ, 0, 1)) , 0, 1) * (~below) if k < 1.6 else (~below) * 1.0
+    centre = sm(0.105, 0.085, np.abs(_TU - 0.5)) * sm(0.13, 0.11, np.abs(_TV - 0.49))      # the whole truck stays solid until the glint swaps it
+    swap = ease((t - tm + 0.05) / 0.1)
+    m = np.maximum(sea, sky); m = m * (1 - centre) + np.maximum(m, swap) * centre
+    out = f1 * (1 - m[..., None]) + f2 * m[..., None]
+    on = min(max(k, 0), 1) * (1 - ease((k - 0.9) / 0.25))
+    crest = np.exp(-((_TV - vf) / 0.009) ** 2) * below * on * (0.75 + 0.25 * np.sin(_TU * 60 + t * 6) ** 2)   # foam riding the crest
+    wake = np.exp(-np.clip(_TV - vf, 0, None) / 0.03) * (_TV > vf) * below * on                          # wet sheen just behind it
+    out = out * (1 + 0.25 * wake[..., None]) + crest[..., None] * np.array([235, 255, 225], np.float32) * 0.75 + bloom(crest[..., None] * GREEN * 0.5, 0.6)
+    g = np.exp(-max(t - tm, 0) * 4.0) * ease((t - tm + 0.12) / 0.12)   # glint + horizon streak
+    if g > 0.01:
+        cy_ = 0.50; d2 = ((_TU - 0.5) / 0.05) ** 2 + ((_TV - cy_) / 0.055) ** 2          # big enough to cover the whole swap
+        star = 1.2 * np.exp(-d2) + 0.6 * np.exp(-((_TV - cy_) / 0.006) ** 2) * np.exp(-np.abs(_TU - 0.5) / 0.12) \
+               + 0.45 * np.exp(-((_TU - 0.5) / 0.006) ** 2) * np.exp(-np.abs(_TV - cy_) / 0.08)
+        reach = 0.05 + 0.6 * ease((t - tm) / 0.5)
+        streak = np.exp(-((_TV - TIDE_HZ) / 0.005) ** 2) * sm(reach, reach - 0.15, np.abs(_TU - 0.5))
+        out = out + bloom((star[..., None] * np.array([255, 255, 235], np.float32) * 1.6 + streak[..., None] * (GREEN + 80)) * g, 0.9)
+    return out
 CLIP_DELAY = {"J1_anim.mp4": 0.35}                                     # -> the truck is exactly the tanker's size when the centre panel flips to J2
 CLIP_SPEED = {}                                                        # J1 truck is pre-slowed 2x (interpolated) so it matches the J2 tanker size at the flip
 def scene_foot(i, t):
     t0, photos, _, t1 = SCN[i][0](), SCN[i][1], SCN[i][2], SCN[i][3]()
     n = len(photos); seg = (t1 - t0) / n; j = int(min(max((t - t0) / seg, 0), n - 1))
     pic = lambda jj: fish_frame(photos[jj], t - (t0 + jj * seg - 0.45) - CLIP_DELAY.get(photos[jj], 0.0), CLIP_SPEED.get(photos[jj], 1.0))
+    if photos[0] == "J1_anim.mp4":                          # land -> sea: the tide rolls in up to the horizon, the truck becomes the tanker in a glint
+        tm = t0 + seg - 0.1
+        if tm - 1.1 <= t < tm + 0.45: return tide(pic(0), pic(1), t, tm)
     f = pic(j)
     if j > 0 and t < t0 + j * seg + 0.45:                   # seam reveal between photos of the same line
         f = reveal(pic(j - 1), f, t, t0 + j * seg - 0.35, 0.8)
