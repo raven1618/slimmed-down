@@ -544,7 +544,7 @@ def wipe(t, t0, dur=0.6):
 
 # ---------- timeline (seconds; temporary until the VO is recorded) ----------
 TL = dict(pulse0=0.4, pulseN=5, pulse_dt=1.05, open=6.0, ball=7.4, somos=8.6, logo=10.0, path=12.2, globe=13.4,
-          txt_global=14.2, txt_40=16.8, txt_cal=19.4, zoom=21.6, py=23.0, km=25.6, entrega=29.7, destino=33.8,
+          txt_global=14.2, txt_40=16.8, txt_cal=19.4, zoom=21.6, py=23.0, km=25.6, entrega=29.0, destino=33.8,
           calidad=36.6, juntos=39.4, collage=46.4, pulse2=49.2, ballspin=52.6, kick=52.6, kv_flash=57.6, logo2=58.2, cat_in=59.2,
           logro=61.4, hoy=63.2, listos=64.8, y2027=67.0, kv=67.8, end=75.2)
 ENTREGA = ["2_entrega/p2_cilindro.png", "2_entrega/p3_aerea02.jpg", "2_entrega/p4_convoy.png", "2_entrega/p4_ladario03.jpg", "2_entrega/p5_DSC3209.tif"]
@@ -623,14 +623,14 @@ KICK_BACK_ROT = math.pi / 5                                            # back: u
 BALL_DOWN = 0.31                                                       # the ball on the spot sits ~20 deg below the centre of the kick clip
 _bc = np.array([0, -math.sin(BALL_DOWN), math.cos(BALL_DOWN)], np.float32); BALL_ANG = np.arccos(np.clip(SYM @ _bc, -1, 1))
 SCN_KEY = ["km", "entrega", "destino", "calidad", "juntos"]
-SCN = [(lambda: TL["km"], ["F4_anim.mp4", "F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], lambda: TL["entrega"]),
-       (lambda: TL["entrega"], ["F2_dolly.mp4", "F3_flyby.mp4"], [("EN CADA", "black", 0.14, W_), ("ENTREGA", "black", 0.18, W_)], lambda: TL["destino"]),
+SCN = [(lambda: TL["km"], ["J2_anim.mp4", "F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], lambda: TL["entrega"]),
+       (lambda: TL["entrega"], ["F2_dolly.mp4", "F3_flyby.mp4", "F4_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("ENTREGA", "black", 0.18, W_)], lambda: TL["destino"]),
        (lambda: TL["destino"], ["F5_anim.mp4", "F6_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("DESTINO", "black", 0.18, W_)], lambda: TL["calidad"]),
        (lambda: TL["calidad"], ["F7_anim.mp4"], [("CON COMBUSTIBLES", "black", 0.11, W_), ("DE CALIDAD", "black", 0.15, W_)], lambda: TL["juntos"]),
-       (lambda: TL["juntos"], ["J1_anim.mp4", "J2_anim.mp4", "J3_anim.mp4"], [], lambda: TL["pulse2"])]      # CONSTRUIMOS JUNTOS: client video re-made as 3 fisheye scenes
+       (lambda: TL["juntos"], ["J1_anim.mp4", "J3_anim.mp4"], [], lambda: TL["pulse2"])]      # CONSTRUIMOS JUNTOS: client video re-made as 3 fisheye scenes
 _TU, _TV = FMX / 640.0, FMY / 640.0                                   # clip coordinates of every sphere pixel (the fisheye scenes' own frame)
 TIDE = False
-SPIN, SPIN_D = True, 2.2
+SPIN, SPIN_D = False, 2.2                                          # client Nov 25: the ship moves to EN CADA KM, spin removed
 SPIN_TM = 2.015                                                      # spin starts 2.015 s into JUNTOS: truck and boat get equal screen time (user)
 SPIN_ROLL = np.load(IN + "fisheye/J1J2_spin_roll.npy") if os.path.exists(IN + "fisheye/J1J2_spin_roll.npy") else np.zeros(66)   # measured camera roll per frame (rad), 3 turns
 SPIN_SIGN = -1.0                                                     # verified on the side view: the halves roll together

@@ -37,7 +37,7 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 | C16 | (user) trim the under-the-truck start; equal screen time truck vs boat | J1 starts at slowed 1.25 s, speed 0.818; spin at JUNTOS+2.015 s; J1 ≈ J2 ≈ 2.4 s | ✅ v18 | `CLIP_DELAY`, `CLIP_SPEED`, `SPIN_TM` |
 | C17 | "logo directo, eliminar el puma que entra… no queda bien como entra el puma sobre el logo" (Nov 25) | Start (~10 s) AND end (~59 s): logo appears complete, no white silhouette run-in (supersedes C7) | 🔶 v19 | `cat_run_in` |
 | C18 | "después de la parte que dice 2027, se queda 2027… debajo del 2027 solo queda 'A JUGAR EN GRANDE'" | No white blow-out; 2027 lands in the lockup in place of CONVOCADOS: PUMA logo / 2027 / A JUGAR EN GRANDE | 🔶 v19 | `cfg_2027`, `cfg_kvend` |
-| C19 | "Mover la toma de la barcaza antes de que entre este camión" | EN CADA KM RECORRIDO = barge (F4) then truck (F1); EN CADA ENTREGA = F2 + F3; same total length | 🔶 v19 | `SCN` |
+| C19 | "Mover la toma de la barcaza antes de que entre este camión" | "Barcaza" = the TANKER SHIP (J2), not the river barge (v19 got this wrong). EN CADA KM = ship (J2) then station truck (F1); ENTREGA back to F2+F3+F4; JUNTOS = J1 truck → J3 city, spin transition removed (user) | 🔶 v20 | `SCN`, `SPIN=False` |
 | C20 | "la dirección del halo de luces… en sentido contrario a donde corre el puma, para que se entienda que está corriendo encima" | Beam streaks travel opposite to the puma (right → left) | 🔶 v19 | `laser_band` |
 | C11 | Truck turning into the oil tanker | Was unconfirmed; now covered by C4a/C4b | ❓→🔶 | |
 
