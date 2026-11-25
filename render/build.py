@@ -10,6 +10,8 @@ import bpy
 from mathutils import Matrix, Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from palm import palm as make_palm                      # Poly Haven has no palm: render/palm.py
+import json as _json
+LOOKCFG = _json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'look.json')))   # sky, sun, lawn: one look
 
 A, SITE, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 W, H, SPP = int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6])
@@ -174,7 +176,7 @@ steep = N.new('ShaderNodeMapRange'); steep.inputs['From Min'].default_value = 0.
 g, s, f, w = pbr(nt, 'leafy_grass', 2.4, coord), pbr(nt, 'cracked_red_ground', 3.0, coord), pbr(nt, 'forest_leaves_02', 2.4, coord), pbr(nt, 'excavated_soil_wall', 4.0, coord)
 wt = N.new('ShaderNodeRGB'); wt.outputs[0].default_value = (0.95, 0.62, 0.45, 1); one_ = N.new('ShaderNodeValue'); one_.outputs[0].default_value = 1.0
 w = [mix(nt, w[0], wt.outputs[0], one_.outputs[0], 'MULTIPLY'), w[1], w[2]]      # the real wall is red-brown earth
-gt = N.new('ShaderNodeRGB'); gt.outputs[0].default_value = (0.6, 0.9, 0.48, 1)
+gt = N.new('ShaderNodeRGB'); gt.outputs[0].default_value = (*LOOKCFG['lawn'], 1)
 one = N.new('ShaderNodeValue'); one.outputs[0].default_value = 1.0
 g = [mix(nt, g[0], gt.outputs[0], one.outputs[0], 'MULTIPLY'), g[1], g[2]]     # the scanned "leafy grass" is beige
 out = []
@@ -237,7 +239,7 @@ for o in grasslib.all_objects:                     # the scanned grass is dry: g
         for im_ in [n for n in m_.node_tree.nodes if n.type == 'TEX_IMAGE' and n.image and 'diff' in n.image.name]:
             for lk in list(im_.outputs['Color'].links):
                 mx = m_.node_tree.nodes.new('ShaderNodeMix'); mx.data_type = 'RGBA'; mx.blend_type = 'MULTIPLY'; mx.inputs['Factor'].default_value = 1
-                mx.inputs[7].default_value = (0.6, 0.92, 0.42, 1); dst_ = lk.to_socket
+                mx.inputs[7].default_value = (*LOOKCFG['tufts'], 1); dst_ = lk.to_socket
                 m_.node_tree.links.new(im_.outputs['Color'], mx.inputs[6]); m_.node_tree.links.new(mx.outputs[2], dst_)
         m_['greened'] = True
 gmod = ground.modifiers.new('grass', 'NODES'); gmod.node_group = scatter_tree('grass_gn', grasslib, density_attr='grass', density=14.0, scale_rand=(0.5, 0.95) if MODELS else (1.0, 1.8))     # a mown meadow: around the buildings, a lawn
@@ -297,7 +299,7 @@ def import_model(name, lamps):
         rm = rf.modifiers.new('roofgrass', 'NODES'); rm.node_group = bpy.data.node_groups.get('roof_gn') or scatter_tree('roof_gn', grasslib, density_attr='grass', density=14.0, scale_rand=(0.55, 0.95))
     for k, (x, y, z) in enumerate(lamps):
         lamp = bpy.data.objects.new(f'{name}_lamp{k}', bpy.data.lights.new(f'{name}_lamp{k}', 'POINT')); col.objects.link(lamp)
-        lamp.location = (x, y, z); lamp.data.energy = 120; lamp.data.color = (1.0, 0.72, 0.45); lamp.data.shadow_soft_size = 0.4
+        lamp.location = (x, y, z); lamp.data.energy = 45; lamp.data.color = (1.0, 0.72, 0.45); lamp.data.shadow_soft_size = 0.4
     return col
 def place(col, x, z, floor, rot):
     e = bpy.data.objects.new(col.name + '_at', None); e.instance_type = 'COLLECTION'; e.instance_collection = col
@@ -315,7 +317,7 @@ def web_materials():
             b.inputs['Roughness'].default_value = 0.02 if key == 'glass' else 0.03; b.inputs['IOR'].default_value = 1.45 if key == 'glass' else 1.33
             b.inputs['Base Color'].default_value = (0.85, 0.9, 0.9, 1) if key == 'glass' else (0.35, 0.75, 0.78, 1)
         else:
-            b.inputs['Emission Color'].default_value = (1.0, 0.75, 0.48, 1); b.inputs['Emission Strength'].default_value = 4.0
+            b.inputs['Emission Color'].default_value = (1.0, 0.75, 0.48, 1); b.inputs['Emission Strength'].default_value = 1.2     # lit, but it is day
 if MODELS:
     if len(D['cabins']):
         cab_col = import_model('cabin', [(0, -0.6, 2.2)])
@@ -394,24 +396,24 @@ if QUARRY:
   L.new(wn.outputs['Fac'], bump.inputs['Height']); L.new(bump.outputs['Normal'], bs.inputs['Normal'])
   lg.data.materials.append(wat)
 
-# ---------------------------------------------------------------- sunrise sky, turned so the sun rises in the east-south-east
+# ---------------------------------------------------------------- the sky and the sun of render/look.json; the sky turned so its sun is the sun's
 world = bpy.data.worlds.new('sky'); sc.world = world; world.use_nodes = True
 WN, WL = world.node_tree.nodes, world.node_tree.links
-env = WN.new('ShaderNodeTexEnvironment'); env.image = bpy.data.images.load(f'{A}/hdri/evening_road_01_puresky.hdr')
+env = WN.new('ShaderNodeTexEnvironment'); env.image = bpy.data.images.load(f"{A}/hdri/{LOOKCFG['sky']['hdri']}.hdr")
 px = np.empty(env.image.size[0] * env.image.size[1] * 4, np.float32); env.image.pixels.foreach_get(px)
 px = px.reshape(env.image.size[1], env.image.size[0], 4); lum = px[..., :3].sum(-1)
 vy, ux = np.unravel_index(np.argmax(lum), lum.shape)
 u, v = (ux + 0.5) / env.image.size[0], (vy + 0.5) / env.image.size[1]
 a_sun, el = 2 * math.pi * (u - 0.5), math.pi * (v - 0.5)
 hdri_ang = -a_sun                                                          # sun azimuth in the panorama, as an XY angle (checked against a render of the sky)
-want = math.atan2(-0.41, 0.86)                                             # east-south-east, as in the web model
+SB = math.radians(LOOKCFG['sun']['bearing']); want = math.atan2(math.cos(SB), math.sin(SB))     # the sun's bearing, as an XY angle
 tco, mp = WN.new('ShaderNodeTexCoord'), WN.new('ShaderNodeMapping')
 mp.inputs['Rotation'].default_value = (0, 0, hdri_ang - want)
 WL.new(tco.outputs['Generated'], mp.inputs['Vector']); WL.new(mp.outputs['Vector'], env.inputs['Vector']); WL.new(env.outputs['Color'], WN['Background'].inputs['Color'])
-WN['Background'].inputs['Strength'].default_value = 0.7
+WN['Background'].inputs['Strength'].default_value = LOOKCFG['sky']['strength']
 sun = bpy.data.objects.new('sun', bpy.data.lights.new('sun', 'SUN')); sc.collection.objects.link(sun)
-hd_ = Vector((0.86, -0.41, 0)).normalized(); e = math.radians(30); sd = Vector((hd_.x * math.cos(e), hd_.y * math.cos(e), math.sin(e)))
-sun.rotation_euler = (-sd).to_track_quat('-Z', 'Y').to_euler(); sun.data.energy = 7.5; sun.data.color = (1.0, 0.72, 0.48); sun.data.angle = math.radians(0.8)
+hd_ = Vector((math.sin(SB), math.cos(SB), 0)); e = math.radians(LOOKCFG['sun']['elevation']); sd = Vector((hd_.x * math.cos(e), hd_.y * math.cos(e), math.sin(e)))
+sun.rotation_euler = (-sd).to_track_quat('-Z', 'Y').to_euler(); sun.data.energy = LOOKCFG['sun']['energy']; sun.data.color = LOOKCFG['sun']['color']; sun.data.angle = math.radians(0.8)
 print(f'sun in panorama at {math.degrees(el):.1f} deg elevation', flush=True)
 
 # ---------------------------------------------------------------- the sky alone, in linear light, for the web world's background, haze and reflections

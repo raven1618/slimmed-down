@@ -74,10 +74,10 @@ export async function build(ctx) {
   }
   const VW = 'varying vec3 vW, vN; void main() { vW = position; vN = normal; gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0); }';
   const ground = new THREE.Mesh(gridGeo(Hd, nx, nz, x0, z0, 1), mat({
-    uniforms: { uNg: { value: L.tex.grassN }, uNs: { value: L.tex.soilN }, uNl: { value: L.tex.litterN }, uSplat: { value: splat }, uLight: { value: light }, uTg: { value: tGrass }, uTs: { value: tSoil }, uTl: { value: tLitter }, uTw: { value: tWall } },
+    uniforms: { uNg: { value: L.tex.grassN }, uNs: { value: L.tex.soilN }, uNl: { value: L.tex.litterN }, uSplat: { value: splat }, uLight: { value: light }, uTg: { value: tGrass }, uTs: { value: tSoil }, uTl: { value: tLitter }, uTw: { value: tWall }, uLawn: { value: new THREE.Vector3(...(W.lawnTint || L.W.lawnTint || [0.52, 0.88, 0.4])) } },   // the lawn's tint: render/look.json
     vertexShader: VW,
     fragmentShader: `${NOISE} ${SKY}
-      uniform sampler2D uSplat, uLight, uTg, uTs, uTl, uTw, uNg, uNs, uNl; uniform vec4 uReg; uniform vec2 uGrid; uniform float uLK; uniform vec3 uSun, uSunA, uAmb; varying vec3 vW, vN;
+      uniform sampler2D uSplat, uLight, uTg, uTs, uTl, uTw, uNg, uNs, uNl; uniform vec3 uLawn; uniform vec4 uReg; uniform vec2 uGrid; uniform float uLK; uniform vec3 uSun, uSunA, uAmb; varying vec3 vW, vN;
       vec3 tile(sampler2D t, vec2 p) {                 // a second, turned and larger copy hides the repeat
         vec3 a = texture2D(t, p).rgb, b = texture2D(t, vec2(p.y, -p.x) * 0.43 + 0.17).rgb;
         return mix(a, b, smoothstep(0.3, 0.7, ohNoise(vec3(p * 0.23, 1.7))) * 0.55);
@@ -90,7 +90,7 @@ export async function build(ctx) {
         float nz = ohNoise(vW * 0.35);
         float ws = brk(sp.g * 0.3, nz, 0.55), wl = brk(sp.b, nz, 0.4), st = clamp((n.y - 0.88) / (0.62 - 0.88), 0.0, 1.0);
         vec2 p = vec2(vW.x, -vW.z);
-        vec3 g = tile(uTg, p / 2.4) * vec3(0.52, 0.88, 0.4), s = tile(uTs, p / 3.0), l = tile(uTl, p / 2.4) * vec3(1.0, 0.85, 0.62);    // leaf litter: browner, so the blue shade under the trees does not turn it teal
+        vec3 g = tile(uTg, p / 2.4) * uLawn, s = tile(uTs, p / 3.0), l = tile(uTl, p / 2.4) * vec3(1.0, 0.85, 0.62);    // leaf litter: browner, so the blue shade under the trees does not turn it teal
         vec3 b = pow(abs(n), vec3(4.0)); b /= b.x + b.y + b.z;
         vec3 w = (texture2D(uTw, vec2(-vW.z, vW.y) / 4.0).rgb * b.x + texture2D(uTw, p / 4.0).rgb * b.y + texture2D(uTw, vec2(vW.x, vW.y) / 4.0).rgb * b.z) * vec3(0.8, 0.6, 0.5);
         vec3 alb = mix(mix(mix(g, s, ws), l, wl), w, st);
@@ -193,6 +193,23 @@ export async function build(ctx) {
     res = { cx: r.x, cz: r.z, fl: r.floor, F: [Math.sin(th), -Math.cos(th)], R: [-Math.cos(th), -Math.sin(th)] };   // R: the model's +x, so RESIDENCE's rectangles land on its walls
   }
   const rocks = [];
+  /* The homestead (already built), as the hill draws it (js/site/hill.js homesteadModels): set on this ground where it
+     stands, the drive laid over it. You walk round the buildings, not through them. */
+  const homestead = new THREE.Group(), blockers = [], ownGeo = [];
+  for (const h of ctx.homestead || []) {
+    if (h.x < x0 + 3 || h.x > x1 - 3 || h.z < z0 + 3 || h.z > z1 - 3) continue;     // only on this walk's ground
+    const g = h.obj;
+    if (h.drape) g.traverse((m) => {
+      if (!m.isMesh) return;
+      m.geometry = m.geometry.clone(); ownGeo.push(m.geometry);                 // its own copy: the hill keeps its drive
+      const p = m.geometry.attributes.position;
+      for (let i = 0; i < p.count; i++) p.setY(i, hAt(p.getX(i), p.getZ(i)) + 0.05);
+      p.needsUpdate = true; m.geometry.computeVertexNormals();
+    });
+    else { g.position.y += hAt(h.x, h.z) - h.ground; if (h.r) blockers.push([h.x, h.z, h.r * 0.8]); }
+    homestead.add(g);
+  }
+  scene.add(homestead);
   if (W.rocks) {
     const t = (k) => { const c = L.tex[k].clone(); c.needsUpdate = true; return c; };
     const rockMat = new THREE.MeshStandardMaterial({ map: t('plaster'), normalMap: t('wallN'), color: new THREE.Color().setRGB(0.5, 0.5, 0.52), roughness: 0.9 });   // grey granite
@@ -240,6 +257,7 @@ export async function build(ctx) {
         for (const f of CAB.RESIDENCE.floors) if (inR(f)) y = Math.max(y, res.fl + f[4]);
       }
     }
+    for (const [bx, bz, br] of blockers) if (Math.hypot(x - bx, z - bz) < br) return null;
     for (const [rx, rz, rw, rd, rot] of rocks) {
       const c = Math.cos((rot * Math.PI) / 180), sn = Math.sin((rot * Math.PI) / 180), du = (x - rx) * c + (z - rz) * sn, dv = -(x - rx) * sn + (z - rz) * c;
       if ((du / (rw / 2 + 0.3)) ** 2 + (dv / (rd / 2 + 0.3)) ** 2 < 1) return null;
@@ -378,6 +396,7 @@ export async function build(ctx) {
       cancelAnimationFrame(raf); ac.abort();
       if (comp) { comp.passes.forEach((p) => p.dispose && p.dispose()); comp.dispose(); }
       if (reflector) reflector.dispose();
+      scene.remove(homestead); ownGeo.forEach((g) => g.dispose());     // the homestead's meshes and materials are the hill's: it keeps them
       sunL.shadow.dispose(); hTex.dispose(); disposeScene(scene);
     },
   };

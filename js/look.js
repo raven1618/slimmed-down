@@ -13,7 +13,6 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 export const TONE = { toneMapping: THREE.AgXToneMapping, exposure: Math.SQRT2 };     // Blender: AgX, exposure +0.5
-export const GRASS_TINT = [0.52, 0.88, 0.4];                                       // the scanned lawn is beige; greened as in the renders
 const B = 'data/walk/';
 
 let assets = null;

@@ -188,7 +188,7 @@ at = lambda u, v: (RES['x'] + R_[0] * u + F[0] * v, RES['z'] + R_[1] * u + F[1] 
 world = {
     'title': 'The private side', 'eyebrow': 'Free roam · Finca 2663, the private side',
     'region': [X0, Z0, X1, Z1], 'grid': [len(xs), len(zs)], 'far': [FX0, FZ0, FX1, FZ1], 'farGrid': [len(fxs), len(fzs)],
-    **{k: QW[k] for k in ('sun', 'sunLight', 'ambient', 'lightScale', 'skyScale', 'spriteScale', 'sprites', 'grassAlbedo')},
+    **{k: QW[k] for k in ('sun', 'sunLight', 'ambient', 'lightScale', 'skyScale', 'spriteScale', 'sprites', 'grassAlbedo', 'sunColor', 'lawnTint') if k in QW},
     'trees': len(tx), 'residence': RES, 'rocks': [[x, z, y, w_, d_, h_, rot] for (x, z, w_, d_, h_, rot), y in zip(rocks, rock_y)],
     'parcel': [[round(x, 2), round(z, 2)] for x, z in RING],
     'spots': [spot('The homesite', *at(-1, 30), *at(-1, 0)), spot('The terrace', *at(-2, 5.4), *at(-2, 60)), {**spot('The mango tree', mx + 22, mz + 8, mx, mz), 'pitch': 0.12}],

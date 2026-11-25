@@ -54,16 +54,11 @@ window.__glb = out;
   await page.waitForTimeout(3000);                                   // the photo textures
   glb.homestead = await page.evaluate(async () => {
     const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
-    const KEEP = ['house', 'solar', 'mast', 'oven', 'cabin', 'quincho', 'tent', 'trampoline', 'gravel'];
     const root = new THREE.Group();
-    hill.structures.children.forEach((c, i) => {
-      let o = null; c.traverse((k) => { if (!o && k.userData.site) o = k.userData.site; });
-      if (!o || !KEEP.includes(o.type)) return;
-      const x = o.x ?? o.path[0][0], z = o.z ?? o.path[0][1];
-      const k = c.clone(true); k.name = `hs_${o.type}_${i}`;
-      k.userData = { ox: x, oz: z, ground: yAt(x, z), drape: o.type === 'gravel' ? 1 : 0 };
-      k.traverse((m) => { if (m !== k) m.userData = {}; });
-      root.add(k);
+    homesteadModels().forEach(({ obj, type, x, z, ground, drape }, i) => {          // js/site/hill.js: the one list
+      obj.name = `hs_${type}_${i}`; obj.traverse((m) => { m.userData = {}; });
+      obj.userData = { ox: x, oz: z, ground, drape: drape ? 1 : 0 };
+      root.add(obj);
     });
     const buf = await new GLTFExporter().parseAsync(root, { binary: true, maxTextureSize: 1024 });
     return btoa(Array.from(new Uint8Array(buf), (c) => String.fromCharCode(c)).join(''));

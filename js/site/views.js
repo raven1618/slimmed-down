@@ -648,7 +648,7 @@ function openWalk(site) {
   markTab('explore');
   try { history.replaceState(null, '', walkSite === 'quarry' ? '#walk' : '#walk-' + walkSite); } catch (e) {}
   document.querySelectorAll('#wk-sites button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.site === walkSite)));
-  walkView.open({ site: walkSite, start: walkStart }); walkStart = null;
+  walkView.open({ site: walkSite, start: walkStart, homestead: walkSite === 'quarry' ? homesteadModels() : null }); walkStart = null;   // the homestead stands at the quarry's west end
   $('wk-close').focus({ preventScroll: true });
 }
 function closeWalk() {

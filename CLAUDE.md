@@ -9,11 +9,13 @@ because each was asked for more than once: do not make the owner repeat them.
 
 1. **Photoreal wherever an investor looks.** No toy geometry, flat untextured boxes, "lollipop" trees or stair-stepped
    edges. If something cannot reach that bar yet, do not show it close up; say so, and list it under Open below.
-2. **One source of truth.** One version of each thing. The buildings exist only in `js/cabin.js`: free roam draws
-   them and `render/export_models.cjs` exports them for the Blender tour. Never add a parallel version (no second
+2. **One source of truth.** One version of each thing. The new buildings exist only in `js/cabin.js`, the homestead
+   only in `js/site/hill.js` (`homesteadModels`): free roam draws them and `render/export_models.cjs` exports them
+   for the Blender tour. Never add a parallel version (no second
    design viewer, no second 360° menu, no separate demo build).
-3. **Light like the renders.** One sky everywhere: the Blender sky (`data/walk/sky.jpg`) on the hill, in the tour and
-   in free roam. Never washed out (no cream or white haze, no clipped sky), never murky. Glow and grain stay subtle.
+3. **Light like the renders.** One sky and one sun everywhere, set once in `render/look.json` (late morning, as in the
+   owner's photos): the renders, the bake, the tree photos, and through `data/walk/world.json` the hill and free
+   roam. Never washed out (no cream or white haze, no clipped sky), never murky. Glow and grain stay subtle.
 4. **Phone first.** Check at iPhone size, not only desktop: `npm run phone` (390×664 CSS px, 2×). Antialiasing on
    (4× MSAA), effects at 2× pixels; slow devices step down on their own. No view may show the edges of the 4 km model.
 5. **Controls: the view follows your finger, in every view.** Drag right = look right, drag up = look up (hill,

@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 WORK, A, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
+LOOKCFG = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'look.json')))   # the sun and the lawn of the renders
 WEB = os.path.join(WORK, 'web'); os.makedirs(os.path.join(OUT, 'tex'), exist_ok=True)
 def f32(name, a):                       # float32 arrays as base64 in JSON: the host serves .json, not .bin
     json.dump(base64.b64encode(np.ascontiguousarray(a, np.float32).tobytes()).decode(), open(os.path.join(OUT, name), 'w'))
@@ -43,7 +44,7 @@ Image.fromarray((np.clip(SKY / 4, 0, 1) ** (1 / 2.2) * 255 + 0.5).astype(np.uint
 s3 = json.load(open(os.path.join(WEB, 'bake.json')))['sun']; sun = np.array([s3[0], s3[2], -s3[1]])
 gz, gx = np.gradient(Hd); nrm = np.dstack([-gx, np.ones_like(Hd), -gz]); nrm /= np.linalg.norm(nrm, axis=2, keepdims=True)
 ndl = np.clip(nrm @ sun, 0, 1)
-a_sun = 7.5 * np.array([1.0, 0.72, 0.48]) / np.pi                            # build.py's sun lamp, as light on a level surface
+a_sun = LOOKCFG['sun']['energy'] * np.array(LOOKCFG['sun']['color']) / np.pi    # build.py's sun lamp, as light on a level surface
 m_ = (sp[..., 2] < 0.2) & (ndl > 0.45) & (ndl < 0.7)                        # open ground, not under the forest
 lum = Lm.mean(-1); m_ &= lum >= np.percentile(lum[m_], 60)                  # and out of the shadows
 coef = np.stack([a_sun, np.median(Lm[m_] - a_sun * ndl[m_][:, None], 0)])   # rows: a, b (the sky and the bounce)
@@ -61,14 +62,14 @@ for name, src in (('grass', 'leafy_grass'), ('soil', 'cracked_red_ground'), ('li
     Image.open(os.path.join(A, 'tex', src, 'diff.jpg')).convert('RGB').resize((1024, 1024), Image.LANCZOS).save(os.path.join(OUT, 'tex', name + '.jpg'), quality=85)
 
 g_ = (np.asarray(Image.open(os.path.join(OUT, 'tex', 'grass.jpg')), np.float32) / 255) ** 2.2
-galb = g_.reshape(-1, 3).mean(0) * np.array([0.6, 0.9, 0.48])           # the lawn's colour, for the live blades
+galb = g_.reshape(-1, 3).mean(0) * np.array(LOOKCFG['lawn'])           # the lawn's colour, for the live blades
 bake = json.load(open(os.path.join(WEB, 'bake.json'))); sprites = json.load(open(os.path.join(WEB, 'trees.json')))
 s = bake['sun']
 world = {
     'region': [dx0, dz0, dx0 + nx - 1, dz0 + nz - 1], 'grid': [nx, nz], 'far': [cx0, cz0, cx1, cz1], 'farGrid': [Hc.shape[1], Hc.shape[0]],
     'sun': [s[0], s[2], -s[1]],                                   # local frame: x east, y up, z south
     'lagoon': [lx, lz, water, lrot, lw, ld], 'cabins': [[float(v) for v in c] for c in D['cabins']],
-    'trees': len(T), 'sprites': sprites['species'], 'lightScale': 2.5, 'skyScale': 4.0, 'spriteScale': 1.6, 'sunLight': [float(v) for v in coef[0]], 'ambient': [float(v) for v in coef[1]], 'grassAlbedo': [float(v) for v in galb],
+    'trees': len(T), 'sprites': sprites['species'], 'lightScale': 2.5, 'skyScale': 4.0, 'spriteScale': 1.6, 'sunLight': [float(v) for v in coef[0]], 'ambient': [float(v) for v in coef[1]], 'grassAlbedo': [float(v) for v in galb], 'sunColor': LOOKCFG['sun']['color'], 'lawnTint': LOOKCFG['lawn'],
     'start': [392.0, 834.0, 222.0],
     'credits': 'Trees, textures and sky: Poly Haven (CC0). Terrain, trees and layout: the site data and the owner\'s notes.',
 }

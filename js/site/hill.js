@@ -516,7 +516,7 @@ function siteMaterials() {
     black: std({ color: 0x1c1e20, roughness: 0.55 }), tank: std({ color: 0xe9ece6, roughness: 0.5 }), lid: std({ color: 0x3f8a5a, roughness: 0.5 }),
     canvas: std({ color: 0xf3f0e7, roughness: 0.95, side: THREE.DoubleSide }), mud: std({ color: 0xb06a42, roughness: 1 }),
     blue: std({ color: 0x2f5fa8, roughness: 0.5 }), tub: std({ color: 0xdfeef3, roughness: 0.3 }),
-    water: std({ color: 0x1f2a22, roughness: 0.04, metalness: 0, envMapIntensity: 1.4 }),       // dark and glassy: it shows the sky, so it reads as water
+    water: std({ color: 0x4f3a24, roughness: 0.05, metalness: 0, envMapIntensity: 1.3 }),       // muddy brown, as in the drone photos, and glassy: it shows the sky, so it reads as water
     bank: std({ map: gravelTex(), vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
     gravel: std({ map: gravelTex(), color: 0xaaa9a3, roughness: 1, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),   // edges fade into the ground
     mast: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.3 }),
@@ -535,6 +535,15 @@ function archWindow(w, h, M) {
   const trim = new THREE.Mesh(new THREE.ShapeGeometry(shape(w + 0.26, h + 0.13), 12), M.trim); trim.position.set(0, -0.05, 0.02);
   const glass = new THREE.Mesh(new THREE.ShapeGeometry(shape(w, h), 12), M.glass); glass.position.z = 0.035;
   g.add(trim, glass);
+  // As in the owner's photos: a white frame (a mullion down the middle, a transom where the arch begins) and black
+  // security bars, each running up to the curve of the arch.
+  const r = w / 2, spring = h - r, bar = (bw, bh, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 0.03), m); b.position.set(x, y, z); g.add(b); };
+  bar(0.05, h, 0, h / 2, 0.05, M.trim); bar(w, 0.05, 0, spring, 0.05, M.trim);
+  const n = Math.max(3, Math.round(w / 0.16));
+  for (let i = 1; i < n; i++) {
+    const x = -r + (i * w) / n, top = spring + Math.sqrt(Math.max(r * r - x * x, 0)) - 0.03;
+    bar(0.016, top, x, top / 2, 0.07, M.black);
+  }
   return g;
 }
 function gableRoof(g, W, D, top, pitch, eave, M) {
@@ -702,7 +711,7 @@ function pondModel(o, M) {
     for (let s = 0; s < n; s++) ring.push([lerp(ax, bx, s / n), lerp(az, bz, s / n)]);
   }
   ring.push(ring[0]);
-  const pos = [], uv = [], idx = [], col = [], grass = new THREE.Color(0x5d6a37), earth = new THREE.Color(0x6e4c33), deep = new THREE.Color(0x2f261c), c = new THREE.Color();   // wet, dark banks: bright clay read as a bowl
+  const pos = [], uv = [], idx = [], col = [], grass = new THREE.Color(0x6d7d3e), earth = new THREE.Color(0x96613f), deep = new THREE.Color(0x5a3d27), c = new THREE.Color();   // as in the drone photos: grass down to the water, red earth where the cut is deep
   const cx = o.ring.reduce((a, p) => a + p[0], 0) / o.ring.length, cz = o.ring.reduce((a, p) => a + p[1], 0) / o.ring.length;
   let acc = 0;
   ring.forEach(([x, z], i) => {
@@ -896,6 +905,20 @@ function buildStructures() {
     group.add(c);
   }
   return group;
+}
+/* The homestead's buildings as the hill draws them, each with where it stands and the hill's ground there: free roam
+   (js/walk.js) and the Blender export (render/export_models.cjs) set them on their own ground. Palms, the pond and the
+   quarry cut are made there in their own way. The models share their meshes and materials with the hill. */
+const HOMESTEAD = ['house', 'solar', 'mast', 'oven', 'cabin', 'quincho', 'tent', 'trampoline', 'gravel'];
+function homesteadModels() {
+  const out = [];
+  for (const c of (hill.structures ? hill.structures.children : [])) {
+    let o = null; c.traverse((k) => { if (!o && k.userData.site) o = k.userData.site; });
+    if (!o || !HOMESTEAD.includes(o.type)) continue;
+    const x = o.x ?? o.path[0][0], z = o.z ?? o.path[0][1];
+    out.push({ obj: c.clone(true), type: o.type, x, z, ground: yAt(x, z), r: FOOT[o.type] || 0, drape: o.type === 'gravel' });
+  }
+  return out;
 }
 /* Ground the structures stand on is kept free of model trees. */
 function clearOfStructures(x, z) {
@@ -1229,7 +1252,11 @@ async function buildHill() {
   loadOfficial(layers);
 
   const scene = hill.scene;
-  const sunDir = new THREE.Vector3(0.86, 0.3, 0.41).normalize();       // golden hour: early morning, low in the east-south-east
+  // The sun of the renders and the bake (render/look.json, through data/walk/world.json), so the hill is lit like them.
+  // Until a bake carries its sun's colour, the hill keeps its own early-morning sun.
+  const SW = HILL_SKY.W, baked = !!(SW && SW.sun && SW.sunColor);
+  const sunDir = baked ? new THREE.Vector3(...SW.sun).normalize() : new THREE.Vector3(0.86, 0.3, 0.41).normalize();
+  const sunCol = baked ? new THREE.Color().setRGB(...SW.sunColor) : new THREE.Color(0xffbf80);
   scene.environment = skyEnvironment(sunDir); scene.environmentIntensity = 0.65;
   if (HILL_SKY.tex && HILL_SKY.W) {
     // The sky Blender rendered from the site, the one in the tour and free roam (js/look.js), so every view has
@@ -1252,9 +1279,9 @@ ${LOOK.OUT}
     scene.add(physicalSky(sunDir, 30000));
   }
   scene.add(new THREE.HemisphereLight(0x9db4d4, 0x4a3d30, 0.55));
-  const sun = new THREE.DirectionalLight(0xffbf80, 3.6);
+  const sun = new THREE.DirectionalLight(sunCol, 3.6);
   hill.sun = sun; hill.sunDir = sunDir;
-  FOL.uSunDir.value.copy(sunDir); FOL.uSunCol.value.set(0xffb870);
+  FOL.uSunDir.value.copy(sunDir); FOL.uSunCol.value.copy(baked ? sunCol : new THREE.Color(0xffb870));
   sun.position.copy(sunDir).multiplyScalar(5000); sun.target.position.set(0, 0, 0);
   sun.castShadow = true; sun.shadow.camera.layers.enable(1);        // layer 1: shadow casters you do not see (the trees' round crowns)
   sun.shadow.mapSize.set(small ? 2048 : 4096, small ? 2048 : 4096);

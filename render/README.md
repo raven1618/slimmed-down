@@ -3,6 +3,13 @@
 Photoreal stills of the site, built from the same data as the web model and rendered with Cycles.
 Trees, grass, textures and the sky are CC0 assets from [Poly Haven](https://polyhaven.com).
 
+## One look: `look.json`
+
+The sky (a Poly Haven HDRI), the sun (bearing, height, colour, strength) and the lawn's tint, read by every step:
+the renders, the light bake, the tree photographs, and through `data/walk/world.json` the web (the hill, free roam
+and the private side). Change the light here, then run the chain: bake, sky, tree photographs, `web_export.py`,
+`private_site.py`, the tour. It is now late morning in the rainy season, as in the owner's drone photos.
+
 ## Run it
 
 Blender is used as a Python module, so no Blender install is needed:
@@ -31,9 +38,10 @@ Change the camera with `CAM, TGT` in `build.py` (local metres: x east, z south).
 The same scene, made walkable in the browser. Blender does the expensive part once; three.js draws the rest live.
 
 ```sh
-blender-env/bin/python build.py assets work /dev/null 4096 4096 24 bake    # light on the ground, about 20 minutes
+blender-env/bin/python build.py assets work /dev/null 4096 4096 24 bake work/models   # light on the ground, with the
+                                                                                      # web's buildings: ~30 minutes
 blender-env/bin/python build.py assets work /dev/null 4096 2048 8 sky      # the sky alone, in linear light
-blender-env/bin/python impostors.py assets work/web 512 24                 # each tree species from eight sides
+blender-env/bin/python impostors.py assets work/web 512 24                 # each tree species from eight sides (trees.webp)
 python3 web_export.py work assets ../data/walk                             # about 7 MB for the web
 ```
 
