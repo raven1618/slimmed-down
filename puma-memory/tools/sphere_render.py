@@ -380,7 +380,7 @@ def laser_band(t, inten=1.0):
         core = np.exp(-(dd / w) ** 2)
         # streaks: bright dashes travelling along the strand (left to right, the puma's direction)
         sp = 140 + 35 * (k % 4); ln = 22 + 9 * (k % 3)
-        streak = 0.18 + 0.82 * np.clip(np.sin((ph_ - sp * t - 37 * k) * np.pi / ln), 0, 1) ** 4
+        streak = 0.18 + 0.82 * np.clip(np.sin((ph_ + sp * t - 37 * k) * np.pi / ln), 0, 1) ** 4   # client: light runs AGAINST the puma (it runs on top of it)
         a = core * streak * (0.75 + 0.25 * (k % 2))
         hot = np.exp(-(dd / (w * 0.45)) ** 2) * streak                   # white-yellow hot core inside each strand
         out += a[..., None] * LASER_LIME * 0.95 + hot[..., None] * LASER_CORE * 0.9
@@ -528,7 +528,7 @@ def lower_black(fr, t, alpha=1.0):
     ph_ = (LON / (2 * np.pi)) * 360; fx = np.zeros_like(d)
     for k, o in enumerate((0.13, 0.21, 0.31, 0.44)):                   # thin streaks drifting left -> right, fading with depth
         dd = np.abs(dep - o - 0.012 * np.sin(1.3 * LON + 0.5 * t + k))
-        dash = 0.25 + 0.75 * np.clip(np.sin((ph_ - (60 + 18 * k) * t - 53 * k) * np.pi / 40), 0, 1) ** 3
+        dash = 0.25 + 0.75 * np.clip(np.sin((ph_ + (60 + 18 * k) * t - 53 * k) * np.pi / 40), 0, 1) ** 3
         fx += np.exp(-(dd / (0.0045 / max(SC, 0.5) * 0.5)) ** 2) * dash * (0.55 - 0.1 * k)
     glow = np.exp(-dep / 0.09) * 0.35 + np.exp(-dep / 0.3) * 0.08          # the band's light spilling down
     L = (fx[..., None] * LASER_LIME * 0.55 + glow[..., None] * LASER_GLOW * 0.5) * (d < 0)[..., None]
@@ -544,9 +544,9 @@ def wipe(t, t0, dur=0.6):
 
 # ---------- timeline (seconds; temporary until the VO is recorded) ----------
 TL = dict(pulse0=0.4, pulseN=5, pulse_dt=1.05, open=6.0, ball=7.4, somos=8.6, logo=10.0, path=12.2, globe=13.4,
-          txt_global=14.2, txt_40=16.8, txt_cal=19.4, zoom=21.6, py=23.0, km=25.6, entrega=28.4, destino=33.8,
+          txt_global=14.2, txt_40=16.8, txt_cal=19.4, zoom=21.6, py=23.0, km=25.6, entrega=29.7, destino=33.8,
           calidad=36.6, juntos=39.4, collage=46.4, pulse2=49.2, ballspin=52.6, kick=52.6, kv_flash=57.6, logo2=58.2, cat_in=59.2,
-          logro=61.4, hoy=63.2, listos=64.8, y2027=67.0, kv=68.75, end=75.2)
+          logro=61.4, hoy=63.2, listos=64.8, y2027=67.0, kv=67.8, end=75.2)
 ENTREGA = ["2_entrega/p2_cilindro.png", "2_entrega/p3_aerea02.jpg", "2_entrega/p4_convoy.png", "2_entrega/p4_ladario03.jpg", "2_entrega/p5_DSC3209.tif"]
 DESTINO = [("3_destino/p1_eess.jpg", 0.6), ("3_destino/p2_aeropuerto.jpg", 0.25)]   # airport: crop away the airline tail (right)
 IN = R + "esfera_in/"
@@ -623,8 +623,8 @@ KICK_BACK_ROT = math.pi / 5                                            # back: u
 BALL_DOWN = 0.31                                                       # the ball on the spot sits ~20 deg below the centre of the kick clip
 _bc = np.array([0, -math.sin(BALL_DOWN), math.cos(BALL_DOWN)], np.float32); BALL_ANG = np.arccos(np.clip(SYM @ _bc, -1, 1))
 SCN_KEY = ["km", "entrega", "destino", "calidad", "juntos"]
-SCN = [(lambda: TL["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], lambda: TL["entrega"]),
-       (lambda: TL["entrega"], ["F2_dolly.mp4", "F3_flyby.mp4", "F4_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("ENTREGA", "black", 0.18, W_)], lambda: TL["destino"]),
+SCN = [(lambda: TL["km"], ["F4_anim.mp4", "F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], lambda: TL["entrega"]),
+       (lambda: TL["entrega"], ["F2_dolly.mp4", "F3_flyby.mp4"], [("EN CADA", "black", 0.14, W_), ("ENTREGA", "black", 0.18, W_)], lambda: TL["destino"]),
        (lambda: TL["destino"], ["F5_anim.mp4", "F6_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("DESTINO", "black", 0.18, W_)], lambda: TL["calidad"]),
        (lambda: TL["calidad"], ["F7_anim.mp4"], [("CON COMBUSTIBLES", "black", 0.11, W_), ("DE CALIDAD", "black", 0.15, W_)], lambda: TL["juntos"]),
        (lambda: TL["juntos"], ["J1_anim.mp4", "J2_anim.mp4", "J3_anim.mp4"], [], lambda: TL["pulse2"])]      # CONSTRUIMOS JUNTOS: client video re-made as 3 fisheye scenes
@@ -754,11 +754,9 @@ def render(t):
     if t < T["path"] + 0.6:
         d, cent, top, Q = ball_field(RZ_UP @ roty(-0.10 * (t - T["ball"]))); fr = green_fill(cent, Q) + neon(d, SW, 1.0, Q=Q, t=t)   # continuous with the ball forming (no jump)
         fr = mg_put(fr, "somos", t - T["somos"])
-        lb = place(BAR_NOCAT if t < T["logo"] + 0.6 else LOGO_BAR, 0.62, 0.5, 0.56)
+        lb = place(LOGO_BAR, 0.62, 0.5, 0.56)                # client: logo directly, no puma running in
         r, a = text_in(lb, t, T["somos"] + 0.35, T["path"] - 0.2)
         if a: fr = disc_put(fr, r, a)
-        if T["logo"] - 0.2 <= t < T["logo"] + 0.6:     # the white logo-cat silhouette runs in and lands in the panel
-            fr = cat_run_in(fr, t, T["logo"] - 0.2, 0.8, 0.62, 0.5, 0.56, CAT)
         if t >= T["path"]:                              # the halo becomes a path; the ball goes dark
             p = ease((t - T["path"]) / 0.6); fr = fr * (1 - p) + swoosh(t, 1.0); fr = puma_put(fr, t, ease((t - T["path"] - 1.6) / 0.6))
         return fr
@@ -837,9 +835,8 @@ def render(t):
     dk = 1 - 0.5 * ease((t - T["logro"] + 0.4) / 0.8)    # closing: the ball sinks to deep emerald (KV background) so the type reads
     fr = green_fill(cent, Q) * dk + (bloom(neon(d, SW, 1.0, Q=Q, t=t), 0.8 * q) if q > 0 else neon(d, SW, 0.55 + 0.45 * dk, Q=Q, t=t))
     if t < T["logro"]:
-        fr = disc_put(fr, place(BAR_NOCAT, 0.72, 0.5, 0.5), ease((t - T["logo2"]) / 0.4))
-        if t >= T["cat_in"]:                            # the white logo-cat silhouette runs in and lands as the logo cat
-            fr = cat_run_in(fr, t, T["cat_in"], 0.9, 0.72, 0.5, 0.5, CAT_G)
+        a = ease((t - T["logo2"]) / 0.4)                # client: logo directly (with its cat), no puma running in
+        fr = disc_put(fr, place(BAR_NOCAT, 0.72, 0.5, 0.5), a); fr = disc_put(fr, place(CAT_G, 0.72, 0.5, 0.5), a)
         return fr
     # ---- 8. closing lines, 2027 grows to fill, KV loop ----
     for key, lines, nxt in (("logro", [("NUESTRO PRÓXIMO", "black", 0.1, W_), ("LOGRO", "black", 0.2, W_)], "hoy"),
@@ -850,9 +847,7 @@ def render(t):
     if t >= T["kv"]:                                    # the KV lockup builds row by row (client's own artwork, animated)
         fr = mg_put(fr, "kvend", t - T["kv"])
     if t >= T["y2027"]:                                 # 2027: pops in small, grows until it overflows the sphere
-        fr = mg_put(fr, "2027", t - T["y2027"])
-        wq = ease((t - T["kv"] + 0.55) / 0.45) * (1 - ease((t - T["kv"] - 0.15) / 0.7))   # client: end in full white, the KV comes out of it
-        fr = fr * (1 - wq) + 255 * wq
+        fr = mg_put(fr, "2027", t - T["y2027"])      # client: 2027 stays, in CONVOCADOS' place; the KV builds around it (no white)
     return fr
 
 def front_view(eq, n=540, back=False):
