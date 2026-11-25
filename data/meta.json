@@ -1,0 +1,38 @@
+{
+ "crs": "EPSG:32721",
+ "utm_zone": "21S",
+ "origin": {
+  "easting": 487570,
+  "northing": 7200720,
+  "lat": -25.3099995,
+  "lon": -57.123491
+ },
+ "half": 2000,
+ "frame": "local metres: x = easting - E0, z = -(northing - N0), y up",
+ "summit": {
+  "x": -600.0,
+  "z": -560.0,
+  "surface_m": 300.4,
+  "ground_m": 297.2
+ },
+ "imagery": {
+  "file": "imagery.jpg",
+  "size_m": 4000,
+  "dates": [
+   "2026-03-03",
+   "2026-03-13",
+   "2026-03-28",
+   "2026-03-30",
+   "2026-04-02",
+   "2026-04-27",
+   "2026-04-27"
+  ]
+ },
+ "sources": {
+  "elevation": "Copernicus DEM GLO-30 (ESA, 2011-2015 radar), surface model; ground estimated by subtracting 0.7 x local canopy height",
+  "canopy": "Meta & WRI global canopy height map, 1 m (Tolan et al. 2024, imagery 2009-2020)",
+  "imagery": "Sentinel-2 L2A (ESA Copernicus), cloud-masked median of 2026-03-03, 2026-03-13, 2026-03-28, 2026-03-30, 2026-04-02, 2026-04-27, 2026-04-27",
+  "landcover": "ESA WorldCover 2021, 10 m",
+  "context": "Overture Maps 2026-09-23.1 (roads and buildings from OpenStreetMap, Google, Microsoft; places from Meta and Microsoft)"
+ }
+}

@@ -1,26 +1,574 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>slimmed-down</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Outer Heaven: glamping cabins and a private off-grid community at the foot of Cerro Kavaju, Cordillera, Paraguay.">
+</head>
+<body>
+<!-- artifact:start -->
+<title>Outer Heaven</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
 
-    <meta property="og:title" content="slimmed-down" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+<div id="stage" aria-hidden="true"></div>
+<div class="shade" aria-hidden="true"></div>
+<nav class="labels" id="labels" aria-label="Places on the map"></nav>
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow" id="eyebrow">Cerro Kavaju · Cordillera, Paraguay</p>
+    <h1>Outer Heaven</h1>
+    <p class="lede" id="lede">Glamping cabins and a private community on about 29 hectares at the foot of a protected forest hill, 65 km from Asunción. Built to run on its own sun and rain.</p>
+  </div>
+  <nav class="tabs" aria-label="Views">
+    <button class="tab" type="button" data-go="cerro" aria-current="true">The hill</button>
+    <button class="tab" type="button" data-go="explore" aria-current="false">Explore the site</button>
+    <button class="tab" type="button" data-go="trail" aria-current="false">The trail</button>
+    <button class="tab" type="button" data-go="plan" aria-current="false">The plan</button>
+  </nav>
+</header>
 
-  <body>
-    <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<div class="dock" id="dock">
+  <p class="hint" id="hint">Drag to orbit · Pinch or scroll to zoom · Tap a place</p>
+  <div class="maplegend" id="legend" hidden></div>
+  <div class="bar" id="bar" role="group" aria-label="Places"></div>
+</div>
+<div class="display" id="display" hidden role="dialog" aria-label="Choose what the map shows"></div>
+<p class="credit" id="credit" hidden></p>
+<div class="compass" id="compass" aria-hidden="true">
+  <svg viewBox="0 0 30 30"><g id="needle"><path d="M15 3 L19 15 L15 13.5 L11 15 Z" fill="#e9bf5a"/><path d="M15 27 L19 15 L15 16.5 L11 15 Z" fill="#5d675a"/></g><text x="15" y="9.5" text-anchor="middle" font-size="0" fill="none">N</text></svg>
+</div>
+
+<aside class="drawer" id="drawer" hidden aria-live="polite">
+  <button class="close" id="drawer-close" type="button" aria-label="Close">×</button>
+  <button class="fold" id="drawer-fold" type="button" aria-expanded="true" aria-label="Collapse panel"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 10 8 5.5 12.5 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <p class="kicker" id="d-kick"></p>
+  <h2 id="d-title"></h2>
+  <div class="compact" id="d-compact" hidden></div>
+  <p id="d-body"></p>
+  <ul class="facts" id="d-facts"></ul>
+  <div class="actions" id="d-actions"></div>
+  <div id="d-extra" hidden></div>
+  <p class="note" id="d-note"></p>
+</aside>
+
+<div class="veil is-on" id="loader">
+  <div class="loader">
+    <div class="track"><span></span></div>
+    <p id="loader-text">Raising Cerro Kavaju</p>
+    <button class="btn" id="loader-plan" type="button" hidden>Open the plan</button>
+  </div>
+</div>
+
+<!-- ======================= EXPLORE THE SITE: the photoreal tour ======================= -->
+<div class="pano" id="pano" hidden>
+  <div class="pano-stage" id="pano-stage"></div>
+  <div class="pano-head">
+    <div><p class="eyebrow" id="pano-eyebrow">Photoreal 360° · rendered in Blender</p><h2 id="pano-title"></h2>
+      <div class="wk-sites" id="pano-sites" role="group" aria-label="Which part of the site"><button type="button" data-site="quarry">Quarry cabins</button><button type="button" data-site="private">Private side</button><button type="button" data-site="homestead">Homestead</button></div></div>
+    <div class="pano-status"><span class="pano-facing" id="pano-facing"></span><button class="btn ghost" id="pano-close" type="button">Back to the hill</button></div>
+  </div>
+  <p class="pano-loading" id="pano-loading">Loading the view</p>
+  <div class="pano-foot">
+    <div class="specs" id="pano-specs"></div>
+    <p id="pano-text"></p>
+    <div class="pano-tabs" id="pano-tabs" role="group" aria-label="Places to stand"></div>
+    <button class="btn" id="pano-roam" type="button">Free roam from here</button>
+    <p class="pano-hint" id="pano-hint">Drag to look around · scroll or pinch to zoom</p>
+  </div>
+</div>
+
+<!-- ======================= FREE ROAM ======================= -->
+<div class="walk" id="walk" hidden>
+  <div class="wk-stage" id="wk-stage"></div>
+  <div class="pano-head">
+    <div><p class="eyebrow" id="wk-eyebrow">Free roam · light baked in Blender, drawn live</p><h2 id="wk-title">The quarry cabins</h2>
+      <div class="wk-sites" id="wk-sites" role="group" aria-label="Which part of the site"><button type="button" data-site="quarry">Quarry cabins</button><button type="button" data-site="private">Private side</button></div></div>
+    <div class="pano-status"><span class="pano-facing" id="wk-facing"></span><button class="btn ghost" id="wk-close" type="button">Back to the tour</button></div>
+  </div>
+  <div class="wk-load" id="wk-loading"><div class="wk-bar"><i id="wk-bar"></i></div><p id="wk-msg">Loading the site</p></div>
+  <div class="wk-stick" id="wk-stick" hidden><i></i></div>
+  <div class="pano-foot">
+    <div class="pano-tabs" id="wk-spots" role="group" aria-label="Places to stand"></div>
+    <p class="pano-hint" id="wk-hint"></p>
+    <p class="pano-hint wk-credit">Trees, textures and sky: Poly Haven (CC0)</p>
+  </div>
+</div>
+
+<!-- ======================= THE TRAIL: THE WALKTHROUGH ======================= -->
+<div class="trailer" id="trailer" hidden>
+  <div class="tl-in">
+    <div class="tl-head">
+      <div><p class="eyebrow">The trail · a game played on the real hill</p><h2>Mala Visión</h2></div>
+      <button class="btn ghost" id="tl-close" type="button">Back to 3D</button>
+    </div>
+    <video id="tl-video" controls playsinline preload="none" poster="img/trail-poster.jpg"><source src="img/trail.mp4" type="video/mp4"></video>
+    <p class="tl-text">Halfway up the trail, visitors meet Mala Visión in a ring of whitewashed trees. The app uses the phone's camera, motion sensors and flash: you answer her cry, find her through the camera, take her picture, look away from her gaze and catch her in the selfie mirror. The video is the browser prototype, played through by a script.</p>
+    <div class="tl-actions"><button class="btn" id="tl-play" type="button">Play the prototype</button></div>
+  </div>
+</div>
+
+<!-- ======================= THE TRAIL ======================= -->
+<div class="trail" id="trail" hidden>
+  <div class="tr-stage" id="tr-stage"></div>
+  <div class="tr-selfie" id="tr-selfie" hidden aria-hidden="true">
+    <span class="tr-cam">Front camera · behind you</span>
+    <svg class="tr-you" viewBox="0 0 200 124" aria-hidden="true"><path d="M100 6c-18 0-31 14-31 33 0 13 6 24 16 29-33 6-62 23-70 56h170c-8-33-37-50-70-56 10-5 16-16 16-29 0-19-13-33-31-33z"/></svg>
+  </div>
+  <div class="tr-frost" id="tr-frost" aria-hidden="true"></div>
+  <div class="tr-edge l" id="tr-edge-l" aria-hidden="true"></div>
+  <div class="tr-edge r" id="tr-edge-r" aria-hidden="true"></div>
+  <div class="tr-reticle" id="tr-reticle" hidden aria-hidden="true"></div>
+  <div class="tr-white" id="tr-white" aria-hidden="true"></div>
+  <div class="tr-head">
+    <div>
+      <p class="eyebrow">The trail · the midpoint · playable prototype</p>
+      <h2>Mala Visión</h2>
+    </div>
+    <div class="tr-status">
+      <span class="tr-round" id="tr-round"></span>
+      <div class="tr-meter" id="tr-meter" hidden title="Until her light returns"><span></span></div>
+      <span class="tr-eyes" id="tr-eyes" role="img" aria-label="3 of 3 eyes left"></span>
+      <button class="tr-icon" id="tr-sound" type="button" aria-pressed="true">Sound on</button>
+      <button class="btn ghost" id="tr-close" type="button">Back to 3D</button>
+    </div>
+  </div>
+  <p class="tr-caption" id="tr-caption" aria-live="polite"></p>
+  <div class="tr-actions" id="tr-actions"></div>
+  <div class="tr-dark" id="tr-dark" hidden>
+    <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="none" stroke="#1f2a24" stroke-width="3"/><circle id="tr-dark-ring" cx="32" cy="32" r="28" fill="none" stroke="#e9bf5a" stroke-width="3" stroke-linecap="round" stroke-dasharray="176" stroke-dashoffset="176" transform="rotate(-90 32 32)"/><rect x="24" y="18" width="16" height="28" rx="3" fill="none" stroke="#8e9889" stroke-width="2"/></svg>
+    <p id="tr-dark-text"></p>
+  </div>
+  <div class="tr-card" id="tr-card">
+    <div class="in">
+      <p class="eyebrow">The trail · the midpoint · playable prototype</p>
+      <h3>Mala Visión</h3>
+      <p>Halfway up the trail, a ring of whitewashed trees surrounds one white tree. On the real trail you face her through your phone's camera. This is the same fight in the browser.</p>
+      <ul>
+        <li><span class="k"><span class="kd">Drag</span><span class="kt">Drag</span></span><span><b>Look around.</b> On the trail you just move the phone.</span></li>
+        <li><span class="k"><span class="kd">E</span><span class="kt">Answer</span></span><span><b>Answer her cry</b> to draw her out. On the trail you answer out loud.</span></li>
+        <li><span class="k"><span class="kd">Space</span><span class="kt">Shutter</span></span><span><b>Take her picture.</b> The flash hurts her.</span></li>
+        <li><span class="k"><span class="kd">L</span><span class="kt">Look away</span></span><span><b>Turn away</b> while her light builds. If she is on your screen when it lands, she takes one of your three eyes.</span></li>
+        <li><span class="k"><span class="kd">M</span><span class="kt">Mirror</span></span><span><b>Strike through the mirror.</b> Once she is awake, never shoot her straight on. Turn your back and catch her in the selfie camera while her light is spent.</span></li>
+      </ul>
+      <p class="note">Best with headphones. Contains bright white flashes.</p>
+      <div class="actions"><button class="btn" type="button" data-do="start" disabled>Preparing the circle…</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= THE PLAN ======================= -->
+<div class="plan" id="plan" hidden>
+  <div class="plan-head">
+    <div class="in">
+      <span class="mark">Outer Heaven · The plan</span>
+      <nav class="plan-nav" aria-label="Plan sections">
+        <a href="#p-site">Site</a><a href="#p-numbers">Cabin numbers</a><a href="#p-homes">Homesites</a><a href="#p-market">Market</a><a href="#p-energy">Self-sufficiency</a><a href="#p-phases">Phases</a><a href="#p-risks">To confirm</a><a href="#p-in">Ways in</a>
+      </nav>
+      <button class="btn" type="button" id="plan-close">Back to 3D</button>
+    </div>
+  </div>
+
+  <main>
+    <section id="p-site">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Cerro Kavaju · Cordillera, Paraguay</p>
+          <h2>One property, two sides, one forest behind them</h2>
+          <p class="lead">Outer Heaven runs along the foot of Cerro Kavaju, a protected hill between Caacupé, Atyrá and Tobatí. Part of it opens to guests as a glamping retreat. The rest is a private community for family and friends. Both share the same solar power, water and staff.</p>
+        </div>
+        <div class="sitefacts">
+          <div><b>Pending</b><span>Area and boundary come from the title plans</span></div>
+          <div><b>65 km</b><span>From Asunción, in Cordillera department</span></div>
+          <div><b>110 ha</b><span>Protected forest next door (Law 5377/2014)</span></div>
+          <div><b>15 kWh</b><span>Solar battery already on site</span></div>
+          <div><b>1 court</b><span>Tennis court already built</span></div>
+        </div>
+        <div class="grid2">
+          <div class="card" style="--c: var(--public)">
+            <span class="tag">Public side</span>
+            <h3>Glamping cabins, a natural pond, the tennis court</h3>
+            <p>Eight cabins dug into the bank at the forest edge, each facing the view. Guests share a swimming pond cleaned by plants, the court, a food forest and the trail up the valley.</p>
+          </div>
+          <div class="card" style="--c: var(--private)">
+            <span class="tag">Private side</span>
+            <h3>About eight homesites of roughly one hectare</h3>
+            <p>The quieter part of the land, closer to the summit. Kybo and Kian Betancourt are buying the first hectare. Homes use the same earth walls and living roofs as the cabins and plug into the shared energy and water systems.</p>
+          </div>
+        </div>
+        <div class="stack">
+          <h3>The bank today, and a cabin in it</h3>
+          <div class="ba" id="ba" style="--cut: 50%">
+            <img src="img/site-before.jpg" alt="The cut bank at the forest edge where the first cabin would go, marked in red" loading="lazy">
+            <img class="after" src="img/render-cabin.jpg" alt="Concept render of a rammed-earth cabin with a solar carport in the same spot" loading="lazy">
+            <div class="line" aria-hidden="true"></div>
+            <span class="lbl l">Today</span><span class="lbl r">Concept</span>
+            <input id="ba-range" type="range" min="0" max="100" value="50" aria-label="Compare today and the concept render">
+          </div>
+        </div>
+        <div class="photos">
+          <figure><img src="img/bank.jpg" alt="Grass field below an eroded bank and forest" loading="lazy"><figcaption>The bank at the forest edge, where the cabins step into the slope.</figcaption></figure>
+          <figure><img src="img/valley.jpg" alt="Open grassland with the forested hill on the left" loading="lazy"><figcaption>The valley floor along the hill.</figcaption></figure>
+          <figure><img src="img/field.jpg" alt="Red soil under sparse grass beside a dirt track" loading="lazy"><figcaption>Red earth under the grass. After a lab test of the mix, the cabin walls come from this soil.</figcaption></figure>
+          <figure><img src="img/track.jpg" alt="Two-track dirt road through a grassy valley with a pickup truck" loading="lazy"><figcaption>The track that runs the length of the property.</figcaption></figure>
+          <figure><img src="img/drone-clearing.jpg" alt="Aerial view of a clearing with a house, solar panels, a pond and an excavated court" loading="lazy"><figcaption>From the air: the house, solar panels, pond and court.</figcaption></figure>
+          <figure><img src="img/drone-wide.jpg" alt="Wide aerial view of forest, roads and a small town" loading="lazy"><figcaption>The property against the forest of the hill.</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-numbers">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Cabin numbers</p>
+          <h2>What one cabin earns</h2>
+          <p>Move the sliders. The model is simple on purpose: nights sold times the nightly rate, minus running costs and the operator's fee. The default case is the middle one, and every input is an estimate until the first season of bookings.</p>
+        </div>
+        <div class="calc">
+          <div class="controls">
+            <div class="seg" role="group" aria-label="Scenario">
+              <button type="button" data-scn="cautious" aria-pressed="false">Cautious</button>
+              <button type="button" data-scn="base" aria-pressed="true">Base</button>
+              <button type="button" data-scn="strong" aria-pressed="false">Strong</button>
+            </div>
+            <div class="field"><label for="in-adr">Nightly rate <output id="o-adr"></output></label><input id="in-adr" type="range" min="90" max="280" step="5"></div>
+            <div class="field"><label for="in-occ">Nights booked <output id="o-occ"></output></label><input id="in-occ" type="range" min="15" max="80" step="1"></div>
+            <div class="field"><label for="in-price">Cabin cost <output id="o-price"></output></label><input id="in-price" type="range" min="50000" max="90000" step="1000"></div>
+            <div class="field"><label for="in-opex">Running costs, % of rent <output id="o-opex"></output></label><input id="in-opex" type="range" min="20" max="55" step="1"></div>
+            <div class="field"><label for="in-fee">Operator fee, % of rent <output id="o-fee"></output></label><input id="in-fee" type="range" min="0" max="30" step="1"></div>
+            <div class="field"><label for="in-n">Cabins <output id="o-n"></output></label><input id="in-n" type="range" min="4" max="16" step="1"></div>
+            <p class="note">Running costs cover cleaning, laundry, booking-site commissions, supplies, maintenance and insurance.</p>
+          </div>
+          <div class="results">
+            <div class="big">
+              <div><b id="r-net"></b><span>Net per cabin, per year</span></div>
+              <div><b id="r-yield"></b><span>Yearly return on the cabin cost</span></div>
+              <div><b id="r-pay"></b><span>Years to pay back the cabin</span></div>
+            </div>
+            <div class="split">
+              <div class="legend"><span>Rent per cabin per year: <b id="r-rev"></b></span><span id="r-nights"></span></div>
+              <div class="barline" aria-hidden="true"><i id="b-opex" style="background:#6b7568"></i><i id="b-fee" style="background:var(--gold)"></i><i id="b-net" style="background:var(--public)"></i></div>
+              <div class="legend">
+                <span><i style="background:#6b7568"></i>Running costs <b id="r-opex"></b></span>
+                <span><i style="background:var(--gold)"></i>Operator fee <b id="r-fee"></b></span>
+                <span><i style="background:var(--public)"></i>Net to the cabin <b id="r-net2"></b></span>
+              </div>
+            </div>
+            <div class="big">
+              <div><b id="r-cap"></b><span>Cabins built (<span id="r-n"></span>)</span></div>
+              <div><b id="r-rent"></b><span>Rent from all cabins, per year</span></div>
+              <div><b id="r-op"></b><span>Operator fees, per year</span></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th scope="col">Scenario</th><th scope="col">Rate</th><th scope="col">Booked</th><th scope="col">Rent / cabin</th><th scope="col">Net / cabin</th><th scope="col">Return</th><th scope="col">Payback</th></tr></thead>
+                <tbody id="scn-table"></tbody>
+              </table>
+            </div>
+            <p class="note">Why 45% booked in the base case: Friday and Saturday nights alone are 29% of the year. Long weekends, holidays and some weekday retreats fill the rest. Cautious assumes weekends only and a lower rate; strong assumes the cabins become a destination.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-homes">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Homesites</p>
+          <h2>The private side pays for what both sides share</h2>
+          <p>Selling homesites on the private side can fund the pond, the hub, the roads, the water and the battery room. The cabins then only have to pay for themselves.</p>
+        </div>
+        <div class="calc">
+          <div class="controls">
+            <div class="field"><label for="in-lots">Homesites sold <output id="o-lots"></output></label><input id="in-lots" type="range" min="2" max="10" step="1" value="8"></div>
+            <div class="field"><label for="in-lotp">Price per homesite <output id="o-lotp"></output></label><input id="in-lotp" type="range" min="80000" max="220000" step="5000" value="150000"></div>
+            <div class="field"><label for="in-lotc">Cost to deliver each <output id="o-lotc"></output></label><input id="in-lotc" type="range" min="5000" max="40000" step="1000" value="20000"></div>
+            <p class="note">Delivery covers survey and title, the lane, and water and power to the lot line. Houses are built by each owner, or by us at roughly $900–1,100 per m².</p>
+          </div>
+          <div class="results">
+            <div class="big">
+              <div><b id="h-gross"></b><span>Homesite sales</span></div>
+              <div><b id="h-net"></b><span>After delivery costs</span></div>
+              <div><b id="h-left"></b><span id="h-left-l">Left after shared infrastructure</span></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th scope="col">Shared infrastructure, phase 1</th><th scope="col">Estimate</th></tr></thead>
+                <tbody>
+                  <tr><td>Natural swimming pond, about 1,000 m²</td><td class="num">$40,000</td></tr>
+                  <tr><td>Hub: reception, laundry, staff room, storage</td><td class="num">$40,000</td></tr>
+                  <tr><td>Solar expansion and battery room (≈30 kWp, ≈100 kWh)</td><td class="num">$60,000</td></tr>
+                  <tr><td>Gravel access road, parking, paths</td><td class="num">$30,000</td></tr>
+                  <tr><td>Water: well, tanks, filtration, wastewater wetland</td><td class="num">$30,000</td></tr>
+                  <tr><td>Design, environmental license, permits</td><td class="num">$20,000</td></tr>
+                  <tr><td>Contingency, 10%</td><td class="num">$22,000</td></tr>
+                  <tr><td><b>Total</b></td><td class="num"><b>$242,000</b></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">Context: raw land near the Caacupé–Atyrá road lists at about $75,000–95,000 per hectare. $150,000 per hectare is a premium that the shared power, water, security, pond, court and protected-forest views have to earn.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-market">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Market</p>
+          <h2>What comparable stays charge</h2>
+          <p>Glamping in Paraguay is young. The closest comparable is Tava in San Bernardino, on the other side of the same Cordillera hills. Paraguayan hotels ran at 61% occupancy in the first half of 2026, and holiday weeks sell out.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Place</th><th scope="col">Where</th><th scope="col">What</th><th scope="col">Per night</th><th scope="col">Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Tava Glamping</td><td>San Bernardino, Cordillera</td><td>Raised wood and bamboo cabins by Lake Ypacaraí</td><td class="num">$120–130</td><td>Listings range $57–182 by room and date</td></tr>
+              <tr><td>Nomade Glamping</td><td>Yaguarón–Pirayú, Paraguarí</td><td>4 tents on 2 ha</td><td class="num">≈ $120–150</td><td>G 800,000–990,000 for two, at about G 6,700 per US$</td></tr>
+              <tr><td>Vista Alegre Natural Resort</td><td>Independencia, Guairá</td><td>Villas and bungalows</td><td class="num">$118–156</td><td>Resort format, not glamping</td></tr>
+              <tr><td>San Bernardino short-term rentals</td><td>Cordillera</td><td>329 active Airbnb listings</td><td class="num">$191 avg</td><td>21% average occupancy; mostly holiday homes</td></tr>
+              <tr><td>Asunción hotels, H1 2026</td><td>Asunción</td><td>400+ hotels surveyed nationwide</td><td class="num">$96 avg</td><td>64% occupancy in Asunción, 61% nationally</td></tr>
+              <tr class="us"><td><b>Outer Heaven cabin</b></td><td>Cerro Kavaju, Cordillera</td><td>Rammed-earth cabin, pond, court, food forest</td><td class="num">$150–200</td><td>Base case $170 at 45% booked</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-energy">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Self-sufficiency</p>
+          <h2>Sun, rain, soil and shade</h2>
+          <p>The goal is a site that runs without the grid. The design starts by needing less: thick earth walls, living roofs and the hill's own afternoon shade cut the cooling load in summers that reach 38 °C.</p>
+        </div>
+        <div class="grid2">
+          <div class="card"><span class="tag">Energy</span><h3>Solar carports and one battery room</h3><p>Panels and a 15 kWh battery already run the house. Phase 1 grows that to roughly 30 kWp and 100 kWh (a sizing estimate): about 3 kWp per cabin over the parking, plus the hub and the pond pump. Paraguay averages about 4 kWh per installed kWp per day.</p></div>
+          <div class="card"><span class="tag">Water</span><h3>Rain first, the well as backup</h3><p>Around 1,400–1,600 mm of rain falls here a year. A 38 m² carport roof catches roughly what one cabin's guests use in a year at 45% booked, into a 10,000 L tank. A well and filtration cover dry spells.</p></div>
+          <div class="card"><span class="tag">Waste</span><h3>Biodigesters and a reed-bed wetland</h3><p>Wastewater is treated on site and kept well away from the swimming pond. Kitchen scraps go to compost for the food forest.</p></div>
+          <div class="card"><span class="tag">Food</span><h3>A food forest along the corridor</h3><p>Orchard, vegetable beds and chickens between the two sides. Breakfast baskets come from it; the rest comes from farms in Atyrá, Tobatí and Caacupé.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-phases">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Phases</p>
+          <h2>Build in the order the money arrives</h2>
+        </div>
+        <ol class="phases">
+          <li><div><span class="when">Now – early 2027</span><h3>Paper and pre-sales</h3><p>Survey the boundary, environmental license, subdivision approval, cabin design, a soil test for the walls. The Betancourt hectare closes and the next homesites are reserved.</p></div></li>
+          <li><div><span class="when">2027</span><h3>Four cabins, the pond, the hub</h3><p>Shared infrastructure goes in with the first four cabins. Opening season tests the rate and the occupancy.</p></div></li>
+          <li><div><span class="when">2027 – 2028</span><h3>Eight cabins and the first homes</h3><p>Four more cabins once bookings prove out. The first houses go up on the private side.</p></div></li>
+          <li><div><span class="when">Later</span><h3>Up to twelve cabins, events, retreats</h3><p>Only if occupancy holds above about 50%. Weekday retreats and small events fill the gaps.</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="p-risks">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">To confirm</p>
+          <h2>What has to be true</h2>
+        </div>
+        <ul class="plain">
+          <li><b>The boundary sits outside the protected area.</b> Cerro Kavaju is public land under Law 5377/2014 and the protected-areas regime of Law 352/94, with a management plan for 2025–2035. A survey has to confirm where the property ends and what the plan allows on neighbouring land.</li>
+          <li><b>Environmental license.</b> A tourism project needs an environmental impact study approved by MADES before building.</li>
+          <li><b>Subdivision and titles.</b> The private side needs municipal approval to split into homesites, and a clean title for each.</li>
+          <li><b>The road.</b> Red earth turns to mud after rain. The access road needs gravel before the first guest arrives.</li>
+          <li><b>Weekday demand.</b> Asunción fills weekends. Weekdays need retreats, foreign visitors and events.</li>
+          <li><b>The rate.</b> $170 is above every glamping comparable we found. The design, the pond and the court have to justify it, and the first season will tell.</li>
+          <li><b>Currency.</b> Most bookings will be paid in guaraníes; some build costs are in dollars.</li>
+          <li><b>The map.</b> The 3D hill is built from satellite elevation, imagery and tree-height data, accurate to a few metres. Boundaries come from the title plans; a drone survey of the property would sharpen the terrain to centimetres.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="p-in">
+      <div class="wrap stack lg">
+        <div class="stack">
+          <p class="kick">Ways in</p>
+          <h2>Starting points for the conversation</h2>
+          <p>Terms are open. These are the shapes that fit the plan.</p>
+        </div>
+        <div class="grid3">
+          <div class="card" style="--c: var(--public)"><span class="tag">Own a cabin</span><h3>From $60–70k</h3><p>Pay for one cabin. We run it and you take the net after running costs and the operator fee. Use it yourself a set number of nights a year.</p></div>
+          <div class="card" style="--c: var(--private)"><span class="tag">Own a homesite</span><h3>From $150k</h3><p>About a hectare on the private side, with shared energy, water and staff. Build your own house or have us build it.</p></div>
+          <div class="card"><span class="tag">Fund what's shared</span><h3>About $240k</h3><p>The pond, hub, roads, water and battery room. Repaid from homesite sales, or turned into a stake in the operating company.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-sources">
+      <div class="wrap stack">
+        <p class="kick">Sources and notes</p>
+        <ol class="sources">
+          <li><a href="https://www.glamping.com/destination/south-america/cordillera/san-bernardino/tava-glamping/" target="_blank" rel="noopener">Tava Glamping rates (Glamping.com)</a> and <a href="https://www.tripadvisor.com/Hotel_Review-g1635342-d11776039-Reviews-Tava_Glamping-San_Bernardino_Cordillera_Department.html" target="_blank" rel="noopener">Tripadvisor</a></li>
+          <li><a href="https://www.nomadeglamping.com/en" target="_blank" rel="noopener">Nomade Glamping</a></li>
+          <li><a href="https://www.booking.com/lodges/country/py.en-gb.html" target="_blank" rel="noopener">Lodges in Paraguay (Booking.com)</a></li>
+          <li><a href="https://www.airroi.com/airbnb-data/paraguay" target="_blank" rel="noopener">AirROI Paraguay short-term rental markets, 2026</a></li>
+          <li><a href="https://www.elinmobiliario.com.py/post/hoteler%C3%ADa-paraguaya-cierra-el-semestre-con-64-de-ocupaci%C3%B3n-en-asunci%C3%B3n-y-acelera-su-expansi%C3%B3n" target="_blank" rel="noopener">Hotel occupancy, first half of 2026 (El Inmobiliario)</a>; <a href="https://en.mercopress.com/2026/04/07/holy-week-boosts-paraguayan-tourism-90-hotel-occupancy-and-36-revenue-increase" target="_blank" rel="noopener">Holy Week 2026 at 90% (MercoPress)</a></li>
+          <li><a href="https://edconstructora.com.py/costo-construccion-casa-paraguay-2025/" target="_blank" rel="noopener">Construction cost per m² in Paraguay, 2026 (ED Constructora)</a></li>
+          <li><a href="https://www.infocasas.com.py/venta/terrenos/cordillera/atyra" target="_blank" rel="noopener">Land listings in Atyrá and Caacupé (InfoCasas)</a></li>
+          <li><a href="https://www.bacn.gov.py/leyes-paraguayas/4559/ley-n-5377-declara-area-silvestre-protegida-bajo-dominio-publico-departamental-y-con-la-categoria-de-manejo-de-paisaje-protegido-al-cerro-kavaju-ubicado-en-los-municipios-de-atyra-y-caacupe-departamento-cordillera" target="_blank" rel="noopener">Law 5377/2014, Cerro Kavaju protected landscape</a>; <a href="https://www.kavaju.org/en" target="_blank" rel="noopener">Kavaju management</a></li>
+          <li><a href="https://www.lanacion.com.py/gran-diario-domingo/2024/07/07/cerro-kavaju-una-maravilla-escondida-en-la-capital-espiritual-del-pais/" target="_blank" rel="noopener">Cerro Kavaju profile (La Nación)</a>; <a href="https://mapcarta.com/N6264739387" target="_blank" rel="noopener">coordinates (Mapcarta)</a></li>
+          <li>3D model: <a href="https://registry.opendata.aws/copernicus-dem/" target="_blank" rel="noopener">Copernicus DEM GLO-30</a>, <a href="https://registry.opendata.aws/dataforgood-fb-forests/" target="_blank" rel="noopener">Meta and WRI 1 m canopy height</a>, <a href="https://registry.opendata.aws/sentinel-2-l2a-cogs/" target="_blank" rel="noopener">Sentinel-2</a> imagery, <a href="https://registry.opendata.aws/esa-worldcover-vito/" target="_blank" rel="noopener">ESA WorldCover</a> and <a href="https://overturemaps.org" target="_blank" rel="noopener">Overture Maps</a>.</li>
+          <li>Infrastructure, energy and water sizing, and the cabin and pond budgets, are our estimates for discussion.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+  <footer><div class="wrap">Outer Heaven is a working name. Prepared October 2026 for discussion; figures are estimates, not an offer.</div></footer>
+</div>
+
+<!-- ======================= plan logic (works without WebGL) ======================= -->
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  var SCN = {
+    cautious: { adr: 130, occ: 30, opex: 40 },
+    base: { adr: 170, occ: 45, opex: 35 },
+    strong: { adr: 200, occ: 55, opex: 30 }
+  };
+  var DEF = { price: 65000, fee: 20, n: 8 };
+  var INFRA = 242000;
+
+  function model(p) {
+    var nights = 365 * p.occ / 100;
+    var rent = nights * p.adr;
+    var opex = rent * p.opex / 100;
+    var fee = rent * p.fee / 100;
+    var net = rent - opex - fee;
+    return { nights: nights, rent: rent, opex: opex, fee: fee, net: net, yld: net / p.price, pay: net > 0 ? p.price / net : Infinity };
+  }
+  window.__ohModel = model;
+
+  var ins = { adr: $('in-adr'), occ: $('in-occ'), price: $('in-price'), opex: $('in-opex'), fee: $('in-fee'), n: $('in-n') };
+  function read() { return { adr: +ins.adr.value, occ: +ins.occ.value, price: +ins.price.value, opex: +ins.opex.value, fee: +ins.fee.value, n: +ins.n.value }; }
+  function setScn(name) {
+    var s = SCN[name];
+    ins.adr.value = s.adr; ins.occ.value = s.occ; ins.opex.value = s.opex;
+    document.querySelectorAll('[data-scn]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.scn === name)); });
+    render();
+  }
+  function pct(x) { return (x * 100).toFixed(1) + '%'; }
+  function yrs(x) { return isFinite(x) ? x.toFixed(1) : '—'; }
+  function render() {
+    var p = read(), m = model(p);
+    $('o-adr').textContent = usd.format(p.adr);
+    $('o-occ').textContent = p.occ + '% · ' + Math.round(m.nights) + ' nights';
+    $('o-price').textContent = usd.format(p.price);
+    $('o-opex').textContent = p.opex + '%';
+    $('o-fee').textContent = p.fee + '%';
+    $('o-n').textContent = p.n;
+    $('r-net').textContent = usd.format(m.net);
+    $('r-net2').textContent = usd.format(m.net);
+    $('r-yield').textContent = pct(m.yld);
+    $('r-pay').textContent = yrs(m.pay);
+    $('r-rev').textContent = usd.format(m.rent);
+    $('r-nights').textContent = Math.round(m.nights) + ' nights at ' + usd.format(p.adr);
+    $('r-opex').textContent = usd.format(m.opex);
+    $('r-fee').textContent = usd.format(m.fee);
+    var tot = Math.max(m.rent, 1);
+    $('b-opex').style.width = (m.opex / tot * 100) + '%';
+    $('b-fee').style.width = (m.fee / tot * 100) + '%';
+    $('b-net').style.width = (Math.max(m.net, 0) / tot * 100) + '%';
+    $('r-cap').textContent = usd.format(p.price * p.n);
+    $('r-n').textContent = p.n + ' × ' + usd.format(p.price);
+    $('r-rent').textContent = usd.format(m.rent * p.n);
+    $('r-op').textContent = usd.format(m.fee * p.n);
+    var rows = '';
+    ['cautious', 'base', 'strong'].forEach(function (k) {
+      var s = SCN[k], q = { adr: s.adr, occ: s.occ, opex: s.opex, fee: p.fee, price: p.price }, r = model(q);
+      rows += '<tr><td>' + k.charAt(0).toUpperCase() + k.slice(1) + '</td><td class="num">' + usd.format(s.adr) + '</td><td class="num">' + s.occ + '%</td><td class="num">' + usd.format(r.rent) + '</td><td class="num">' + usd.format(r.net) + '</td><td class="num">' + pct(r.yld) + '</td><td class="num">' + yrs(r.pay) + ' yrs</td></tr>';
+    });
+    $('scn-table').innerHTML = rows;
+  }
+  Object.keys(ins).forEach(function (k) {
+    ins[k].addEventListener('input', function () {
+      if (k === 'adr' || k === 'occ' || k === 'opex') document.querySelectorAll('[data-scn]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+      render();
+    });
+  });
+  document.querySelectorAll('[data-scn]').forEach(function (b) { b.addEventListener('click', function () { setScn(b.dataset.scn); }); });
+  ins.price.value = DEF.price; ins.fee.value = DEF.fee; ins.n.value = DEF.n;
+  setScn('base');
+
+  var lots = $('in-lots'), lotp = $('in-lotp'), lotc = $('in-lotc');
+  function renderHomes() {
+    var n = +lots.value, pr = +lotp.value, c = +lotc.value;
+    $('o-lots').textContent = n + (n >= 1 ? ' (incl. Betancourt)' : '');
+    $('o-lotp').textContent = usd.format(pr);
+    $('o-lotc').textContent = usd.format(c);
+    var gross = n * pr, net = n * (pr - c), left = net - INFRA;
+    $('h-gross').textContent = usd.format(gross);
+    $('h-net').textContent = usd.format(net);
+    var el = $('h-left');
+    el.textContent = usd.format(left);
+    el.className = left >= 0 ? 'ok' : 'warn';
+    $('h-left-l').textContent = left >= 0 ? 'Left after shared infrastructure ($242k)' : 'Short of shared infrastructure ($242k)';
+  }
+  [lots, lotp, lotc].forEach(function (i) { i.addEventListener('input', renderHomes); });
+  renderHomes();
+
+  $('loader-plan').addEventListener('click', function () {
+    $('loader').classList.remove('is-on');
+    $('plan').hidden = false;
+  });
+
+  var ba = $('ba'), bar = $('ba-range');
+  bar.addEventListener('input', function () { ba.style.setProperty('--cut', bar.value + '%'); });
+})();
+</script>
+
+<script>
+  // If the 3D modules never arrive (offline, blocked CDN), say so instead of spinning.
+  setTimeout(function () {
+    if (!window.__ohReady) {
+      var t = document.getElementById('loader-text');
+      if (t) { t.className = 'err'; t.textContent = 'The 3D view could not load. Check the connection and reload, or read the plan.'; }
+      document.getElementById('loader-plan').hidden = false;
+    }
+  }, 25000);
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+/* three.js and the shared modules, handed to the page's scripts in js/site/. Those run after this, in order,
+   and share one scope: core, hill, ui, tools, views. */
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import * as LOOK from './js/look.js';
+import * as CAB from './js/cabin.js';
+Object.assign(window, { THREE, OrbitControls, RoomEnvironment, Sky, EffectComposer, RenderPass, UnrealBloomPass, OutputPass, ShaderPass, mergeGeometries, mergeVertices, LOOK, CAB });
+</script>
+<script defer src="js/site/core.js"></script>
+<script defer src="js/site/hill.js"></script>
+<script defer src="js/site/ui.js"></script>
+<script defer src="js/site/tools.js"></script>
+<script defer src="js/site/views.js"></script>
+<!-- artifact:end -->
+</body>
 </html>

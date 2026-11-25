@@ -1,0 +1,146 @@
+[
+ {
+  "site": "quarry",
+  "id": "arrival",
+  "name": "Arrival",
+  "x": 392,
+  "z": 834,
+  "y": 157.8,
+  "bearing": 215.9,
+  "file": "tour/quarry-arrival.jpg",
+  "text": "Where the track comes in: the row of cabins set into the old quarry wall, their living roofs level with the forest above."
+ },
+ {
+  "site": "quarry",
+  "id": "lagoon",
+  "name": "Lagoon shore",
+  "x": 384.2,
+  "z": 860.4,
+  "y": 158.27,
+  "bearing": 280,
+  "file": "tour/quarry-lagoon.jpg",
+  "text": "The natural lagoon, cleaned by plants instead of chlorine. Every cabin faces it through a front of glass, floor to ceiling."
+ },
+ {
+  "site": "quarry",
+  "id": "deck",
+  "name": "Cabin deck",
+  "x": 353.15,
+  "z": 868.6,
+  "y": 158.67,
+  "bearing": 64.1,
+  "file": "tour/quarry-deck.jpg",
+  "text": "The deck of cabin 4. The roof reaches 1.5 m past the glass with no posts: the summer sun never touches it and nothing blocks the view."
+ },
+ {
+  "site": "quarry",
+  "id": "inside",
+  "name": "Inside the cabin",
+  "x": 347.39,
+  "z": 867.24,
+  "y": 158.32,
+  "bearing": 115.0,
+  "file": "tour/quarry-inside.jpg",
+  "text": "Inside cabin 4: one bedroom and a kitchen island behind the glass. 45 cm walls of local rammed earth soak up the afternoon heat and give it back at night.",
+  "roam": [
+   353.15,
+   868.6
+  ]
+ },
+ {
+  "site": "quarry",
+  "id": "roof",
+  "name": "On the living roof",
+  "x": 366.59,
+  "z": 830.87,
+  "y": 161.37,
+  "bearing": 158.3,
+  "file": "tour/quarry-roof.jpg",
+  "text": "On the living roof of cabin 2: native grasses on 20 cm of soil. It insulates and slows the rain, and from the hill the cabin disappears."
+ },
+ {
+  "site": "private",
+  "id": "homesite",
+  "name": "The homesite",
+  "x": -106.0,
+  "z": -581.0,
+  "y": 166.4,
+  "bearing": 215.8,
+  "file": "tour/private-homesite.jpg",
+  "text": "A homesite of about a hectare on the private side: the protected forest behind, the valley in front. Two earth volumes stepped with the slope."
+ },
+ {
+  "site": "private",
+  "id": "terrace",
+  "name": "The terrace",
+  "x": -114.6,
+  "z": -563.0,
+  "y": 166.72,
+  "bearing": 90.0,
+  "file": "tour/private-terrace.jpg",
+  "text": "The terrace and the 12 m pool, heated by the sun and filtered without chlorine, looking east over the valley."
+ },
+ {
+  "site": "private",
+  "id": "living",
+  "name": "The living room",
+  "x": -119.5,
+  "z": -560.5,
+  "y": 166.37,
+  "bearing": 90.0,
+  "file": "tour/private-living.jpg",
+  "text": "The living room: rammed-earth walls and a glass front to the valley. Three bedrooms, about 180 m\u00b2 in all; the bedroom wing sits back for privacy.",
+  "roam": [
+   -114.6,
+   -563.0
+  ]
+ },
+ {
+  "site": "private",
+  "id": "roof",
+  "name": "On the living roof",
+  "x": -114.8,
+  "z": -561.0,
+  "y": 170.05,
+  "bearing": 90.0,
+  "file": "tour/private-roof.jpg",
+  "text": "On the living roof: native grasses on 20 cm of soil, the terrace and the pool below, the valley beyond. From the trail above you see grass, not a house.",
+  "roam": [
+   -114.6,
+   -563.0
+  ]
+ },
+ {
+  "site": "private",
+  "id": "mango",
+  "name": "The mango tree",
+  "x": -159.5,
+  "z": -590.3,
+  "y": 172.12,
+  "bearing": 290.0,
+  "file": "tour/private-mango.jpg",
+  "text": "The old mango tree and its two granite boulders, where the trail across the hill ends."
+ },
+ {
+  "site": "homestead",
+  "id": "house",
+  "name": "The homestead",
+  "x": 249.49,
+  "z": 759.22,
+  "y": 180.91,
+  "bearing": 205.0,
+  "file": "tour/homestead-house.jpg",
+  "text": "Already built: the brick house with its clay tile roof, the solar array beside it, and the forest of Cerro Kavaju behind."
+ },
+ {
+  "site": "homestead",
+  "id": "pond",
+  "name": "By the pond",
+  "x": 241.92,
+  "z": 754.26,
+  "y": 181.96,
+  "bearing": 304.0,
+  "file": "tour/homestead-pond.jpg",
+  "text": "The pond, dug into the slope: the wooden cabin at the edge of the forest above it, the bell tent and the quincho, among pind\u00f3 palms."
+ }
+]

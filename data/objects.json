@@ -1,0 +1,344 @@
+{
+ "source": "Placed from the owner's two drone photos. Each photo's camera was fitted to the overhead site photo and pinned on two roofs it shows (the house and the wooden cabin); positions are good to about ±3 m.",
+ "view": {
+  "camera": [
+   312.7,
+   230.6,
+   713.6
+  ],
+  "bearing": 247.9,
+  "pitch": -36.2,
+  "note": "the camera of the wide drone photo"
+ },
+ "objects": [
+  {
+   "id": "house",
+   "type": "house",
+   "name": "House",
+   "x": 244.0,
+   "z": 771.0,
+   "rot": 25,
+   "w": 6.4,
+   "d": 7.6,
+   "note": "Two floors in exposed brick under a clay-tile roof, with a porch on the front corner and a water tank on the ridge."
+  },
+  {
+   "id": "solar",
+   "type": "solar",
+   "name": "Solar array",
+   "x": 239.6,
+   "z": 759.0,
+   "rot": 15,
+   "tables": 3,
+   "note": "Three tables of six panels on concrete posts, facing north. It feeds the 15 kWh battery bank."
+  },
+  {
+   "id": "mast",
+   "type": "mast",
+   "name": "Antenna mast",
+   "x": 235.4,
+   "z": 768.1,
+   "h": 18
+  },
+  {
+   "id": "oven",
+   "type": "oven",
+   "name": "Clay oven",
+   "x": 231.8,
+   "z": 766.4
+  },
+  {
+   "id": "pond",
+   "type": "pond",
+   "name": "Pond",
+   "ring": [
+    [
+     236.0,
+     748.4
+    ],
+    [
+     234.4,
+     735.3
+    ],
+    [
+     239.8,
+     735.9
+    ],
+    [
+     244.3,
+     741.3
+    ],
+    [
+     245.9,
+     745.7
+    ],
+    [
+     242.1,
+     746.6
+    ]
+   ],
+   "note": "Dug into the slope, with a cut bank on its uphill side."
+  },
+  {
+   "id": "cabin",
+   "type": "cabin",
+   "name": "Wooden cabin",
+   "x": 216.6,
+   "z": 737.2,
+   "rot": 110,
+   "w": 4.6,
+   "d": 5.6
+  },
+  {
+   "id": "quincho",
+   "type": "quincho",
+   "name": "Quincho",
+   "x": 235.6,
+   "z": 703.4,
+   "rot": 74,
+   "w": 6.4,
+   "d": 4.2,
+   "note": "Open pergola with a tile roof, a counter and a plunge tub."
+  },
+  {
+   "id": "tent",
+   "type": "tent",
+   "name": "Bell tent",
+   "x": 217.4,
+   "z": 718.1,
+   "r": 2.5
+  },
+  {
+   "id": "trampoline",
+   "type": "trampoline",
+   "name": "Trampoline",
+   "x": 217.2,
+   "z": 704.3,
+   "r": 1.8
+  },
+  {
+   "id": "palm",
+   "type": "palm",
+   "x": 236.7,
+   "z": 717.9,
+   "h": 12
+  },
+  {
+   "id": "drive",
+   "type": "gravel",
+   "name": "Gravel drive",
+   "w": 3.4,
+   "path": [
+    [
+     246.8,
+     762.7
+    ],
+    [
+     249.6,
+     756.2
+    ],
+    [
+     251.1,
+     748.7
+    ],
+    [
+     250.9,
+     739.9
+    ],
+    [
+     249.1,
+     731.5
+    ],
+    [
+     247.4,
+     723.3
+    ],
+    [
+     247.0,
+     716.7
+    ],
+    [
+     244.5,
+     709.0
+    ]
+   ]
+  },
+  {
+   "id": "parking",
+   "type": "gravel",
+   "w": 7.5,
+   "path": [
+    [
+     245.2,
+     765.4
+    ],
+    [
+     247.6,
+     759.6
+    ]
+   ]
+  },
+  {
+   "id": "quarry",
+   "group": "quarry",
+   "type": "cut",
+   "name": "Quarry wall",
+   "ring": [
+    [
+     341.1,
+     873.9
+    ],
+    [
+     341.3,
+     934.6
+    ],
+    [
+     359.7,
+     950.4
+    ],
+    [
+     405.8,
+     849.8
+    ],
+    [
+     447.5,
+     747.5
+    ],
+    [
+     376.5,
+     802.4
+    ]
+   ],
+   "wall": [
+    [
+     376.5,
+     802.4
+    ],
+    [
+     341.1,
+     873.9
+    ],
+    [
+     341.3,
+     934.6
+    ]
+   ],
+   "depth": 3.0,
+   "reach": 35,
+   "note": "The old quarry cut along the forest edge, about 3 m high, with the forest on top. Height taken from the owner's photos; a survey would pin it down."
+  },
+  {
+   "id": "wallpalm0",
+   "group": "quarry",
+   "type": "palm",
+   "x": 367.4,
+   "z": 807.6,
+   "h": 15.9
+  },
+  {
+   "id": "wallpalm1",
+   "group": "quarry",
+   "type": "palm",
+   "x": 363.4,
+   "z": 814.3,
+   "h": 12.9
+  },
+  {
+   "id": "wallpalm2",
+   "group": "quarry",
+   "type": "palm",
+   "x": 358.2,
+   "z": 831.1,
+   "h": 15.4
+  },
+  {
+   "id": "wallpalm3",
+   "group": "quarry",
+   "type": "palm",
+   "x": 348.9,
+   "z": 839.3,
+   "h": 13.4
+  },
+  {
+   "id": "wallpalm4",
+   "group": "quarry",
+   "type": "palm",
+   "x": 344.1,
+   "z": 850.6,
+   "h": 15.9
+  },
+  {
+   "id": "wallpalm5",
+   "group": "quarry",
+   "type": "palm",
+   "x": 337.5,
+   "z": 861.4,
+   "h": 15.6
+  },
+  {
+   "id": "wallpalm6",
+   "group": "quarry",
+   "type": "palm",
+   "x": 334.7,
+   "z": 878.0,
+   "h": 14.5
+  },
+  {
+   "id": "wallpalm7",
+   "group": "quarry",
+   "type": "palm",
+   "x": 334.3,
+   "z": 895.6,
+   "h": 11.7
+  },
+  {
+   "id": "wallpalm8",
+   "group": "quarry",
+   "type": "palm",
+   "x": 335.5,
+   "z": 905.9,
+   "h": 13.5
+  },
+  {
+   "id": "wallpalm9",
+   "group": "quarry",
+   "type": "palm",
+   "x": 336.5,
+   "z": 921.7,
+   "h": 12.1
+  },
+  {
+   "id": "mango",
+   "group": "mango",
+   "type": "mango",
+   "name": "Mango tree",
+   "x": -181.5,
+   "z": -598.3,
+   "h": 13,
+   "r": 8,
+   "note": "A huge old mango with two granite boulders at its foot, from the owner's photos. A natural checkpoint for the trail."
+  },
+  {
+   "id": "boulder1",
+   "group": "mango",
+   "type": "boulder",
+   "x": -185.7,
+   "z": -597.3,
+   "w": 4.2,
+   "d": 3.0,
+   "h": 2.0,
+   "rot": 20
+  },
+  {
+   "id": "boulder2",
+   "group": "mango",
+   "type": "boulder",
+   "x": -175.5,
+   "z": -596.1,
+   "w": 5.0,
+   "d": 3.4,
+   "h": 2.1,
+   "rot": 75
+  }
+ ]
+}
