@@ -516,7 +516,7 @@ function siteMaterials() {
     black: std({ color: 0x1c1e20, roughness: 0.55 }), tank: std({ color: 0xe9ece6, roughness: 0.5 }), lid: std({ color: 0x3f8a5a, roughness: 0.5 }),
     canvas: std({ color: 0xf3f0e7, roughness: 0.95, side: THREE.DoubleSide }), mud: std({ color: 0xb06a42, roughness: 1 }),
     blue: std({ color: 0x2f5fa8, roughness: 0.5 }), tub: std({ color: 0xdfeef3, roughness: 0.3 }),
-    water: std({ color: 0x4f3a24, roughness: 0.05, metalness: 0, envMapIntensity: 1.3 }),       // muddy brown, as in the drone photos, and glassy: it shows the sky, so it reads as water
+    water: std({ color: 0x6e4c2e, roughness: 0.03, metalness: 0, envMapIntensity: 2.2 }),       // muddy brown, as in the drone photos, and glassy: it shows the sky, so it reads as water
     bank: std({ map: gravelTex(), vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
     gravel: std({ map: gravelTex(), color: 0xaaa9a3, roughness: 1, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),   // edges fade into the ground
     mast: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.3 }),
@@ -683,7 +683,7 @@ function baseY(x, z, r) {
 }
 /* Ponds: the terrain shader leaves a hole the shape of the water (a fine mask), and the pond brings its own
    cut bank down from the ground to the water, so the shoreline is exact at any terrain resolution. */
-function pondLevel(o) { return Math.min(...o.ring.map(([x, z]) => groundAt(x, z))) - 0.7; }
+function pondLevel(o) { return Math.min(...o.ring.map(([x, z]) => groundAt(x, z))) - 0.35; }     // full, as in the photos (render/prep.py: the same)
 /* Ponds are drawn from a few corners; round them off (Chaikin) so the shore curves. */
 function roundRing(ring, n = 3) {
   let r = ring;
@@ -711,7 +711,7 @@ function pondModel(o, M) {
     for (let s = 0; s < n; s++) ring.push([lerp(ax, bx, s / n), lerp(az, bz, s / n)]);
   }
   ring.push(ring[0]);
-  const pos = [], uv = [], idx = [], col = [], grass = new THREE.Color(0x6d7d3e), earth = new THREE.Color(0x96613f), deep = new THREE.Color(0x5a3d27), c = new THREE.Color();   // as in the drone photos: grass down to the water, red earth where the cut is deep
+  const pos = [], uv = [], idx = [], col = [], grass = new THREE.Color(0x6d7d3e), earth = new THREE.Color(0x96613f), deep = new THREE.Color(0x5a3d27), c = new THREE.Color();   // as in the drone photos: grass down to the water, red earth only where the cut is tall
   const cx = o.ring.reduce((a, p) => a + p[0], 0) / o.ring.length, cz = o.ring.reduce((a, p) => a + p[1], 0) / o.ring.length;
   let acc = 0;
   ring.forEach(([x, z], i) => {
@@ -719,7 +719,7 @@ function pondModel(o, M) {
     const top = Math.max(yAt(x, z), wl + 0.1) + 0.03, bot = wl - 1.0, d = Math.hypot(cx - x, cz - z) || 1;
     const run = Math.min((top - bot) * 0.75, d * 0.45);                  // banks slope in, steeper where the cut is deep
     pos.push(x, top, z, x + ((cx - x) / d) * run, bot, z + ((cz - z) / d) * run); uv.push(acc / 8, top / 8, acc / 8, bot / 8);
-    c.copy(grass).lerp(earth, clamp((top - wl - 0.8) / 1.6, 0, 1)); col.push(c.r, c.g, c.b, deep.r, deep.g, deep.b);   // grassy where low, raw earth where the cut is deep
+    imageryColor(x, z, c); c.lerp(earth, clamp((top - wl - 1.8) / 1.4, 0, 1) * 0.5); col.push(c.r, c.g, c.b, deep.r, deep.g, deep.b);   // the bank's top is the ground around it; wet earth at the water   // grassy where low, raw earth where the cut is deep
     if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
   });
   const bank = new THREE.BufferGeometry();

@@ -47,7 +47,7 @@ de = np.min([seg_dist(X, Z, *s) for s in other], axis=0)
 cutd = np.where(inside, cut['depth'] * np.clip(1 - dw / cut['reach'], 0, 1) * np.clip(de / 8, 0, 1), 0)
 Hd -= cutd
 
-# The homestead's pond, dug into the slope (data/objects.json): the water 0.7 m under the lowest point of its rim, as on
+# The homestead's pond, dug into the slope (data/objects.json): the water 0.35 m under the lowest point of its rim, as on
 # the hill, and banks that slope down to it. The shore is rounded as on the hill (Chaikin).
 def round_ring(r, n=3):
     for _ in range(n):
@@ -57,7 +57,7 @@ pond = next((o for o in objects if o.get('type') == 'pond'), None)
 pond_ring, pond_level = [], 0.0
 if pond:
     pond_ring = round_ring([tuple(p) for p in pond['ring']])
-    pr = np.array(pond_ring); pond_level = float(height(pr[:, 0], pr[:, 1], 1).min()) - 0.7
+    pr = np.array(pond_ring); pond_level = float(height(pr[:, 0], pr[:, 1], 1).min()) - 0.35
     pin = in_poly(X, Z, pond_ring)
     pdist = np.min([seg_dist(X, Z, *a, *b) for a, b in zip(pond_ring, pond_ring[1:] + pond_ring[:1])], axis=0)
     Hd = np.where(pin, np.minimum(Hd, pond_level - 0.15 - np.minimum(pdist * 0.45, 1.2)), Hd)

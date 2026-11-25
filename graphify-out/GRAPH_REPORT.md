@@ -1,17 +1,17 @@
 # Graph Report - slimmed-down  (2026-11-25)
 
 ## Corpus Check
-- 47 files · ~78,666 words
+- 47 files · ~78,760 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 1, .css 1, .geojson 1)
 
 ## Summary
-- 575 nodes · 1038 edges · 28 communities (22 shown, 6 thin omitted)
+- 575 nodes · 1039 edges · 27 communities (21 shown, 6 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 34 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4402ea1c`
+- Built from commit: `479f3bbe`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -38,8 +38,7 @@
 - impostors.py
 - ph_fetch.py
 - contourMaterial
-- buildBuildings
-- showStructure
+- groundAt
 - Outer Heaven: standing rules
 - .claude/CLAUDE.md
 - tour_spots.py
@@ -61,17 +60,17 @@
   CLAUDE.md → js/site/hill.js
 - `build()` --calls--> `loadLook()`  [EXTRACTED]
   js/walk.js → js/look.js
-- `build()` --calls--> `uniforms()`  [EXTRACTED]
-  js/walk.js → js/look.js
 - `build()` --calls--> `sunLight()`  [EXTRACTED]
   js/walk.js → js/look.js
-- `build()` --calls--> `material()`  [EXTRACTED]
+- `build()` --calls--> `uniforms()`  [EXTRACTED]
+  js/walk.js → js/look.js
+- `build()` --calls--> `addSky()`  [EXTRACTED]
   js/walk.js → js/look.js
 
 ## Import Cycles
 - None detected.
 
-## Communities (28 total, 6 thin omitted)
+## Communities (27 total, 6 thin omitted)
 
 ### Community 0 - "views.js"
 Cohesion: 0.05
@@ -118,8 +117,8 @@ Cohesion: 0.12
 Nodes (16): jobs, smoke, name, on, pull_request, push, runs-on, steps (+8 more)
 
 ### Community 11 - "yAt"
-Cohesion: 0.16
-Nodes (17): baseY(), bearingRot(), buildStructures(), cutAt(), cutModel(), gravelTex(), groundAt(), hillLabels() (+9 more)
+Cohesion: 0.17
+Nodes (16): baseY(), bearingRot(), buildBuildings(), buildStructures(), buildTrees(), gravelTex(), hillLabels(), homesteadView() (+8 more)
 
 ### Community 12 - "relayout"
 Cohesion: 0.21
@@ -149,13 +148,9 @@ Nodes (8): Blender renders, Free roam: the private side, Free roam: the quarry c
 Cohesion: 0.40
 Nodes (5): contourMaterial(), detailTexture(), holeMask(), roundRing(), shoreOf()
 
-### Community 23 - "buildBuildings"
-Cohesion: 0.40
-Nodes (5): buildBuildings(), buildTrees(), imageryColor(), treeCardsMesh(), treeGeometry()
-
-### Community 24 - "showStructure"
-Cohesion: 0.50
-Nodes (4): geojsonOf(), ringArea(), showStructure(), toUTM()
+### Community 24 - "groundAt"
+Cohesion: 0.22
+Nodes (10): cutAt(), cutModel(), geojsonOf(), groundAt(), pondLevel(), ringArea(), segDist(), showStructure() (+2 more)
 
 ### Community 25 - "Outer Heaven: standing rules"
 Cohesion: 0.22

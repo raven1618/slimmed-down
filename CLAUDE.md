@@ -40,6 +40,9 @@ because each was asked for more than once: do not make the owner repeat them.
 - **Hill close-ups, closer than about 50 m:** the ground is the 1 m satellite image and turns soft; the homestead's
   buildings are simple shapes (now in photographed brick, clay tile, plaster and wood). Done already: the hill's trees
   and palms are photographed tree models (`render/impostors.py ... aerial`, `data/hill/`), not round canopies.
+- **The homestead's pond on the hill:** muddy water in its dug hole, as in the photos, but from above its rim reads
+  too clean, like a bowl. The tour's renders show it right. (The site photo shows no water there to use instead.)
+- **Palms in free roam:** its tree photographs have no palm row yet, so the homestead's palms show as broadleaf trees.
 
 ## Where things are
 
