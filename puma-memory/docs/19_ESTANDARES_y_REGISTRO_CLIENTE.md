@@ -35,6 +35,10 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 | C14 | (user) ENTREGA text smaller and higher; centre the LPG worker so his canister is visible | `cfg_entrega` yTop 0.075, widths ×0.69; F2 background scaled down ×1.12 (`CLIP_ZOOM`, rim kept on the rim) + tilted −16° (`CLIP_TILT`); head clear of the text, canister clear of the puma | ✅ v18 (first try cut his head: fixed) | |
 | C15 | (user) 2027 too slow: speed ramp, don't dwell | pop 0.35 s, hold 0.3 s, cubic ramp 0.8 s to overflow; white → KV at 68.75 (was 70.6); KV holds to 75.2 | ✅ v18 | `cfg_2027`, `mg.html growScale` |
 | C16 | (user) trim the under-the-truck start; equal screen time truck vs boat | J1 starts at slowed 1.25 s, speed 0.818; spin at JUNTOS+2.015 s; J1 ≈ J2 ≈ 2.4 s | ✅ v18 | `CLIP_DELAY`, `CLIP_SPEED`, `SPIN_TM` |
+| C17 | "logo directo, eliminar el puma que entra… no queda bien como entra el puma sobre el logo" (Nov 25) | Start (~10 s) AND end (~59 s): logo appears complete, no white silhouette run-in (supersedes C7) | 🔶 v19 | `cat_run_in` |
+| C18 | "después de la parte que dice 2027, se queda 2027… debajo del 2027 solo queda 'A JUGAR EN GRANDE'" | No white blow-out; 2027 lands in the lockup in place of CONVOCADOS: PUMA logo / 2027 / A JUGAR EN GRANDE | 🔶 v19 | `cfg_2027`, `cfg_kvend` |
+| C19 | "Mover la toma de la barcaza antes de que entre este camión" | EN CADA KM RECORRIDO = barge (F4) then truck (F1); EN CADA ENTREGA = F2 + F3; same total length | 🔶 v19 | `SCN` |
+| C20 | "la dirección del halo de luces… en sentido contrario a donde corre el puma, para que se entienda que está corriendo encima" | Beam streaks travel opposite to the puma (right → left) | 🔶 v19 | `laser_band` |
 | C11 | Truck turning into the oil tanker | Was unconfirmed; now covered by C4a/C4b | ❓→🔶 | |
 
 ## C. User rules (permanent)
