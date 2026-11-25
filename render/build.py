@@ -311,6 +311,15 @@ def web_materials():
         if not m.use_nodes or key not in ('glass', 'pool', 'lamp'): continue
         b = next((n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
         if not b: continue
+        if key == 'glass':
+            # Daylight into the rooms: to shadow and bounce rays the glass is clear (the usual way to light interiors
+            # in Cycles; real glass would leave them in the dark), while the eye still sees glass and reflections.
+            nt_ = m.node_tree; out_ = next(n for n in nt_.nodes if n.type == 'OUTPUT_MATERIAL')
+            lp, mx, tr = nt_.nodes.new('ShaderNodeLightPath'), nt_.nodes.new('ShaderNodeMixShader'), nt_.nodes.new('ShaderNodeBsdfTransparent')
+            mxo = nt_.nodes.new('ShaderNodeMath'); mxo.operation = 'MAXIMUM'
+            nt_.links.new(lp.outputs['Is Shadow Ray'], mxo.inputs[0]); nt_.links.new(lp.outputs['Is Diffuse Ray'], mxo.inputs[1])
+            nt_.links.new(mxo.outputs[0], mx.inputs[0]); nt_.links.new(b.outputs[0], mx.inputs[1]); nt_.links.new(tr.outputs[0], mx.inputs[2])
+            nt_.links.new(mx.outputs[0], out_.inputs['Surface'])
         if key in ('glass', 'pool'):
             for l in list(b.inputs['Alpha'].links): m.node_tree.links.remove(l)
             b.inputs['Alpha'].default_value = 1.0; b.inputs['Transmission Weight'].default_value = 1.0; b.inputs['Metallic'].default_value = 0.0
@@ -525,6 +534,7 @@ if VIEW == 'tour':
         cam.rotation_euler = (math.pi / 2, 0, -math.radians(p['bearing']))           # level, centre of the image toward the bearing
         sc.render.filepath = os.path.join(OUT, f"{p['site']}-{p['id']}.jpg")
         c_.samples = SPP * 3 if 'roam' in p else SPP              # a view inside (free roam starts outside it): lamplight needs more samples
+        vs.exposure = 0.5 + (1.3 if p['id'] in ('inside', 'living') else 0)   # rooms exposed as a photographer would: brighter than outdoors
         t1 = time.time(); bpy.ops.render.render(write_still=True)
         print(f"{p['site']}-{p['id']}: {W}x{H} @ {c_.samples} spp in {time.time() - t1:.0f} s", flush=True)
     sys.exit(0)
