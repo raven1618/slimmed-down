@@ -47,7 +47,7 @@ W_, L_ = "white", "lime"
 lockup("B1", [("small", "COMPRENDER EL", 0.30), ("fit", [("ENTORNO", "black", 100, W_)]), ("fit", [("ECONÓMICO", "black", 100, L_)])], 480)
 lockup("B2", [("small", "ES ANTICIPAR", 0.30), ("fit", [("OPORTUNIDADES", "black", 100, L_)])], 560)
 lockup("B3", [("small", "Y", 0.40), ("fit", [("TRANSFORMARLAS", "black", 100, W_)]), ("small", "EN", 0.40), ("fit", [("DECISIONES", "black", 100, L_)])], 500)
-lockup("B4", [("small", "ES LO QUE", 0.30), ("fit", [("GENERA", "black", 100, W_)]), ("fit", [("VALOR", "black", 100, L_)])], 440)
+lockup("B4", [("fit", [("GENERA", "black", 100, W_)]), ("fit", [("VALOR", "black", 100, L_)])], 440)   # client Nov 25: no "ES LO QUE"
 name = [("MANUEL", "black", 104, "white"), ("FERREIRA", "black", 104, "lime")]; nw = width(name)
 role = [("EX MINISTRO DE ECONOMÍA", "medium", 26, "white")]
 logo_h = 32; cn, cr = cap(name), cap(role); g1, g2 = 18, 15

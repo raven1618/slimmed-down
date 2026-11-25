@@ -347,46 +347,28 @@
     {
      "runs": [
       [
-       "ES LO QUE",
-       "bold",
-       34,
-       "white"
-      ]
-     ],
-     "y": 87,
-     "rules": true,
-     "delay": 0,
-     "rule_y": 75,
-     "rule_span": [
-      820.0,
-      1100.0
-     ]
-    },
-    {
-     "runs": [
-      [
        "GENERA",
        "black",
-       114,
+       135,
        "white"
       ]
      ],
-     "y": 179,
+     "y": 158,
      "rules": false,
-     "delay": 4
+     "delay": 0
     },
     {
      "runs": [
       [
        "VALOR",
        "black",
-       137,
+       161,
        "lime"
       ]
      ],
-     "y": 289,
+     "y": 288,
      "rules": false,
-     "delay": 8
+     "delay": 4
     }
    ]
   },
@@ -862,10 +844,10 @@
     "B4"
    ],
    "box": [
-    820.0,
-    63.0,
-    1100.0,
-    289.0
+    795.0,
+    64.0,
+    1125.0,
+    288.0
    ],
    "f_in": 466,
    "f_out": 557
