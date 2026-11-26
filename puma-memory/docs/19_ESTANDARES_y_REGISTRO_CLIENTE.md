@@ -46,7 +46,7 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 ## B2. Client request register — teasers
 | # | Client request | Exactly what it means | Status | Where |
 |---|---|---|---|---|
-| T1 | Carolina (Nov 26): "Me pide girar ya con la sonrisa… porque al girar está seria, entonces al girar ya que esté sonriendo" | Same close (end frame 3507e08f, 7 s, 21:9 green screen) but smiling from the first profile frame through the whole turn; head level, no back | 🔶 Seedance `82983226` (21 credits) | `carolina/` |
+| T1 | Carolina (Nov 26): "Me pide girar ya con la sonrisa… porque al girar está seria, entonces al girar ya que esté sonriendo" | Same close (end frame 3507e08f, 7 s, 21:9 green screen) but smiling from the first profile frame through the whole turn; head level, no back | ✅ v12: take `04d92ca2` (run on the site, 7 s, came out slow) retimed in post: turn 0–4.6 s at 1.7× (turn 4.3 s → 2.3 s, other speakers 2.0–2.8 s), settle at 1×; keyed to `anim4k_v6`. API attempt `82983226` rejected (ip_detected) | `carolina/anim4k_v6`, `carolina_v6/c6_rt.mp4` |
 
 ## C. User rules (permanent)
 - Credits: state the cost first; no waste; no upscales before approval.
