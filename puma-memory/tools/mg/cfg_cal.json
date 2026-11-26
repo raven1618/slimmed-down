@@ -1,1 +1,31 @@
-{"W": 648, "dur": 2.2, "tin": 0.0, "tout": 1.55, "sweep": 0.8, "underline": null, "yTop": 0.28, "lines": [{"text": "CALIDAD", "w": 0.44, "anim": "slide", "delay": 0.0, "stagger": 0.03, "font": "GBlack", "color": "#ffffff", "glow": false}, {"text": "INTERNACIONAL", "w": 0.496, "anim": "rise", "delay": 0.25, "stagger": 0.02, "font": "GBlack", "color": "#7fff00", "glow": true}]}
+{
+ "W": 648,
+ "dur": 2.2,
+ "tin": 0.0,
+ "tout": 1.55,
+ "sweep": 0.8,
+ "underline": null,
+ "yTop": 0.168,
+ "lines": [
+  {
+   "text": "CALIDAD",
+   "w": 0.44,
+   "anim": "slide",
+   "delay": 0.0,
+   "stagger": 0.03,
+   "font": "GBlack",
+   "color": "#ffffff",
+   "glow": false
+  },
+  {
+   "text": "INTERNACIONAL",
+   "w": 0.496,
+   "anim": "rise",
+   "delay": 0.25,
+   "stagger": 0.02,
+   "font": "GBlack",
+   "color": "#7fff00",
+   "glow": true
+  }
+ ]
+}

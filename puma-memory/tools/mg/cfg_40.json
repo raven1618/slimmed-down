@@ -1,1 +1,33 @@
-{"W": 648, "dur": 2.6, "tin": 0.0, "tout": 1.95, "sweep": 1.05, "underline": 0.9, "yTop": 0.2, "lines": [{"text": "+40", "w": 0.336, "anim": "count", "delay": 0.0, "stagger": 0.03, "font": "GBlack", "color": "#7fff00", "glow": true, "value": 40, "prefix": "+"}, {"text": "PAÍSES", "w": 0.32, "anim": "rise", "delay": 0.35, "stagger": 0.03, "font": "GBlack", "color": "#ffffff", "glow": false}]}
+{
+ "W": 648,
+ "dur": 2.6,
+ "tin": 0.0,
+ "tout": 1.95,
+ "sweep": 1.05,
+ "underline": 0.9,
+ "yTop": 0.062,
+ "lines": [
+  {
+   "text": "+40",
+   "w": 0.336,
+   "anim": "count",
+   "delay": 0.0,
+   "stagger": 0.03,
+   "font": "GBlack",
+   "color": "#7fff00",
+   "glow": true,
+   "value": 40,
+   "prefix": "+"
+  },
+  {
+   "text": "PA\u00cdSES",
+   "w": 0.32,
+   "anim": "rise",
+   "delay": 0.35,
+   "stagger": 0.03,
+   "font": "GBlack",
+   "color": "#ffffff",
+   "glow": false
+  }
+ ]
+}
