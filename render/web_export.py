@@ -26,6 +26,13 @@ u = (X - lx) * fx + (Z - lz) * fz; v = (X - lx) * -fz + (Z - lz) * fx
 q = (u / (ld / 2)) ** 2 + (v / (lw / 2)) ** 2
 grass = np.clip(1 - sp[..., 2] * 1.5, 0, 1) * np.clip((q - 1.15) / 0.3, 0, 1)
 for x, z, *_ in D['cabins']: grass *= np.clip((np.hypot(X - x, Z - z) - 10) / 3, 0, 1)
+def seg_d(px, pz, ax, az, bx, bz):
+    dx, dz = bx - ax, bz - az; t = np.clip(((px - ax) * dx + (pz - az) * dz) / (dx * dx + dz * dz + 1e-9), 0, 1)
+    return np.hypot(px - ax - t * dx, pz - az - t * dz)
+for o in json.load(open(os.path.join(OUT, '..', 'objects.json')))['objects']:      # the homestead: as in render/prep.py
+    if o.get('type') in ('house', 'solar', 'cabin', 'quincho', 'tent', 'trampoline', 'oven'): grass *= np.clip((np.hypot(X - o['x'], Z - o['z']) - 6) / 2, 0, 1)
+    elif o.get('type') == 'gravel':
+        for a_, b_ in zip(o['path'], o['path'][1:]): grass *= np.clip((seg_d(X, Z, *a_, *b_) - o.get('w', 3) / 2) / 1.5, 0, 1)
 # Stored as RGB (live grass, soil, litter): browsers may spoil colour where alpha is zero.
 Image.fromarray((np.dstack([grass, sp[..., 1], sp[..., 2]]) * 255 + 0.5).astype(np.uint8), 'RGB').save(os.path.join(OUT, 'splat.png'))
 

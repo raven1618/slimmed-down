@@ -61,8 +61,10 @@ push (`.github/workflows/smoke.yml`) and attaches the screenshots to the run.
 
 Any static host works. Pick one:
 
-- **Netlify Drop:** go to https://app.netlify.com/drop and drag this repository's folder onto the page. You get a public URL in seconds.
-- **Cloudflare Pages / Netlify / Vercel from GitHub:** connect this repository, leave the build command empty and set the output directory to the repository root.
+- **Netlify from GitHub (set up in `netlify.toml`):** in Netlify, *Add new site → Import an existing project → GitHub*,
+  pick this repository and the working branch, and deploy; the settings come from `netlify.toml`. Every push redeploys.
+- **Netlify Drop:** go to https://app.netlify.com/drop and drag this repository's folder onto the page.
+- **Cloudflare Pages / Vercel from GitHub:** connect this repository, leave the build command empty and set the output directory to the repository root.
 - **GitHub Pages:** this works if the repo is public, or on a paid plan for a private repo. Publish from the branch.
 
 To preview locally, run `npx serve .` or `python3 -m http.server` in this folder, then open the printed URL. Opening the file straight from disk won't work, because the browser blocks loading the files in `data/` that way.

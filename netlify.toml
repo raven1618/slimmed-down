@@ -1,0 +1,6 @@
+# Netlify: the site is the static files at the root of this repository; there is no build step.
+# Connect the repository once (Add new site > Import an existing project > GitHub), pick this branch, and every push
+# redeploys it.
+[build]
+  publish = "."
+  command = ""

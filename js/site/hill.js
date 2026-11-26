@@ -746,7 +746,7 @@ function ribbon(path, w, mat) {
     let dx = bx - ax, dz = bz - az; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
     if (i) acc += Math.hypot(x - pts[i - 1][0], z - pts[i - 1][1]);
     for (const [s, a] of ACROSS) { const px = x - dz * w * s, pz = z + dx * w * s; pos.push(px, yAt(px, pz) + 0.05, pz); uv.push((s * w) / 2, acc / 2); col.push(1, 1, 1, a * 0.9); }
-    if (i) { const b = (i - 1) * 4; for (let k = 0; k < 3; k++) idx.push(b + k, b + k + 4, b + k + 1, b + k + 4, b + k + 5, b + k + 1); }
+    if (i) { const b = (i - 1) * 4; for (let k = 0; k < 3; k++) idx.push(b + k, b + k + 1, b + k + 4, b + k + 1, b + k + 5, b + k + 4); }   // facing up
   });
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));

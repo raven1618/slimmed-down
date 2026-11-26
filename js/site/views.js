@@ -484,7 +484,8 @@ function moduleView(el, src, settings, onFail) {
    finished image on the inside of a sphere. "Free roam from here" opens the walk where you stand. */
 let TOUR = [], panoLabels = [];
 const tourLast = {};                          // the last view seen on each part of the site
-const WALK_SITES = ['quarry', 'private'];       // the parts that free roam covers
+const WALK_OF = { quarry: 'quarry', private: 'private', homestead: 'quarry' };   // the free roam each part opens: the homestead is in the quarry's
+let walkFrom = null;                            // the tour view free roam was opened from, to go back to
 const SITE_NAMES = { quarry: 'The quarry cabins', private: 'The private side · Finca 2663', homestead: 'The homestead · already built' };
 const SITE_SPECS = {
   quarry: '<b>Cabin</b><span>9 × 6.5 m · 58 m²</span><span>27 m² deck</span><span>1 bedroom</span><span>build budget $60–70k</span>',
@@ -534,7 +535,7 @@ $('pano-roam').addEventListener('click', () => {
   const [x, z] = p.roam || [p.x, p.z];        // views inside a building start free roam just outside it
   walkStart = { x, z, bearing: p.bearing - (pano.yaw * 180) / Math.PI };
   closePano();
-  openWalk(p.site);
+  walkFrom = p; openWalk(WALK_OF[p.site]);
 });
 function buildPano() {
   pano.built = true;
@@ -605,7 +606,7 @@ function showPano(p) {
   $('pano-title').textContent = p.name;
   $('pano-text').textContent = p.text || '';
   $('pano-specs').innerHTML = SITE_SPECS[p.site] || '';
-  $('pano-roam').hidden = !WALK_SITES.includes(p.site);                // free roam covers the quarry and the private side
+  $('pano-roam').hidden = !WALK_OF[p.site];
   $('pano-hint').textContent = 'Drag to look around · scroll or pinch to zoom' + (p.site === 'homestead' ? '' : ' · design not final');   // the homestead is built
   document.querySelectorAll('#pano-sites button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.site === p.site)));
   const tabsEl = $('pano-tabs');
@@ -648,7 +649,11 @@ function openWalk(site) {
   markTab('explore');
   try { history.replaceState(null, '', walkSite === 'quarry' ? '#walk' : '#walk-' + walkSite); } catch (e) {}
   document.querySelectorAll('#wk-sites button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.site === walkSite)));
-  walkView.open({ site: walkSite, start: walkStart, homestead: walkSite === 'quarry' ? homesteadModels() : null }); walkStart = null;   // the homestead stands at the quarry's west end
+  const hs = walkSite === 'quarry' ? TOUR.filter((p) => p.site === 'homestead') : [];          // the homestead stands at the quarry's west end
+  walkView.open({ site: walkSite, start: walkStart, homestead: hs.length ? homesteadModels() : null,
+    title: walkFrom && walkFrom.site === 'homestead' ? 'The homestead' : null,
+    spots: hs.map((p) => ({ name: p.name, x: (p.roam || [p.x])[0], z: (p.roam || [0, p.z])[1], bearing: p.bearing, title: 'The homestead' })) });
+  walkStart = null;
   $('wk-close').focus({ preventScroll: true });
 }
 function closeWalk() {
@@ -658,9 +663,9 @@ function closeWalk() {
   markTab(mode);
   try { history.replaceState(null, '', '#' + mode); } catch (e) {}
 }
-function backToTour() { const p = tourLast[walkSite]; closeWalk(); openTour(p ? p.site + '-' + p.id : walkSite); }
+function backToTour() { const p = walkFrom || tourLast[walkSite]; walkFrom = null; closeWalk(); openTour(p ? p.site + '-' + p.id : walkSite); }
 $('wk-close').addEventListener('click', backToTour);
-document.querySelectorAll('#wk-sites button').forEach((b) => b.addEventListener('click', () => openWalk(b.dataset.site)));
+document.querySelectorAll('#wk-sites button').forEach((b) => b.addEventListener('click', () => { walkFrom = null; openWalk(b.dataset.site); }));
 
 /* ------------------------------------------------------------ the trail -- */
 /* Mala Visión, the fight at the trail's midpoint: js/trail.js, loaded when the tab opens.

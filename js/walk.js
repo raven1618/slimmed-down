@@ -280,7 +280,10 @@ export async function build(ctx) {
     { name: 'Lagoon shore', at: () => ({ x: 384.2, z: 860.4 }), bearing: 280 },
     { name: 'Cabin deck', at: deckSpot, look: [lx, lz] },
   ];
+  for (const s of ctx.spots || []) SPOTS.push({ name: s.name, at: () => ({ x: s.x, z: s.z }), bearing: s.bearing, title: s.title });   // e.g. the homestead's views
+  const baseTitle = W.title || 'The quarry cabins';
   function goTo(s) {
+    $('wk-title').textContent = s.title || baseTitle;
     const p = s.at(), y = feetAt(p.x, p.z, hAt(p.x, p.z) + 0.5) ?? hAt(p.x, p.z);      // from the ground: a deck, not the roof above it
     Object.assign(P, { x: p.x, z: p.z, feet: y, feetT: y });
     if (s.look) lookAt(p.x, p.z, s.look[0], s.look[1], s.pitch ?? -0.04);
@@ -290,7 +293,7 @@ export async function build(ctx) {
   const spotsEl = $('wk-spots');
   spotsEl.innerHTML = '';
   for (const s of SPOTS) { const b = document.createElement('button'); b.type = 'button'; b.textContent = s.name; b.addEventListener('click', () => goTo(s), sig); spotsEl.appendChild(b); }
-  goTo(ctx.start ? { name: '', at: () => ctx.start, bearing: ctx.start.bearing } : SPOTS[0]);      // from the tour: where you were looking from
+  goTo(ctx.start ? { name: '', at: () => ctx.start, bearing: ctx.start.bearing, title: ctx.title } : SPOTS[0]);      // from the tour: where you were looking from
   function tryStep(x, z) {
     const y = feetAt(x, z, P.feet);
     if (y === null || y - P.feet > 0.3) return false;            // water, walls, or a step up of more than 30 cm
@@ -390,7 +393,7 @@ export async function build(ctx) {
   $('wk-loading').hidden = true;
   raf = requestAnimationFrame(loop);
   return {
-    P, goTo, SPOTS, frame,
+    P, goTo, SPOTS, frame, homestead,                      // homestead: for tests
     stop() { cancelAnimationFrame(raf); raf = 0; },        // for tests: frames by hand
     dispose() {                                            // everything this view put on the GPU, and its listeners
       cancelAnimationFrame(raf); ac.abort();

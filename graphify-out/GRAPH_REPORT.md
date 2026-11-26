@@ -1,17 +1,17 @@
-# Graph Report - slimmed-down  (2026-11-25)
+# Graph Report - slimmed-down  (2026-11-26)
 
 ## Corpus Check
-- 47 files · ~78,760 words
+- 47 files · ~79,261 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 3 file(s) not represented in the graph (top: (none) 1, .css 1, .geojson 1)
+- Unclassified: 4 file(s) not represented in the graph (top: (none) 1, .css 1, .geojson 1)
 
 ## Summary
-- 575 nodes · 1039 edges · 27 communities (21 shown, 6 thin omitted)
+- 576 nodes · 1032 edges · 30 communities (24 shown, 6 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 34 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `479f3bbe`
+- Built from commit: `1572cf3f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -31,46 +31,41 @@
 - relayout
 - buildHill
 - initLimits
-- cabin.js
+- export_models.cjs
 - hexRGB
 - private_site.py
 - Blender renders
 - impostors.py
 - ph_fetch.py
 - contourMaterial
+- package.json
 - groundAt
 - Outer Heaven: standing rules
 - .claude/CLAUDE.md
+- phone.cjs
 - tour_spots.py
+- smoke.cjs
 
 ## God Nodes (most connected - your core abstractions)
 1. `build()` - 39 edges
 2. `renderNotes()` - 17 edges
 3. `say()` - 16 edges
-4. `build()` - 15 edges
-5. `yAt()` - 14 edges
-6. `buildHill()` - 14 edges
-7. `openTour()` - 13 edges
-8. `buildStructures()` - 12 edges
-9. `relayout()` - 12 edges
-10. `markTab()` - 12 edges
+4. `yAt()` - 14 edges
+5. `buildHill()` - 14 edges
+6. `openTour()` - 13 edges
+7. `buildStructures()` - 12 edges
+8. `relayout()` - 12 edges
+9. `markTab()` - 12 edges
+10. `setMode()` - 12 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `The quality bar (every change, every view)` --references--> `homesteadModels()`  [INFERRED]
   CLAUDE.md → js/site/hill.js
-- `build()` --calls--> `loadLook()`  [EXTRACTED]
-  js/walk.js → js/look.js
-- `build()` --calls--> `sunLight()`  [EXTRACTED]
-  js/walk.js → js/look.js
-- `build()` --calls--> `uniforms()`  [EXTRACTED]
-  js/walk.js → js/look.js
-- `build()` --calls--> `addSky()`  [EXTRACTED]
-  js/walk.js → js/look.js
 
 ## Import Cycles
 - None detected.
 
-## Communities (27 total, 6 thin omitted)
+## Communities (30 total, 6 thin omitted)
 
 ### Community 0 - "views.js"
 Cohesion: 0.05
@@ -85,12 +80,12 @@ Cohesion: 0.05
 Nodes (35): archWindow(), BASES, baseTex, BLANK, BROWN, BUILDERS, cabinModel(), CREAM (+27 more)
 
 ### Community 3 - "look.js"
-Cohesion: 0.11
-Nodes (21): addSky(), composer(), grass(), loadLook(), LOOK_FILES, material(), NOISE, OUT (+13 more)
+Cohesion: 0.08
+Nodes (27): box(), buildVolume(), CABIN, cabinInterior(), livingInterior(), quarryCabin(), residence(), RESIDENCE (+19 more)
 
 ### Community 4 - "trail_video.mjs"
-Cohesion: 0.05
-Nodes (39): description, devDependencies, playwright@1.63.0, name, private, scripts, phone, test (+31 more)
+Cohesion: 0.20
+Nodes (11): caption(), D(), face(), frames, LIMIT, log, page, run() (+3 more)
 
 ### Community 5 - "build"
 Cohesion: 0.16
@@ -132,9 +127,9 @@ Nodes (14): b64bytes(), baseTexture(), buildHill(), buildRoads(), getJSON(), loa
 Cohesion: 0.20
 Nodes (11): deleteLimit(), flatten(), initLimits(), limitById(), loadLocalNames(), localLoad(), localSave(), newLimitId() (+3 more)
 
-### Community 16 - "cabin.js"
-Cohesion: 0.33
-Nodes (9): box(), buildVolume(), CABIN, cabinInterior(), livingInterior(), quarryCabin(), residence(), RESIDENCE (+1 more)
+### Community 16 - "export_models.cjs"
+Cohesion: 0.20
+Nodes (6): { chromium }, fs, [OUT, THREE_DIR], path, ROOT, TYPES
 
 ### Community 17 - "hexRGB"
 Cohesion: 0.33
@@ -148,6 +143,10 @@ Nodes (8): Blender renders, Free roam: the private side, Free roam: the quarry c
 Cohesion: 0.40
 Nodes (5): contourMaterial(), detailTexture(), holeMask(), roundRing(), shoreOf()
 
+### Community 23 - "package.json"
+Cohesion: 0.22
+Nodes (9): description, devDependencies, playwright@1.63.0, name, private, scripts, phone, test (+1 more)
+
 ### Community 24 - "groundAt"
 Cohesion: 0.22
 Nodes (10): cutAt(), cutModel(), geojsonOf(), groundAt(), pondLevel(), ringArea(), segDist(), showStructure() (+2 more)
@@ -155,6 +154,14 @@ Nodes (10): cutAt(), cutModel(), geojsonOf(), groundAt(), pondLevel(), ringArea(
 ### Community 25 - "Outer Heaven: standing rules"
 Cohesion: 0.22
 Nodes (8): Before saying "done", graphify, Open (not at the bar yet), Outer Heaven: standing rules, Privacy (the repository is public), The quality bar (every change, every view), Where things are, homesteadModels()
+
+### Community 27 - "phone.cjs"
+Cohesion: 0.25
+Nodes (6): { chromium, devices }, fs, path, ROOT, SHOTS, TYPES
+
+### Community 29 - "smoke.cjs"
+Cohesion: 0.25
+Nodes (7): { chromium }, fs, path, ROOT, SHOTS, TYPES, VIEWS
 
 ## Knowledge Gaps
 - **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
@@ -168,7 +175,7 @@ _Questions this graph is uniquely positioned to answer:_
   _`build()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **Should `views.js` be split into smaller, more focused modules?**
   _Cohesion score 0.05189873417721519 - nodes in this community are weakly interconnected._
-- **Why does `build()` connect `build` to `look.js`?**
+- **Why does `build()` connect `build` to `export_models.cjs`, `look.js`?**
   _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **Should `tools.js` be split into smaller, more focused modules?**
   _Cohesion score 0.09574468085106383 - nodes in this community are weakly interconnected._
