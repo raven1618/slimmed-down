@@ -623,7 +623,7 @@ KICK_BACK_ROT = math.pi / 5                                            # back: u
 BALL_DOWN = 0.31                                                       # the ball on the spot sits ~20 deg below the centre of the kick clip
 _bc = np.array([0, -math.sin(BALL_DOWN), math.cos(BALL_DOWN)], np.float32); BALL_ANG = np.arccos(np.clip(SYM @ _bc, -1, 1))
 SCN_KEY = ["km", "entrega", "destino", "calidad", "juntos"]
-SCN = [(lambda: TL["km"], ["J2_anim.mp4", "F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], lambda: TL["entrega"]),
+SCN = [(lambda: TL["km"], ["F1_anim.mp4"], [("EN CADA KM", "black", 0.14, W_), ("RECORRIDO", "black", 0.18, W_)], lambda: TL["entrega"]),
        (lambda: TL["entrega"], ["F2_dolly.mp4", "F3_flyby.mp4", "F4_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("ENTREGA", "black", 0.18, W_)], lambda: TL["destino"]),
        (lambda: TL["destino"], ["F5_anim.mp4", "F6_anim.mp4"], [("EN CADA", "black", 0.14, W_), ("DESTINO", "black", 0.18, W_)], lambda: TL["calidad"]),
        (lambda: TL["calidad"], ["F7_anim.mp4"], [("CON COMBUSTIBLES", "black", 0.11, W_), ("DE CALIDAD", "black", 0.15, W_)], lambda: TL["juntos"]),
@@ -733,7 +733,20 @@ def kick_to_kv(fr, t):
     out = fr * (1 - a) + ball * a
     return out + bloom(neon(d, SW, 1.0, Q=Q, t=t), 0.8) * math.sin(math.pi * min(max(p, 0), 1)) * 0.5
 
+SHIP_AT, SHIP_D = 21.6, 3.2  # KM is truck-only now;                                           # client Nov 26: tanker ship right after CALIDAD INTERNACIONAL ("sabemos de qué estamos hablando")
+def ship_scene(t):
+    f = fish_frame("J2_anim.mp4", t - SHIP_AT + 0.3)
+    f = lower_black(f, t); f = light_over(f, swoosh(t, 1.0), 1.6, 0.5); return puma_put(f, t)
 def render(t):
+    """master clock: the ship scene is inserted at SHIP_AT; everything after it plays SHIP_D later."""
+    if t < SHIP_AT: return _render(t)
+    if t < SHIP_AT + SHIP_D:
+        fr = ship_scene(t)
+        if t < SHIP_AT + 0.8: fr = reveal(_render(SHIP_AT), fr, t, SHIP_AT, 0.8)          # globe -> ship, seam reveal
+        if t >= SHIP_AT + SHIP_D - 0.8: fr = reveal(fr, _render(SHIP_AT), t, SHIP_AT + SHIP_D - 0.8, 0.8)   # ship -> globe
+        return fr
+    return _render(t - SHIP_D)
+def _render(t):
     T = TL; fr = np.zeros((EH, EW, 3), np.float32)
     spin = roty(-0.10 * t)
     # ---- 1. pulses (black sphere, pentagon halo opens and closes x5) ----
@@ -869,7 +882,7 @@ if __name__ == "__main__":
             img = np.vstack([fv, e2]); cv2.putText(img, f"{t:.1f}s", (8, 28), 0, 0.9, (255, 255, 0), 2)
             cv2.imwrite(OUT + f"frames/esf_{t:05.1f}.jpg", cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         sys.exit(0)
-    N = int(TL["end"] * FPS)
+    N = int((TL["end"] + SHIP_D) * FPS)
     tag = "" if SC == 1 else f"_preview{EW}"
     pe = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{EW}x{EH}", "-r", str(FPS), "-i", "-",
                            "-c:v", "libx264", "-preset", "medium", "-crf", "16", "-pix_fmt", "yuv420p", OUT + f"Esfera_apertura_equirect{tag}.mp4"], stdin=subprocess.PIPE)
