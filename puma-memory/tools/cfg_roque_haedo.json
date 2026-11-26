@@ -422,8 +422,8 @@
      "rules": true,
      "rule_y": 182,
      "rule_span": [
-      699.62375,
-      1220.37625
+      693.99875,
+      1226.00125
      ]
     }
    ]
@@ -461,7 +461,7 @@
        "lime"
       ],
       [
-       "HAEDO",
+       "GATITO",
        "black",
        104,
        "white"
@@ -492,7 +492,7 @@
    690,
    730
   ],
-  "rule_half": 260,
+  "rule_half": 266,
   "swap": 690,
   "wing_names": {
    "L": [
@@ -513,17 +513,17 @@
    "R": [
     [
      [
-      "NELSON",
+      "GATITO",
       "black",
       "white"
      ],
      [
-      "HAEDO VALDEZ",
+      "FERNÁNDEZ",
       "black",
       "lime"
      ]
     ],
-    "TEAM HAEDO"
+    "TEAM GATITO"
    ]
   }
  },
@@ -550,7 +550,7 @@
    "b": 7.48,
    "name": "PLACA 1 · EL SUEÑO",
    "vo": "«Dos historias que empezaron con un sueño.»",
-   "sides": "Roque (izq.) / Haedo (der.) · fotos reales",
+   "sides": "Roque (izq.) / Gatito (der.) · fotos reales",
    "centre": "Noticiero: EN VIVO + ticker · LOS ÚLTIMOS AÑOS / INDUSTRIA",
    "light": "Transición slit",
    "sfx": "Kolomna + impactos"
@@ -560,7 +560,7 @@
    "b": 12.48,
    "name": "PLACA 2 · DESAFÍOS",
    "vo": "«Con desafíos que los obligaron a superarse.»",
-   "sides": "Roque (izq.) / Haedo (der.) · fotos reales",
+   "sides": "Roque (izq.) / Gatito (der.) · fotos reales",
    "centre": "PONIÉNDONOS FRENTE A / NUEVOS DESAFÍOS",
    "light": "Transición beam",
    "sfx": "Kolomna + impactos"
@@ -570,7 +570,7 @@
    "b": 17.48,
    "name": "PLACA 3 · GRAN HISTORIA",
    "vo": "«Porque toda gran historia se construye…»",
-   "sides": "Roque (izq.) / Haedo (der.) · fotos reales",
+   "sides": "Roque (izq.) / Gatito (der.) · fotos reales",
    "centre": "EXIGIENDO / DECISIONES / ESTRATÉGICAS",
    "light": "Transición iris",
    "sfx": "Kolomna + impactos"
@@ -580,7 +580,7 @@
    "b": 23.6,
    "name": "PLACA 4 · JUGAR EN GRANDE",
    "vo": "«…con quienes se atreven a jugar en grande.»",
-   "sides": "Roque (izq.) / Haedo (der.) · fotos reales",
+   "sides": "Roque (izq.) / Gatito (der.) · fotos reales",
    "centre": "PARA AVANZAR CON CLARIDAD / EN MEDIO DE LA / COMPLEJIDAD",
    "light": "Sweep → pelota KV",
    "sfx": "Subida al destello"
@@ -588,9 +588,9 @@
   {
    "a": 23.6,
    "b": 30.1,
-   "name": "CIERRE · ROQUE + HAEDO",
-   "vo": "«Con ustedes… Roque Santa Cruz y Nelson Haedo Valdez.»",
-   "sides": "Roque (izq.) / Haedo (der.) · fotos reales",
+   "name": "CIERRE · ROQUE + GATITO",
+   "vo": "«Con ustedes… Roque Santa Cruz y Nelson Gatito Valdez.»",
+   "sides": "Roque (izq.) / Gatito (der.) · fotos reales",
    "centre": "CON USTEDES → DANIEL FORMENTO",
    "light": "Contorno",
    "sfx": "Impacto + cola"
@@ -660,7 +660,7 @@
      "push": 0.0
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/H1.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt_gatito/G1.mp4",
      "z": 1.3,
      "fy": 0.3,
      "speed": 1.0,
@@ -713,7 +713,7 @@
      "push": 0.0
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/H2.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt_gatito/G2.mp4",
      "z": 1.7,
      "fy": 0.3,
      "speed": 1.0,
@@ -766,7 +766,7 @@
      "push": 0.0
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/X2.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt_gatito/G3.mp4",
      "z": 1.4,
      "fy": 0.4,
      "speed": 1.0,
@@ -819,7 +819,7 @@
      "push": 0.0
     },
     "R": {
-     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt/H4.mp4",
+     "clip": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/bt_gatito/G4.mp4",
      "z": 1.35,
      "fy": 0.35,
      "speed": 1.0,
@@ -874,7 +874,7 @@
  "andres_anim": {
   "dir": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/anim_roque",
   "dir_L": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/anim_roque",
-  "dir_R": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/anim_haedo",
+  "dir_R": "/tmp/claude-0/-home-user-slimmed-down/53c99130-536b-5075-8d31-c2afdb1cd256/scratchpad/roque_haedo/anim_gatito",
   "frames": 30
  },
  "text_groups": [

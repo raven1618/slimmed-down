@@ -48,7 +48,7 @@ lockup("B1", [("fit", [("DOS HISTORIAS", "black", 100, W_)]), ("small", "QUE EMP
 lockup("B2", [("fit", [("CON DESAFÍOS", "black", 100, W_)]), ("small", "QUE LOS OBLIGARON A", 0.32), ("fit", [("SUPERARSE", "black", 100, L_)])], 480)
 lockup("B3", [("small", "PORQUE TODA", 0.32), ("fit", [("GRAN HISTORIA", "black", 100, W_)]), ("fit", [("SE CONSTRUYE", "black", 100, L_)])], 480)
 lockup("B4", [("small", "CON QUIENES SE ATREVEN", 0.30), ("small", "A JUGAR EN", 0.30), ("fit", [("GRANDE", "black", 100, L_)])], 520)
-name = [("ROQUE", "black", 104, "white"), ("+", "black", 104, "lime"), ("HAEDO", "black", 104, "white")]; nw = width(name)
+name = [("ROQUE", "black", 104, "white"), ("+", "black", 104, "lime"), ("GATITO", "black", 104, "white")]; nw = width(name)   # Nov 25: Haedo bailed, Gatito Fernández; nw = width(name)
 role = [("UNA CHARLA PARA JUGAR EN GRANDE", "medium", 26, "white")]
 logo_h = 32; cn, cr = cap(name), cap(role); g1, g2 = 18, 15
 total = logo_h + g1 + cn + g2 + 1 + g2 + cr; top = CY - total / 2
