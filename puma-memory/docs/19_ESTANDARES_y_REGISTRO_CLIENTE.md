@@ -48,6 +48,9 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 |---|---|---|---|---|
 | T1 | Carolina (Nov 26): "Me pide girar ya con la sonrisa… porque al girar está seria, entonces al girar ya que esté sonriendo" | Same close (end frame 3507e08f, 7 s, 21:9 green screen) but smiling from the first profile frame through the whole turn; head level, no back | ✅ v12: take `04d92ca2` (run on the site, 7 s, came out slow) retimed in post: turn 0–4.6 s at 1.7× (turn 4.3 s → 2.3 s, other speakers 2.0–2.8 s), settle at 1×; keyed to `anim4k_v6`. API attempt `82983226` rejected (ip_detected) | `carolina/anim4k_v6`, `carolina_v6/c6_rt.mp4` |
 
+| T2 | Break loop, long screen (client, Nov 25; invoice: "Adaptación del KV para el break") | KV background + client KV lockup + lime rule + BREAK (Gotham Cond. Black); the KV's own halo layer on the sides, light pulses flowing outward, never behind the type; 10 s seamless loop, 3840×708 30 fps (ProRes master + MP4) | 🔶 sent for review | `tools/break_loop.py` |
+| T3 | Sphere loop (client, Nov 25: "pasa de pecho y chuta, y se agranda") | Opening's end (_render 54.4–59.6: chest → kick → KV ball + logo) + 0.8 s seam reveal back into the chest shot; 6.0 s seamless, 2688×1296 | 🔶 rendering | `tools/sphere_loop.py` |
+
 ## C. User rules (permanent)
 - Credits: state the cost first; no waste; no upscales before approval.
 - Prompts via skills; always pasted in full in the chat (Chinese + English for Seedance).
