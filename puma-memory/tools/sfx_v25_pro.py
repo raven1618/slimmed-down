@@ -168,7 +168,7 @@ if PRO: v = filt(V_RAW, "high", 60); CUTS = [(0.0, min(len(v), N) / SR, 0.0)]
 vo = np.zeros((N, 2), np.float32); duck = np.ones(N, np.float32); fd = int(0.015 * SR)
 for a0, a1, t0 in CUTS:
     seg = v[int(a0 * SR):int(a1 * SR)].copy(); seg[:fd] *= np.linspace(0, 1, fd); seg[-fd:] *= np.linspace(1, 0, fd)
-    i = int(t0 * SR); seg = seg[: N - i]; vo[i:i + len(seg)] += np.stack([seg, seg], 1); duck[i:i + len(seg)] = db(-4)
+    i = int(t0 * SR); seg = seg[: N - i]; vo[i:i + len(seg)] += np.stack([seg, seg], 1); duck[i:i + len(seg)] = db(-2)
 duck = np.convolve(duck, np.ones(4800) / 4800, mode="same").astype(np.float32)
 vo = vo * (db(-24.3) / (np.sqrt((vo ** 2).mean()) + 1e-9))            # same loudness as the previous voice
 pk = db(-3); vo = np.where(np.abs(vo) > pk, np.sign(vo) * (pk + (1 - pk) * np.tanh((np.abs(vo) - pk) / (1 - pk))), vo).astype(np.float32)   # soft peak limit
@@ -188,9 +188,9 @@ else:
 k = int(0.35 * SR); act = np.convolve(act, np.hanning(k) / np.hanning(k).sum(), mode="same").astype(np.float32)
 if NOVO: act[:] = 0
 tail = np.clip((np.arange(N) / SR - 23.6) / 0.3, 0, 1)                         # after the stop the ringing tail is already soft
-mduck = db(-18) * 10 ** ((-7 * act * (1 - tail) - 3 * act * tail) / 20)       # bed at -18 dB, -7 dB more under the voice
+mduck = db(-18) * 10 ** ((-3 * act * (1 - tail) - 1.5 * act * tail) / 20)     # bed at -18 dB; subtle duck under the voice (user Nov 26: -3 dB, was -7)
 mid = np.stack([signal.sosfiltfilt(signal.butter(2, [1200, 4500], btype="band", fs=SR, output="sos"), music[:, c]) for c in range(2)], 1).astype(np.float32)
-music = (music - 0.45 * mid * act[:, None]) * mduck[:, None]                   # carve the voice's presence band while it speaks
+music = (music - 0.2 * mid * act[:, None]) * mduck[:, None]                    # light carve of the voice's presence band (was 0.45)
 music = np.stack([filt(music[:, c], "high", 35) for c in range(2)], 1)
 m22 = np.abs(effects * duck[:, None] + vo).max(); g22 = min(1.0, db(-1) / m22)   # the exact gain v22 used, so the voice level matches it
 effects = fx * 0.8 * db(-4) + wet * 0.45 * db(-4) + beds * db(-9)               # SFX tucked under the music, room beds mostly out
