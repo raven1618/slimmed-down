@@ -5,11 +5,11 @@
  "tout": 2.05,
  "sweep": 0.85,
  "underline": 0.6,
- "yTop": 0.133,
+ "yTop": 0.17,
  "lines": [
   {
    "text": "EN CADA",
-   "w": 0.336,
+   "w": 0.2957,
    "anim": "rise",
    "delay": 0.0,
    "stagger": 0.03,
@@ -19,7 +19,7 @@
   },
   {
    "text": "DESTINO",
-   "w": 0.496,
+   "w": 0.4365,
    "anim": "punch",
    "delay": 0.25,
    "stagger": 0.02,
