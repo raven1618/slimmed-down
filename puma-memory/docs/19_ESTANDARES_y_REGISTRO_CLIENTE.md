@@ -43,6 +43,11 @@ Status: ✅ done and verified · 🔶 in progress · ⛔ rejected approach (don'
 | C21 | Benjamín Nov 26: "Después del texto que dice 'calidad internacional' ingresa el buque el tiempo suficiente como para que la locución de 'sabemos de qué estamos hablando' pueda leerse… Posterior a eso vuelve el mapa de Paraguay con el texto 'Y EN PARAGUAY'… ingresa el camión y queda dos segundos más" | Ship (J2) 21.6–24.8 s right after CALIDAD INTERNACIONAL (3.2 s); then globe zoom + Y EN PARAGUAY; EN CADA KM = truck (F1) only, 28.8–32.2 s (3.4 s, was ~1.7 s). Total 78.4 s (was 75.2). Supersedes C19's KM order | ✅ v21 (checklist: frames, side joins, jump scan) | `SHIP_AT`, `SHIP_D`, `render()` wrapper |
 | C11 | Truck turning into the oil tanker | Was unconfirmed; now covered by C4a/C4b | ❓→🔶 | |
 
+## B2. Client request register — teasers
+| # | Client request | Exactly what it means | Status | Where |
+|---|---|---|---|---|
+| T1 | Carolina (Nov 26): "Me pide girar ya con la sonrisa… porque al girar está seria, entonces al girar ya que esté sonriendo" | Same close (end frame 3507e08f, 7 s, 21:9 green screen) but smiling from the first profile frame through the whole turn; head level, no back | 🔶 Seedance `82983226` (21 credits) | `carolina/` |
+
 ## C. User rules (permanent)
 - Credits: state the cost first; no waste; no upscales before approval.
 - Prompts via skills; always pasted in full in the chat (Chinese + English for Seedance).
