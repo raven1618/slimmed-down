@@ -21,16 +21,15 @@ for j, k in enumerate(order):
     if d0 < 0: out[N + d0:N] += seg[:-d0]; seg = seg[-d0:]; d0 = 0
     out[d0:d0 + len(seg)] += seg
 out[:SR] += out[N:N + SR]; loop = out[:N]                         # wrap the last tail onto the start: seamless
-loop *= db(-1) / np.abs(loop).max()
-wavfile.write("sphere_audio/v3/Pulso_loop_60s.wav", SR, (loop * 2147483647).astype(np.int32))
+loop = np.roll(loop, int(round(0.7 * SR)), 0)                    # hits at 0.7 s + 3n: big visual pulses (start 0.4 s) peak on them
 # ---- 2. opening soundtrack: pulse 0-6 s, epic hit (its 23.77 s) lands on the pentagon opening at 6.0 s ----
 NO = int(78.4 * SR); st = np.zeros((NO, 2), np.float32)
-p = pul[int(2.5 * SR):int(2.5 * SR) + int(6.1 * SR)].copy(); p[:int(0.5 * SR)] *= fade(int(0.5 * SR))[:, None]
+p = loop[:int(6.1 * SR)].copy()                                    # the opening continues the loop's music exactly
 p[-int(0.4 * SR):] *= fade(int(0.4 * SR), True)[:, None]; st[:len(p)] += p
 E0, AT = 23.5, 6.0 - (23.77 - 23.5)
 e = epi[int(E0 * SR):int(E0 * SR) + NO - int(AT * SR)].copy(); e[:int(0.15 * SR)] *= fade(int(0.15 * SR))[:, None]
 e[-3 * SR:] *= fade(3 * SR, True)[:, None]; st[int(AT * SR):int(AT * SR) + len(e)] += e
-st *= db(-1) / np.abs(st).max()
+g1 = db(-1) / np.abs(st).max(); st *= g1
 wavfile.write("sphere_audio/v3/Esfera_soundtrack_v3.wav", SR, (st * 2147483647).astype(np.int32))
 # ---- 3. + sphere VO, same subtle duck as before (bed -7 dB, -3 dB under the voice) ----
 v = load("vo_esfera/esfera.wav"); v = np.pad(v, ((0, max(0, NO - len(v))), (0, 0)))[:NO]
@@ -41,6 +40,9 @@ for i in range(len(g)):
 env = np.zeros_like(g); a_, rl = 1 - np.exp(-1 / 7.5), 1 - np.exp(-1 / 30)
 for i in range(1, len(g)): env[i] = env[i - 1] + (a_ if g[i] > env[i - 1] else rl) * (g[i] - env[i - 1])
 env = np.interp(np.arange(NO) / hop, np.arange(len(env)), env)
-mix = st * (db(-7) * db(-3 * env))[:, None] + v; mix *= db(-1) / np.abs(mix).max()
+mix = st * (db(-7) * db(-3 * env))[:, None] + v; g2 = db(-1) / np.abs(mix).max(); mix *= g2
+loop_out = loop * g1 * db(-7) * g2                                # same gain as the opening's first 6 s: no level change at the cut
+wavfile.write("sphere_audio/v3/Pulso_loop_60s.wav", SR, (loop_out * 2147483647).astype(np.int32))
+print("cut check: max |loop[0:5.6]-mix[0:5.6]| =", np.abs(loop_out[:int(5.6*SR)] - mix[:int(5.6*SR)]).max())
 wavfile.write("sphere_audio/v3/Esfera_mezcla_v3.wav", SR, (mix * 2147483647).astype(np.int32))
 print("loop s", round(len(loop) / SR, 3), "opening s", NO / SR)
